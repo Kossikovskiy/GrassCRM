@@ -737,33 +737,6 @@
      МОДАЛЬНЫЕ ОКНА
 ════════════════════════════════════════ -->
 
-<!-- Новая сделка -->
-<div class="modal-overlay" id="modal-deal">
-  <div class="modal">
-    <h2>НОВАЯ СДЕЛКА</h2>
-    <div class="form-group"><label>Клиент</label><input id="f-client" placeholder="Иванов А.П."></div>
-    <div class="form-group"><label>Название</label><input id="f-title" placeholder="Покос участка, 10 соток"></div>
-    <div class="form-group"><label>Адрес</label><input id="f-address" placeholder="ул. Лесная, 12"></div>
-  <div class="form-group">
-  <label>Услуги</label>
-  <select id="f-services" multiple size="6" style="height: auto; min-height: 120px;">
-    <!-- услуги будут добавлены через JavaScript -->
-  </select>
-  <small style="color: var(--text3); display: block; margin-top: 5px; font-size: 10px;">✓ Удерживайте Ctrl для выбора нескольких услуг</small>
-</div>
-<div class="form-group" id="service-quantities" style="display: none;">
-  <label>Количество (для выбранных услуг)</label>
-  <div id="quantity-inputs"></div>
-</div>
-    <div class="form-group"><label>Сумма (₽)</label><input id="f-sum" type="number" placeholder="5000"></div>
-    <div class="form-group"><label>Примечание</label><input id="f-notes" placeholder="..."></div>
-    <div class="modal-footer">
-      <button class="btn-cancel" onclick="closeModal('modal-deal')">Отмена</button>
-      <button class="btn-save" onclick="saveDeal()">Создать сделку</button>
-    </div>
-  </div>
-</div>
-
 <!-- Новый расход -->
 <div class="modal-overlay" id="modal-expense">
   <div class="modal">
@@ -1141,13 +1114,37 @@ function filterServicesCat(val) { svcFilter.cat = val; renderServices(); }
 //  МОДАЛЬНЫЕ ОКНА
 // ════════════════════════════════════════
 
-function openDealModal() { document.getElementById('modal-deal').classList.add('open'); }
+function resetDealModalState() {
+  const modalTitle = document.querySelector('#modal-deal h2');
+  if (modalTitle) modalTitle.textContent = 'НОВАЯ СДЕЛКА';
+
+  const saveBtn = document.querySelector('#modal-deal .btn-save');
+  if (saveBtn) {
+    saveBtn.textContent = 'Создать сделку';
+    saveBtn.setAttribute('onclick', 'saveDeal()');
+  }
+
+  ['f-client', 'f-title', 'f-address', 'f-services', 'f-sum', 'f-notes'].forEach(id => {
+    const field = document.getElementById(id);
+    if (field) field.value = '';
+  });
+}
+
+function openDealModal() {
+  resetDealModalState();
+  document.getElementById('modal-deal').classList.add('open');
+}
 function openExpenseModal() {
   document.getElementById('fe-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('modal-expense').classList.add('open');
 }
 function openEquipModal() { document.getElementById('modal-equip').classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  if (id === 'modal-deal') {
+    resetDealModalState();
+  }
+}
 // Открытие деталей сделки
 function openDealDetails(dealId) {
   const deal = deals.find(d => d.id === dealId);
@@ -1170,59 +1167,27 @@ function openDealDetails(dealId) {
   
   // Добавляем кнопку сохранения с обновленной логикой
   const saveBtn = document.querySelector('#modal-deal .btn-save');
+  saveBtn.textContent = 'Сохранить изменения';
   saveBtn.setAttribute('onclick', `updateDeal(${dealId})`);
   
   // Открываем модальное окно
   document.getElementById('modal-deal').classList.add('open');
 }
 document.querySelectorAll('.modal-overlay').forEach(m => {
-  m.addEventListener('click', e => { if(e.target === m) m.classList.remove('open'); });
+  m.addEventListener('click', e => {
+    if (e.target !== m) return;
+    m.classList.remove('open');
+    if (m.id === 'modal-deal') {
+      resetDealModalState();
+    }
+  });
 });
 
 async function saveDeal() {
   const client = document.getElementById('f-client').value.trim();
   const title  = document.getElementById('f-title').value.trim();
   if (!client || !title) { alert('Заполните клиента и название'); return; }
-// Обновление существующей сделки
-async function updateDeal(dealId) {
-  const client = document.getElementById('f-client').value.trim();
-  const title  = document.getElementById('f-title').value.trim();
-  if (!client || !title) { 
-    alert('Заполните клиента и название'); 
-    return; 
-  }
 
-  const res = await apiFetch(`/deals/${dealId}`, {
-    method: 'PUT',
-    body: JSON.stringify({ 
-      title, 
-      client, 
-      notes: document.getElementById('f-notes').value, 
-      address: document.getElementById('f-address').value,
-      services: getSelectedServices(),
-      total: parseFloat(document.getElementById('f-sum').value) || 0
-    })
-  });
-  
-  if (!res) return;
-
-  closeModal('modal-deal');
-  
-  // Восстанавливаем исходное состояние модального окна для новых сделок
-  const modalTitle = document.querySelector('#modal-deal h2');
-  if (modalTitle) modalTitle.textContent = 'НОВАЯ СДЕЛКА';
-  
-  const saveBtn = document.querySelector('#modal-deal .btn-save');
-  saveBtn.setAttribute('onclick', 'saveDeal()');
-  
-  // Очищаем форму
-  ['f-client','f-title','f-address','f-services','f-sum','f-notes'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
-  
-  await loadAll();
-  showToast('✅ Сделка обновлена!');
-}
   const res = await apiFetch('/deals', {
     method: 'POST',
     body: JSON.stringify({ 
@@ -1236,11 +1201,36 @@ async function updateDeal(dealId) {
   if (!res) return;
 
   closeModal('modal-deal');
-  ['f-client','f-title','f-address','f-services','f-sum','f-notes'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
   await loadAll();
   showToast('✅ Сделка создана!');
+}
+
+// Обновление существующей сделки
+async function updateDeal(dealId) {
+  const client = document.getElementById('f-client').value.trim();
+  const title  = document.getElementById('f-title').value.trim();
+  if (!client || !title) {
+    alert('Заполните клиента и название');
+    return;
+  }
+
+  const res = await apiFetch(`/deals/${dealId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ 
+      title, 
+      client, 
+      notes: document.getElementById('f-notes').value, 
+      address: document.getElementById('f-address').value,
+      services: getSelectedServices(),
+      total: parseFloat(document.getElementById('f-sum').value) || 0
+    })
+  });
+
+  if (!res) return;
+
+  closeModal('modal-deal');
+  await loadAll();
+  showToast('✅ Сделка обновлена!');
 }
 
 async function saveExpense() {

@@ -9,5 +9,12 @@ fastapi>=0.110.0
 uvicorn[standard]>=0.27.0
 pydantic>=2.0.0
 
+# Авторизация
+passlib[bcrypt]>=1.7.4
+python-jose[cryptography]>=3.3.0
+
+# Планировщик задач (Telegram уведомления)
+apscheduler>=3.10.0
+
 # Утилиты
 python-dotenv>=1.0.0

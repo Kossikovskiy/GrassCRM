@@ -5,10 +5,13 @@ FastAPI REST API для CRM
 
 import sys
 import os
+import urllib.request
+import urllib.parse
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from datetime import datetime, date
-from typing import Optional, List, Any
+from contextlib import asynccontextmanager
+from typing import Optional, List
 from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -27,9 +30,8 @@ from api.auth_module import (
 from models.database import (
     get_engine, get_session_factory, init_db,
     Stage, Service, ServiceCategory, Deal, DealService,
-    Equipment, Maintenance, MaintenanceConsumable, Consumable, ExpenseCategory, Expense
+    Equipment, Maintenance, ExpenseCategory, Expense
 )
-from scripts.init_db import seed_database
 
 engine = get_engine()
 init_db(engine)
@@ -41,11 +43,150 @@ Base.metadata.create_all(engine)
 
 SessionFactory = get_session_factory(engine)
 
-# Автозаполнение БД начальными данными (если база пустая)
-with SessionFactory() as seed_session:
-    seed_database(seed_session)
 
-app = FastAPI(title="Grass CRM API", version="1.0.0")
+# ════════════════════════════════════════
+#  TELEGRAM — настройки
+# ════════════════════════════════════════
+# Заполните свои данные или задайте через переменные окружения:
+#   TG_TOKEN=xxx TG_CHAT=yyy uvicorn api.main:app
+TG_TOKEN      = os.getenv("TG_TOKEN", "ВСТАВЬТЕ_ТОКЕН_ОТ_BOTFATHER")
+TG_CHAT       = os.getenv("TG_CHAT",  "-4993820220")
+NOTIFY_HOUR   = int(os.getenv("NOTIFY_HOUR",   "9"))   # час   (по МСК)
+NOTIFY_MINUTE = int(os.getenv("NOTIFY_MINUTE", "0"))   # минута
+
+
+def tg_send(text: str) -> bool:
+    """Отправить сообщение в Telegram. Возвращает True если успешно."""
+    if not TG_TOKEN or TG_TOKEN.startswith("ВСТАВЬТЕ"):
+        print("[TG] Токен не задан, пропускаем отправку")
+        return False
+    url  = f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage"
+    data = urllib.parse.urlencode({
+        "chat_id":    TG_CHAT,
+        "text":       text,
+        "parse_mode": "HTML",
+    }).encode()
+    try:
+        urllib.request.urlopen(urllib.request.Request(url, data=data), timeout=10)
+        print("[TG] ✅ Сообщение отправлено")
+        return True
+    except Exception as e:
+        print(f"[TG] ❌ Ошибка: {e}")
+        return False
+
+
+def build_morning_report() -> str:
+    """Собирает утренний отчёт из БД."""
+    from datetime import timedelta
+    today   = date.today()
+    in_week = today + timedelta(days=7)
+
+    with SessionFactory() as session:
+        # Активные сделки (Запланировано / В работе / Ожидание)
+        active_names  = ["Запланировано", "В работе", "Ожидание"]
+        active_stages = session.query(Stage).filter(Stage.name.in_(active_names)).all()
+        active_ids    = [s.id for s in active_stages]
+        active_deals  = session.query(Deal).filter(
+            Deal.stage_id.in_(active_ids)
+        ).order_by(Deal.created_at).all() if active_ids else []
+
+        # Техника — ТО на этой неделе
+        equip_soon = session.query(Equipment).filter(
+            Equipment.next_maintenance >= today,
+            Equipment.next_maintenance <= in_week,
+            Equipment.status == "active"
+        ).all()
+
+        # Техника в ремонте
+        in_repair = session.query(Equipment).filter(
+            Equipment.status == "repair"
+        ).all()
+
+    # Определяем день недели по-русски
+    DAYS = ["Понедельник","Вторник","Среда","Четверг","Пятница","Суббота","Воскресенье"]
+    day_name = DAYS[today.weekday()]
+
+    lines = [
+        f"🌿 <b>GreenCRM — Доброе утро!</b>",
+        f"📅 {today.strftime('%d.%m.%Y')}, {day_name}",
+        "",
+    ]
+
+    # Активные сделки
+    if active_deals:
+        lines.append(f"📋 <b>Активных сделок: {len(active_deals)}</b>")
+        icons = {"Запланировано": "🗓", "В работе": "⚡", "Ожидание": "⏳"}
+        for deal in active_deals[:10]:
+            total   = sum(ds.quantity * ds.price_at_moment for ds in deal.deal_services)
+            icon    = icons.get(deal.stage.name if deal.stage else "", "📌")
+            sum_str = f"{int(total):,} ₽".replace(",", " ") if total else "—"
+            lines.append(f"  {icon} <b>{deal.client}</b> — {sum_str}")
+            lines.append(f"      {deal.title[:55]}")
+        if len(active_deals) > 10:
+            lines.append(f"  … и ещё {len(active_deals) - 10}")
+    else:
+        lines.append("📋 <b>Активных сделок нет</b> — самое время создать новые! 💪")
+
+    lines.append("")
+
+    # Техника
+    if equip_soon:
+        lines.append("🔧 <b>Нужно ТО на этой неделе:</b>")
+        for eq in equip_soon:
+            days_left = (eq.next_maintenance - today).days
+            when = "сегодня!" if days_left == 0 else ("завтра" if days_left == 1 else f"через {days_left} дн.")
+            lines.append(f"  ⚠️ {eq.name} — {when}")
+
+    if in_repair:
+        lines.append("🛠 <b>В ремонте:</b>")
+        for eq in in_repair:
+            lines.append(f"  🔴 {eq.name} ({eq.model})")
+
+    if not equip_soon and not in_repair:
+        lines.append("🔧 <b>Техника:</b> всё в порядке ✅")
+
+    lines += ["", "━━━━━━━━━━━━━━━━━━━━", "🌿 Хорошего рабочего дня!"]
+    return "\n".join(lines)
+
+
+def send_morning_report():
+    """Задача планировщика — вызывается каждый день в NOTIFY_HOUR:NOTIFY_MINUTE."""
+    print(f"[Scheduler] Запуск утреннего отчёта ({datetime.now().strftime('%H:%M')})")
+    try:
+        report = build_morning_report()
+        tg_send(report)
+    except Exception as e:
+        print(f"[Scheduler] ❌ Ошибка при формировании отчёта: {e}")
+
+
+# ════════════════════════════════════════
+#  LIFESPAN — запуск и остановка сервера
+# ════════════════════════════════════════
+
+@asynccontextmanager
+async def lifespan(app):
+    """Запускает планировщик вместе с сервером."""
+    try:
+        from apscheduler.schedulers.asyncio import AsyncIOScheduler
+        from apscheduler.triggers.cron import CronTrigger
+
+        scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
+        scheduler.add_job(
+            send_morning_report,
+            CronTrigger(hour=NOTIFY_HOUR, minute=NOTIFY_MINUTE),
+            id="morning_report",
+            replace_existing=True,
+        )
+        scheduler.start()
+        print(f"[Scheduler] ✅ Запущен — отчёт каждый день в {NOTIFY_HOUR:02d}:{NOTIFY_MINUTE:02d} МСК")
+    except ImportError:
+        print("[Scheduler] ⚠️  apscheduler не установлен. Запустите: pip install apscheduler")
+
+    yield  # сервер работает
+
+    print("[Scheduler] Остановка...")
+
+app = FastAPI(title="Grass CRM API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -154,17 +295,7 @@ class DealCreate(BaseModel):
     manager: str = ""
     address: str = ""
     notes: str = ""
-    vat_rate: str = "no_vat"
-    services: Any = []
-
-class DealUpdate(BaseModel):
-    title: str
-    client: str
-    manager: str = ""
-    address: str = ""
-    notes: str = ""
-    vat_rate: str = "no_vat"
-    services: Any = []
+    services: List[DealServiceIn] = []
 
 class StageUpdate(BaseModel):
     stage_name: str
@@ -183,20 +314,7 @@ class EquipmentCreate(BaseModel):
     serial: str = ""
     purchase_date: Optional[str] = None
     purchase_cost: float = 0
-    engine_hours: float = 0
     status: str = "active"
-    notes: str = ""
-
-class MaintenanceConsumableIn(BaseModel):
-    consumable_id: int
-    quantity: float
-    unit: str = "мл"
-
-class ConsumableCreate(BaseModel):
-    name: str
-    quantity: float
-    unit: str
-    total_cost: float
     notes: str = ""
 
 class MaintenanceCreate(BaseModel):
@@ -204,54 +322,6 @@ class MaintenanceCreate(BaseModel):
     description: str
     cost: float = 0
     performed_by: str = ""
-    equipment_id: Optional[int] = None
-    consumables: List[MaintenanceConsumableIn] = []
-
-
-UNIT_ALIASES = {
-    "мл": "ml", "ml": "ml", "л": "l", "l": "l",
-    "г": "g", "гр": "g", "g": "g", "кг": "kg", "kg": "kg",
-    "шт": "pcs", "pcs": "pcs", "ед": "pcs",
-}
-
-
-def _to_base_unit(unit_raw: str):
-    u = UNIT_ALIASES.get((unit_raw or "").strip().lower())
-    if not u:
-        raise HTTPException(400, f"Неподдерживаемая единица '{unit_raw}'")
-    if u in ("ml", "l"):
-        return "ml"
-    if u in ("g", "kg"):
-        return "g"
-    return "pcs"
-
-
-def _convert_to_base(quantity: float, unit_raw: str, base_unit: str):
-    if quantity <= 0:
-        raise HTTPException(400, "Количество должно быть больше 0")
-    u = UNIT_ALIASES.get((unit_raw or "").strip().lower())
-    if not u:
-        raise HTTPException(400, f"Неподдерживаемая единица '{unit_raw}'")
-
-    if base_unit == "ml":
-        if u == "ml":
-            return quantity
-        if u == "l":
-            return quantity * 1000
-    elif base_unit == "g":
-        if u == "g":
-            return quantity
-        if u == "kg":
-            return quantity * 1000
-    elif base_unit == "pcs":
-        if u == "pcs":
-            return quantity
-
-    raise HTTPException(400, "Единица расходника не совпадает с единицей на складе")
-
-
-def _human_unit(base_unit: str):
-    return {"ml": "мл", "g": "г", "pcs": "шт"}.get(base_unit, base_unit)
 
 
 # ── STAGES ────────────────────────────────────
@@ -297,7 +367,6 @@ def get_deals(
             "stage": d.stage.name if d.stage else None,
             "stage_color": d.stage.color if d.stage else "#6B7280",
             "manager": d.manager, "address": d.address,
-            "vat_rate": d.vat_rate or "no_vat",
             "total": total,
             "services": [{"name": ds.service.name if ds.service else "?", "qty": ds.quantity, "price": ds.price_at_moment}
                          for ds in d.deal_services],
@@ -306,96 +375,26 @@ def get_deals(
     return {"deals": result, "count": len(result), "total_sum": sum(d["total"] for d in result)}
 
 
-def _add_services_to_deal(db: DBSession, deal_id: int, services_raw: Any):
-    """Поддерживает оба формата услуг: старый API-список и фронтовую строку name:qty,name2:qty."""
-    if not services_raw:
-        return
-
-    # Формат API: [{service_id, quantity}, ...]
-    if isinstance(services_raw, list):
-        for svc_in in services_raw:
-            try:
-                service_id = int(svc_in.get("service_id")) if isinstance(svc_in, dict) else int(getattr(svc_in, "service_id"))
-                quantity = float(svc_in.get("quantity")) if isinstance(svc_in, dict) else float(getattr(svc_in, "quantity"))
-            except Exception:
-                continue
-            svc = db.query(Service).get(service_id)
-            if svc:
-                qty = max(quantity, svc.min_volume)
-                db.add(DealService(deal_id=deal_id, service_id=svc.id, quantity=qty, price_at_moment=svc.price))
-        return
-
-    # Формат фронта: "Название:2,Название2:1"
-    if isinstance(services_raw, str):
-        for chunk in services_raw.split(','):
-            if ':' not in chunk:
-                continue
-            name, qty_raw = chunk.split(':', 1)
-            name = name.strip()
-            if not name:
-                continue
-            try:
-                qty = max(float(qty_raw), 0)
-            except Exception:
-                qty = 0
-            if qty <= 0:
-                continue
-
-            svc = db.query(Service).filter(Service.name == name).first()
-            if not svc:
-                svc = db.query(Service).filter(Service.name.ilike(f"%{name}%")).first()
-            if svc:
-                db.add(DealService(deal_id=deal_id, service_id=svc.id, quantity=max(qty, svc.min_volume), price_at_moment=svc.price))
-
-
 @app.post("/api/deals", status_code=201)
 def create_deal(body: DealCreate, db: DBSession = Depends(get_db), _=Depends(get_current_user)):
-    stage = db.query(Stage).filter_by(name="Согласовать").first()
+    stage = db.query(Stage).filter_by(name="Начальная").first()
     deal = Deal(
         title=body.title, client=body.client,
         manager=body.manager, address=body.address,
         notes=body.notes,
-        vat_rate=body.vat_rate,
         stage_id=stage.id if stage else None
     )
     db.add(deal)
     db.flush()
 
-    _add_services_to_deal(db, deal.id, body.services)
+    for svc_in in body.services:
+        svc = db.query(Service).get(svc_in.service_id)
+        if svc:
+            qty = max(svc_in.quantity, svc.min_volume)
+            db.add(DealService(deal_id=deal.id, service_id=svc.id, quantity=qty, price_at_moment=svc.price))
 
     db.commit()
     return {"id": deal.id, "title": deal.title, "client": deal.client}
-
-
-@app.put("/api/deals/{deal_id}")
-def update_deal(deal_id: int, body: DealUpdate, db: DBSession = Depends(get_db), _=Depends(get_current_user)):
-    deal = db.query(Deal).get(deal_id)
-    if not deal:
-        raise HTTPException(404, "Сделка не найдена")
-
-    deal.title = body.title
-    deal.client = body.client
-    deal.manager = body.manager
-    deal.address = body.address
-    deal.notes = body.notes
-    deal.vat_rate = body.vat_rate
-    deal.updated_at = datetime.utcnow()
-
-    db.query(DealService).filter(DealService.deal_id == deal.id).delete()
-    _add_services_to_deal(db, deal.id, body.services)
-
-    db.commit()
-    return {"id": deal.id, "title": deal.title, "client": deal.client}
-
-
-@app.delete("/api/deals/{deal_id}", dependencies=[Depends(require_admin)])
-def delete_deal(deal_id: int, db: DBSession = Depends(get_db)):
-    deal = db.query(Deal).get(deal_id)
-    if not deal:
-        raise HTTPException(404, "Сделка не найдена")
-    db.delete(deal)
-    db.commit()
-    return {"detail": "Сделка удалена", "id": deal_id}
 
 
 @app.patch("/api/deals/{deal_id}/stage")
@@ -424,7 +423,6 @@ def get_deal(deal_id: int, db: DBSession = Depends(get_db)):
         "id": deal.id, "title": deal.title, "client": deal.client,
         "stage": deal.stage.name if deal.stage else None,
         "manager": deal.manager, "address": deal.address, "notes": deal.notes,
-        "vat_rate": deal.vat_rate or "no_vat",
         "total": total,
         "services": [{"id": ds.id, "service_id": ds.service_id,
                       "name": ds.service.name if ds.service else "?",
@@ -437,39 +435,6 @@ def get_deal(deal_id: int, db: DBSession = Depends(get_db)):
 
 # ── EQUIPMENT ─────────────────────────────────
 
-@app.get("/api/consumables")
-def get_consumables(db: DBSession = Depends(get_db), _=Depends(get_current_user)):
-    rows = db.query(Consumable).order_by(Consumable.name).all()
-    return [{
-        "id": c.id,
-        "name": c.name,
-        "base_unit": c.base_unit,
-        "unit": _human_unit(c.base_unit),
-        "stock_quantity": round(c.stock_quantity or 0, 3),
-        "price_per_unit": round(c.price_per_unit or 0, 4),
-        "stock_value": round((c.stock_quantity or 0) * (c.price_per_unit or 0), 2),
-        "notes": c.notes,
-    } for c in rows]
-
-
-@app.post("/api/consumables", status_code=201)
-def create_consumable(body: ConsumableCreate, db: DBSession = Depends(get_db), _=Depends(get_current_user)):
-    base_unit = _to_base_unit(body.unit)
-    qty_base = _convert_to_base(body.quantity, body.unit, base_unit)
-    if body.total_cost < 0:
-        raise HTTPException(400, "Стоимость не может быть отрицательной")
-    c = Consumable(
-        name=body.name.strip(),
-        base_unit=base_unit,
-        stock_quantity=qty_base,
-        price_per_unit=(body.total_cost / qty_base) if qty_base else 0,
-        notes=body.notes,
-    )
-    db.add(c)
-    db.commit()
-    return {"id": c.id, "name": c.name, "unit": _human_unit(c.base_unit), "stock_quantity": c.stock_quantity}
-
-
 @app.get("/api/equipment")
 def get_equipment(status: Optional[str] = Query(None), db: DBSession = Depends(get_db)):
     q = db.query(Equipment)
@@ -477,9 +442,7 @@ def get_equipment(status: Optional[str] = Query(None), db: DBSession = Depends(g
         q = q.filter(Equipment.status == status)
     eqs = q.order_by(Equipment.name).all()
     return [{"id": e.id, "name": e.name, "model": e.model, "status": e.status,
-             "purchase_date": str(e.purchase_date) if e.purchase_date else None,
              "purchase_cost": e.purchase_cost,
-             "engine_hours": e.engine_hours,
              "last_maintenance": str(e.last_maintenance) if e.last_maintenance else None,
              "next_maintenance": str(e.next_maintenance) if e.next_maintenance else None,
              "notes": e.notes} for e in eqs]
@@ -489,7 +452,7 @@ def get_equipment(status: Optional[str] = Query(None), db: DBSession = Depends(g
 def create_equipment(body: EquipmentCreate, db: DBSession = Depends(get_db)):
     eq = Equipment(
         name=body.name, model=body.model, serial=body.serial,
-        purchase_cost=body.purchase_cost, engine_hours=body.engine_hours, status=body.status, notes=body.notes
+        purchase_cost=body.purchase_cost, status=body.status, notes=body.notes
     )
     if body.purchase_date:
         try:
@@ -501,136 +464,22 @@ def create_equipment(body: EquipmentCreate, db: DBSession = Depends(get_db)):
     return {"id": eq.id, "name": eq.name}
 
 
-@app.put("/api/equipment/{equipment_id}", dependencies=[Depends(require_admin)])
-def update_equipment(equipment_id: int, body: EquipmentCreate, db: DBSession = Depends(get_db)):
-    eq = db.query(Equipment).get(equipment_id)
-    if not eq:
-        raise HTTPException(404, "Техника не найдена")
-
-    eq.name = body.name
-    eq.model = body.model
-    eq.serial = body.serial
-    eq.purchase_cost = body.purchase_cost
-    eq.engine_hours = body.engine_hours
-    eq.status = body.status
-    eq.notes = body.notes
-    if body.purchase_date:
-        try:
-            eq.purchase_date = datetime.strptime(body.purchase_date, "%Y-%m-%d").date()
-        except ValueError:
-            pass
-    db.commit()
-    return {"id": eq.id, "name": eq.name}
-
-
-
-
-def _replace_maintenance_consumables(db: DBSession, maintenance: Maintenance, consumables_payload: List[MaintenanceConsumableIn]) -> float:
-    # Возвращаем старые списания на склад
-    for item in list(maintenance.consumables):
-        if item.consumable:
-            item.consumable.stock_quantity = (item.consumable.stock_quantity or 0) + (item.quantity or 0)
-    db.query(MaintenanceConsumable).filter(MaintenanceConsumable.maintenance_id == maintenance.id).delete()
-
-    total_cost = 0.0
-    for row in consumables_payload or []:
-        c = db.query(Consumable).get(row.consumable_id)
-        if not c:
-            raise HTTPException(404, f"Расходник {row.consumable_id} не найден")
-        qty_base = _convert_to_base(row.quantity, row.unit, c.base_unit)
-        if c.stock_quantity < qty_base:
-            raise HTTPException(400, f"Недостаточно '{c.name}' на складе. Остаток: {round(c.stock_quantity,3)} {_human_unit(c.base_unit)}")
-        subtotal = round(qty_base * (c.price_per_unit or 0), 2)
-        c.stock_quantity = (c.stock_quantity or 0) - qty_base
-        db.add(MaintenanceConsumable(
-            maintenance_id=maintenance.id,
-            consumable_id=c.id,
-            quantity=qty_base,
-            unit_cost=c.price_per_unit or 0,
-            subtotal=subtotal,
-        ))
-        total_cost += subtotal
-    return round(total_cost, 2)
-
-
-@app.get("/api/maintenances")
-def get_maintenances(equipment_id: Optional[int] = Query(None), db: DBSession = Depends(get_db)):
-    q = db.query(Maintenance)
-    if equipment_id:
-        q = q.filter(Maintenance.equipment_id == equipment_id)
-    rows = q.order_by(Maintenance.date.desc()).all()
-    result = []
-    for m in rows:
-        items = [{
-            "id": i.id,
-            "consumable_id": i.consumable_id,
-            "consumable": i.consumable.name if i.consumable else None,
-            "quantity": i.quantity,
-            "unit": _human_unit(i.consumable.base_unit) if i.consumable else None,
-            "unit_cost": i.unit_cost,
-            "subtotal": i.subtotal,
-        } for i in m.consumables]
-        result.append({
-            "id": m.id,
-            "equipment_id": m.equipment_id,
-            "equipment": m.equipment.name if m.equipment else None,
-            "date": str(m.date),
-            "description": m.description,
-            "cost": round(sum(i["subtotal"] for i in items), 2) if items else m.cost,
-            "performed_by": m.performed_by,
-            "consumables": items,
-        })
-    return result
-
-
 @app.post("/api/equipment/{equipment_id}/maintenance")
 def add_maintenance(equipment_id: int, body: MaintenanceCreate, db: DBSession = Depends(get_db)):
     eq = db.query(Equipment).get(equipment_id)
     if not eq:
         raise HTTPException(404, "Техника не найдена")
     maint_date = datetime.strptime(body.date, "%Y-%m-%d").date()
-
     m = Maintenance(equipment_id=equipment_id, date=maint_date,
-                    description=body.description, cost=0, performed_by=body.performed_by)
+                    description=body.description, cost=body.cost, performed_by=body.performed_by)
     db.add(m)
-    db.flush()
-    m.cost = _replace_maintenance_consumables(db, m, body.consumables or [])
-
     today = date.today()
     if maint_date <= today:
         eq.last_maintenance = maint_date
     else:
         eq.next_maintenance = maint_date
     db.commit()
-    return {"id": m.id, "equipment": eq.name, "date": str(maint_date), "cost": m.cost}
-
-
-@app.put("/api/maintenances/{maintenance_id}")
-def update_maintenance(maintenance_id: int, body: MaintenanceCreate, db: DBSession = Depends(get_db)):
-    m = db.query(Maintenance).get(maintenance_id)
-    if not m:
-        raise HTTPException(404, "ТО не найдено")
-
-    maint_date = datetime.strptime(body.date, "%Y-%m-%d").date()
-    if body.equipment_id:
-        eq = db.query(Equipment).get(body.equipment_id)
-        if not eq:
-            raise HTTPException(404, "Техника не найдена")
-        m.equipment_id = eq.id
-    m.date = maint_date
-    m.description = body.description
-    m.performed_by = body.performed_by
-    m.cost = _replace_maintenance_consumables(db, m, body.consumables or [])
-
-    if m.equipment:
-        today = date.today()
-        if maint_date <= today:
-            m.equipment.last_maintenance = maint_date
-        else:
-            m.equipment.next_maintenance = maint_date
-
-    db.commit()
-    return {"id": m.id, "equipment": m.equipment.name if m.equipment else None, "date": str(m.date), "cost": m.cost}
+    return {"id": m.id, "equipment": eq.name, "date": str(maint_date)}
 
 
 @app.patch("/api/equipment/{equipment_id}/status")
@@ -691,16 +540,6 @@ def create_expense(body: ExpenseCreate, db: DBSession = Depends(get_db), _=Depen
     db.add(exp)
     db.commit()
     return {"id": exp.id, "name": exp.name, "amount": exp.amount}
-
-
-@app.delete("/api/expenses/{expense_id}", dependencies=[Depends(require_admin)])
-def delete_expense(expense_id: int, db: DBSession = Depends(get_db)):
-    exp = db.query(Expense).get(expense_id)
-    if not exp:
-        raise HTTPException(404, "Расход не найден")
-    db.delete(exp)
-    db.commit()
-    return {"detail": "Расход удалён", "id": expense_id}
 
 
 # ── SERVICES ──────────────────────────────────
@@ -794,6 +633,17 @@ def export_report(report_type: str, year: int, db: DBSession = Depends(get_db)):
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
+
+
+
+# ── TELEGRAM ──────────────────────────────────
+
+@app.post("/api/telegram/test", dependencies=[Depends(require_admin)])
+def telegram_test():
+    """Отправить тестовый отчёт прямо сейчас (только для admin)"""
+    report = build_morning_report()
+    ok = tg_send(report)
+    return {"sent": ok, "preview": report[:300] + "..."}
 
 
 if __name__ == "__main__":

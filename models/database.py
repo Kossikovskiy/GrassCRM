@@ -4,7 +4,7 @@ CRM для бизнеса по покосу травы — модели базы
 
 from sqlalchemy import (
     Column, Integer, String, Float, Date, DateTime, Boolean,
-    ForeignKey, Text, create_engine
+    ForeignKey, Text, create_engine, inspect, text
 )
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 from datetime import datetime
@@ -100,6 +100,7 @@ class Equipment(Base):
     serial = Column(String(100), default="")
     purchase_date = Column(Date, nullable=True)
     purchase_cost = Column(Float, default=0.0)
+    engine_hours = Column(Float, default=0.0)
     status = Column(String(50), default="active")   # active | repair | retired
     last_maintenance = Column(Date, nullable=True)
     next_maintenance = Column(Date, nullable=True)
@@ -162,3 +163,11 @@ def get_session_factory(engine):
 
 def init_db(engine):
     Base.metadata.create_all(engine)
+
+    # Лёгкая миграция для существующих БД: добавляем колонку моточасов при отсутствии.
+    inspector = inspect(engine)
+    if "equipment" in inspector.get_table_names():
+        columns = {c["name"] for c in inspector.get_columns("equipment")}
+        if "engine_hours" not in columns:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE equipment ADD COLUMN engine_hours FLOAT DEFAULT 0"))

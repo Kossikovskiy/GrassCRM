@@ -181,6 +181,7 @@ class EquipmentCreate(BaseModel):
     serial: str = ""
     purchase_date: Optional[str] = None
     purchase_cost: float = 0
+    engine_hours: float = 0
     status: str = "active"
     notes: str = ""
 
@@ -286,7 +287,7 @@ def _add_services_to_deal(db: DBSession, deal_id: int, services_raw: Any):
 
 @app.post("/api/deals", status_code=201)
 def create_deal(body: DealCreate, db: DBSession = Depends(get_db), _=Depends(get_current_user)):
-    stage = db.query(Stage).filter_by(name="Начальная").first()
+    stage = db.query(Stage).filter_by(name="Согласовать").first()
     deal = Deal(
         title=body.title, client=body.client,
         manager=body.manager, address=body.address,
@@ -379,6 +380,7 @@ def get_equipment(status: Optional[str] = Query(None), db: DBSession = Depends(g
     return [{"id": e.id, "name": e.name, "model": e.model, "status": e.status,
              "purchase_date": str(e.purchase_date) if e.purchase_date else None,
              "purchase_cost": e.purchase_cost,
+             "engine_hours": e.engine_hours,
              "last_maintenance": str(e.last_maintenance) if e.last_maintenance else None,
              "next_maintenance": str(e.next_maintenance) if e.next_maintenance else None,
              "notes": e.notes} for e in eqs]
@@ -388,7 +390,7 @@ def get_equipment(status: Optional[str] = Query(None), db: DBSession = Depends(g
 def create_equipment(body: EquipmentCreate, db: DBSession = Depends(get_db)):
     eq = Equipment(
         name=body.name, model=body.model, serial=body.serial,
-        purchase_cost=body.purchase_cost, status=body.status, notes=body.notes
+        purchase_cost=body.purchase_cost, engine_hours=body.engine_hours, status=body.status, notes=body.notes
     )
     if body.purchase_date:
         try:
@@ -410,6 +412,7 @@ def update_equipment(equipment_id: int, body: EquipmentCreate, db: DBSession = D
     eq.model = body.model
     eq.serial = body.serial
     eq.purchase_cost = body.purchase_cost
+    eq.engine_hours = body.engine_hours
     eq.status = body.status
     eq.notes = body.notes
     if body.purchase_date:

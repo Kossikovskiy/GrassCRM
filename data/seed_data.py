@@ -3,13 +3,12 @@
 """
 
 STAGES = [
-    {"name": "Начальная",   "order": 1, "type": "regular",  "is_final": False, "color": "#6B7280"},
-    {"name": "Согласовать", "order": 2, "type": "regular",  "is_final": False, "color": "#3B82F6"},
-    {"name": "Ожидание",    "order": 3, "type": "regular",  "is_final": False, "color": "#F59E0B"},
-    {"name": "Запланировано","order":4, "type": "regular",  "is_final": False, "color": "#8B5CF6"},
-    {"name": "В работе",    "order": 5, "type": "regular",  "is_final": False, "color": "#EC4899"},
-    {"name": "Успешно",     "order": 6, "type": "success",  "is_final": True,  "color": "#10B981"},
-    {"name": "Провалена",   "order": 7, "type": "failed",   "is_final": True,  "color": "#EF4444"},
+    {"name": "Согласовать", "order": 1, "type": "regular",  "is_final": False, "color": "#3B82F6"},
+    {"name": "Ожидание",    "order": 2, "type": "regular",  "is_final": False, "color": "#F59E0B"},
+    {"name": "Запланировано","order":3, "type": "regular",  "is_final": False, "color": "#8B5CF6"},
+    {"name": "В работе",    "order": 4, "type": "regular",  "is_final": False, "color": "#EC4899"},
+    {"name": "Успешно",     "order": 5, "type": "success",  "is_final": True,  "color": "#10B981"},
+    {"name": "Провалена",   "order": 6, "type": "failed",   "is_final": True,  "color": "#EF4444"},
 ]
 
 EXPENSE_CATEGORIES = [

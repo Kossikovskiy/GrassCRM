@@ -29,6 +29,7 @@ from models.database import (
     Stage, Service, ServiceCategory, Deal, DealService,
     Equipment, Maintenance, ExpenseCategory, Expense
 )
+from scripts.init_db import seed_database
 
 engine = get_engine()
 init_db(engine)
@@ -39,6 +40,10 @@ from models.user import User as UserModel
 Base.metadata.create_all(engine)
 
 SessionFactory = get_session_factory(engine)
+
+# Автозаполнение БД начальными данными (если база пустая)
+with SessionFactory() as seed_session:
+    seed_database(seed_session)
 
 app = FastAPI(title="Grass CRM API", version="1.0.0")
 

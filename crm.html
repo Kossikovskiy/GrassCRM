@@ -3,679 +3,872 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🌿 GreenCRM</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Geologica:wght@300;400;500;600&display=swap" rel="stylesheet">
+<title>GreenCRM · Система управления</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&family=Geologica:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0e1208;
-    --bg2: #151a0d;
-    --bg3: #1c2412;
-    --card: #1f2914;
-    --card2: #253016;
-    --border: #2e3d1a;
-    --green: #7ec832;
-    --green2: #5a9e1f;
-    --green-dim: #3a5c14;
-    --yellow: #d4a017;
-    --red: #c0392b;
-    --blue: #2980b9;
-    --purple: #8e44ad;
-    --text: #e8f0d0;
-    --text2: #9aad72;
-    --text3: #5a6e3a;
-    --font-display: 'Bebas Neue', sans-serif;
-    --font-body: 'Geologica', sans-serif;
-  }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink: #141a10;
+  --forest: #1e3d18;
+  --moss: #3a6b2e;
+  --fern: #5a9448;
+  --sage: #8cbf76;
+  --dew: #d4ead0;
+  --mist: #eef7ec;
+  --parchment: #f6f3ea;
+  --cream: #fffdf5;
+  --gold: #b8882a;
+  --gold-light: #e8c96a;
+  --rust: #8b3a2a;
+  --shadow: rgba(20,40,16,.12);
+  --shadow-deep: rgba(20,40,16,.22);
+  --border: #dde8d9;
+}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font-body);
-    font-weight: 300;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+html { scroll-behavior: smooth; }
 
-  /* ── ШАПКА ── */
-  header {
-    background: var(--bg2);
-    border-bottom: 1px solid var(--border);
-    padding: 0 24px;
-    display: flex;
-    align-items: center;
-    gap: 0;
-    height: 56px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
+body {
+  font-family: 'Geologica', sans-serif;
+  font-weight: 300;
+  background: var(--cream);
+  color: var(--ink);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
 
-  .logo {
-    font-family: var(--font-display);
-    font-size: 28px;
-    letter-spacing: 3px;
-    color: var(--green);
-    margin-right: auto;
-  }
-  .logo span { color: var(--text3); }
+/* ════ ЭКРАН ВХОДА ════ */
+#login-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--forest);
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  overflow: hidden;
+}
 
-  nav { display: flex; gap: 2px; }
+.login-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 90%, rgba(90,148,72,.3) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 50% at 95% 5%, rgba(184,136,42,.15) 0%, transparent 50%);
+}
 
-  nav button {
-    background: none;
-    border: none;
-    color: var(--text3);
-    font-family: var(--font-body);
-    font-size: 13px;
-    font-weight: 500;
-    padding: 8px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all .2s;
-    letter-spacing: .5px;
-    text-transform: uppercase;
-  }
-  nav button:hover { color: var(--text2); background: var(--bg3); }
-  nav button.active { color: var(--green); background: var(--green-dim); }
+.login-pattern {
+  position: absolute;
+  inset: 0;
+  opacity: .05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cellipse cx='40' cy='20' rx='8' ry='16' fill='%23fff' transform='rotate(15 40 20)'/%3E%3Cellipse cx='20' cy='55' rx='6' ry='13' fill='%23fff' transform='rotate(-20 20 55)'/%3E%3Cellipse cx='62' cy='58' rx='7' ry='14' fill='%23fff' transform='rotate(30 62 58)'/%3E%3C/svg%3E");
+}
 
-  .header-stat {
-    margin-left: 24px;
-    text-align: right;
-    display: flex;
-    flex-direction: column;
-  }
-  .header-stat .val {
-    font-family: var(--font-display);
-    font-size: 20px;
-    letter-spacing: 1px;
-    color: var(--green);
-    line-height: 1;
-  }
-  .header-stat .lbl {
-    font-size: 10px;
-    color: var(--text3);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
+.login-box {
+  position: relative;
+  z-index: 2;
+  width: 400px;
+  text-align: center;
+  animation: fadeUp .7s ease forwards;
+}
 
-  /* ── СТРАНИЦЫ ── */
-  .page { display: none; padding: 24px; animation: fadeIn .3s ease; }
-  .page.active { display: block; }
+.login-logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 56px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.login-logo em { font-style: italic; color: var(--sage); }
 
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.login-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 48px;
+}
+.login-eyebrow span {
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.4);
+}
+.login-eyebrow::before, .login-eyebrow::after {
+  content: '';
+  width: 24px;
+  height: 1px;
+  background: rgba(255,255,255,.2);
+}
 
-  /* ── ДАШБОРД ── */
-  .dash-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 24px;
-  }
+.login-field {
+  width: 100%;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 4px;
+  color: #fff;
+  font-family: 'Geologica', sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  padding: 16px 20px;
+  outline: none;
+  transition: border-color .2s, background .2s;
+  margin-bottom: 10px;
+  letter-spacing: .3px;
+}
+.login-field:focus {
+  border-color: var(--sage);
+  background: rgba(255,255,255,.1);
+}
+.login-field::placeholder { color: rgba(255,255,255,.3); }
 
-  .kpi {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 20px;
-    position: relative;
-    overflow: hidden;
-    transition: border-color .2s;
-  }
-  .kpi:hover { border-color: var(--green-dim); }
-  .kpi::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: var(--green);
-    opacity: .6;
-  }
-  .kpi .icon { font-size: 28px; margin-bottom: 12px; }
-  .kpi .val {
-    font-family: var(--font-display);
-    font-size: 36px;
-    letter-spacing: 1px;
-    color: var(--green);
-    line-height: 1;
-  }
-  .kpi .lbl { font-size: 12px; color: var(--text3); margin-top: 4px; text-transform: uppercase; letter-spacing: .5px; }
-  .kpi .sub { font-size: 12px; color: var(--text2); margin-top: 8px; }
+.login-btn {
+  width: 100%;
+  background: var(--sage);
+  border: none;
+  border-radius: 4px;
+  color: var(--forest);
+  font-family: 'Geologica', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 16px;
+  cursor: pointer;
+  transition: all .25s;
+  margin-top: 4px;
+}
+.login-btn:hover { background: var(--gold-light); transform: translateY(-2px); }
+.login-error {
+  color: #f87171;
+  font-size: 12px;
+  margin-top: 14px;
+  min-height: 18px;
+  letter-spacing: .3px;
+}
+.login-footer {
+  margin-top: 48px;
+  font-size: 10px;
+  color: rgba(255,255,255,.2);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
 
-  .dash-bottom { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
-  .dash-toolbar { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+#app { display: none; }
 
-  .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-  }
-  .card-head {
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .card-head h3 {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: var(--text3);
-    font-weight: 500;
-  }
-  .card-body { padding: 16px 20px; }
+/* ════ HEADER ════ */
+header {
+  background: var(--forest);
+  height: 58px;
+  display: flex;
+  align-items: center;
+  padding: 0 32px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  gap: 0;
+}
 
-  /* месячный график */
-  .bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 120px; }
-  .bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
-  .bar {
-    width: 100%;
-    background: var(--green-dim);
-    border-radius: 4px 4px 0 0;
-    transition: background .2s;
-    position: relative;
-    cursor: pointer;
-    min-height: 4px;
-  }
-  .bar:hover { background: var(--green); }
-  .bar-lbl { font-size: 9px; color: var(--text3); text-transform: uppercase; }
+.logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  margin-right: auto;
+  text-decoration: none;
+  letter-spacing: .5px;
+}
+.logo em { font-style: italic; color: var(--sage); }
 
-  /* категории расходов */
-  .expense-list { display: flex; flex-direction: column; gap: 10px; }
-  .expense-row { display: flex; align-items: center; gap: 10px; }
-  .expense-row .name { font-size: 12px; color: var(--text2); flex: 1; }
-  .expense-row .bar-bg { flex: 2; height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
-  .expense-row .bar-fill { height: 100%; background: var(--yellow); border-radius: 3px; transition: width .8s ease; }
-  .expense-row .amt { font-size: 12px; color: var(--text); width: 70px; text-align: right; }
+nav { display: flex; gap: 0; }
 
-  /* ── КАНБАН ── */
-  .kanban { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 16px; }
+nav button {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,.45);
+  font-family: 'Geologica', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: color .2s;
+  position: relative;
+}
+nav button::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 18px; right: 18px;
+  height: 1px;
+  background: var(--sage);
+  transform: scaleX(0);
+  transition: transform .2s;
+}
+nav button:hover { color: rgba(255,255,255,.8); }
+nav button.active { color: var(--sage); }
+nav button.active::after { transform: scaleX(1); }
 
-  .kanban-col {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    width: 240px;
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    max-height: calc(100vh - 120px);
-  }
+.header-stat {
+  margin-left: 32px;
+  text-align: right;
+  border-left: 1px solid rgba(255,255,255,.1);
+  padding-left: 24px;
+}
+.header-stat .val {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--sage);
+  line-height: 1;
+}
+.header-stat .lbl {
+  font-size: 9px;
+  color: rgba(255,255,255,.3);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-top: 2px;
+}
 
-  .col-head {
-    padding: 12px 14px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .col-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .col-head h4 { font-size: 12px; font-weight: 500; letter-spacing: .5px; flex: 1; color: var(--text2); }
-  .col-count {
-    background: var(--bg3);
-    color: var(--text3);
-    font-size: 11px;
-    padding: 1px 7px;
-    border-radius: 99px;
-  }
+/* ════ PAGES ════ */
+.page { display: none; padding: 40px 40px; animation: fadeUp .3s ease; }
+.page.active { display: block; }
 
-  .col-cards { padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; flex: 1; }
-  .col-cards::-webkit-scrollbar { width: 3px; }
-  .col-cards::-webkit-scrollbar-track { background: transparent; }
-  .col-cards::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-  .col-cards.drag-over { outline: 1px dashed var(--green); background: #21301255; border-radius: 8px; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
-  .deal-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px;
-    cursor: pointer;
-    transition: all .2s;
-    position: relative;
-    overflow: hidden;
-  }
-  .deal-card::before {
-    content: '';
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 3px;
-    background: var(--green);
-    opacity: 0;
-    transition: opacity .2s;
-  }
-  .deal-card:hover { border-color: var(--green-dim); transform: translateY(-1px); }
-  .deal-card:hover::before { opacity: 1; }
-  .deal-card.dragging { opacity: .5; }
+/* ════ SECTION LABEL (like website) ════ */
+.section-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.label-line { width: 32px; height: 1px; background: var(--fern); }
+.label-text {
+  font-size: 9px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--fern);
+  font-weight: 600;
+}
 
-  .deal-client { font-size: 11px; font-weight: 400; color: var(--text3); margin-bottom: 4px; line-height: 1.25; }
-  .deal-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text);
-    margin-bottom: 8px;
-    line-height: 1.3;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  .deal-footer { display: flex; justify-content: space-between; align-items: center; }
-  .deal-sum { font-family: var(--font-display); font-size: 16px; color: var(--green); letter-spacing: .5px; }
-  .deal-date { font-size: 10px; color: var(--text3); }
+.page-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 38px;
+  font-weight: 700;
+  color: var(--forest);
+  line-height: 1;
+  margin-bottom: 28px;
+}
+.page-title em { font-style: italic; color: var(--fern); }
 
-  /* ── ТАБЛИЦЫ ── */
-  .table-toolbar {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 16px;
-    align-items: center;
-  }
+/* ════ DASHBOARD ════ */
+.dash-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 24px;
+}
 
-  .search-input {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-family: var(--font-body);
-    font-size: 13px;
-    padding: 8px 14px;
-    outline: none;
-    transition: border-color .2s;
-    width: 240px;
-  }
-  .search-input:focus { border-color: var(--green-dim); }
-  .search-input::placeholder { color: var(--text3); }
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+  background: var(--dew);
+  border: 1px solid var(--dew);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
 
-  select.filter-sel {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text2);
-    font-family: var(--font-body);
-    font-size: 12px;
-    padding: 8px 12px;
-    outline: none;
-    cursor: pointer;
-  }
+.kpi {
+  background: var(--cream);
+  padding: 28px 24px;
+  transition: background .2s;
+  position: relative;
+}
+.kpi:hover { background: var(--mist); }
+.kpi::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 24px; right: 24px;
+  height: 1px;
+  background: var(--dew);
+}
 
-  .btn {
-    background: var(--green-dim);
-    border: 1px solid var(--green2);
-    border-radius: 8px;
-    color: var(--green);
-    font-family: var(--font-body);
-    font-size: 12px;
-    font-weight: 500;
-    padding: 8px 16px;
-    cursor: pointer;
-    transition: all .2s;
-    letter-spacing: .5px;
-    text-transform: uppercase;
-  }
-  .btn:hover { background: var(--green2); color: #fff; }
-  .btn.ml { margin-left: auto; }
+.kpi .icon { font-size: 22px; margin-bottom: 16px; opacity: .7; }
+.kpi .val {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 38px;
+  font-weight: 700;
+  color: var(--forest);
+  line-height: 1;
+}
+.kpi .val.profit-neg { color: var(--rust); }
+.kpi .lbl {
+  font-size: 9px;
+  color: var(--fern);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-top: 6px;
+  font-weight: 600;
+}
+.kpi .sub {
+  font-size: 11px;
+  color: #aaa;
+  margin-top: 10px;
+}
 
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th {
-    text-align: left;
-    font-size: 10px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--text3);
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--border);
-  }
-  td { padding: 11px 14px; border-bottom: 1px solid var(--bg3); color: var(--text2); vertical-align: middle; }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: var(--card2); color: var(--text); }
+.dash-bottom { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
 
-  .badge {
-    display: inline-block;
-    font-size: 10px;
-    padding: 3px 10px;
-    border-radius: 99px;
-    font-weight: 500;
-    letter-spacing: .3px;
-  }
+/* ════ CARD ════ */
+.card {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.card-head {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--dew);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-head h3 {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  color: var(--fern);
+  font-weight: 600;
+}
+.card-body { padding: 20px 24px; }
 
-  .money { font-family: var(--font-display); font-size: 15px; color: var(--green); letter-spacing: .5px; }
+/* Bar chart */
+.bar-chart { display: flex; align-items: flex-end; gap: 4px; height: 120px; }
+.bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+.bar {
+  width: 100%;
+  background: var(--dew);
+  border-radius: 2px 2px 0 0;
+  transition: background .2s;
+  cursor: pointer;
+  min-height: 3px;
+}
+.bar:hover { background: var(--fern); }
+.bar-lbl { font-size: 9px; color: #aaa; text-transform: uppercase; letter-spacing: .5px; }
 
-  /* ── ТЕХНИКА ── */
-  .equip-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
-  .tiny-btn {
-    font-size: 10px;
-    border: 1px solid var(--border);
-    background: var(--bg3);
-    color: var(--text2);
-    border-radius: 6px;
-    padding: 4px 8px;
-    cursor: pointer;
-  }
-  .tiny-btn:hover { color: var(--text); border-color: var(--green-dim); }
+/* Expense categories */
+.expense-list { display: flex; flex-direction: column; gap: 12px; }
+.expense-row { display: flex; align-items: center; gap: 10px; }
+.expense-row .name { font-size: 11px; color: #888; flex: 1; }
+.expense-row .bar-bg { flex: 2; height: 4px; background: var(--dew); border-radius: 2px; overflow: hidden; }
+.expense-row .bar-fill { height: 100%; background: var(--gold); border-radius: 2px; transition: width .8s ease; }
+.expense-row .amt { font-size: 11px; color: var(--forest); width: 70px; text-align: right; font-weight: 500; }
 
-  .status-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 5px;
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: .4; }
-  }
+/* ════ TOOLBAR ════ */
+.table-toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  align-items: center;
+}
 
-  /* ── МОДАЛЬНОЕ ОКНО ── */
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.7);
-    z-index: 200;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(4px);
-  }
-  .modal-overlay.open { display: flex; }
+.search-input {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--ink);
+  font-family: 'Geologica', sans-serif;
+  font-size: 12px;
+  font-weight: 300;
+  padding: 9px 14px;
+  outline: none;
+  transition: border-color .2s;
+  width: 240px;
+}
+.search-input:focus { border-color: var(--fern); }
+.search-input::placeholder { color: #bbb; }
 
-  .modal {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 28px;
-    width: 480px;
-    max-height: 90vh;
-    overflow-y: auto;
-    animation: modalIn .25s ease;
-  }
-  @keyframes modalIn { from { opacity: 0; transform: scale(.95); } to { opacity: 1; transform: none; } }
+select.filter-sel {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: #888;
+  font-family: 'Geologica', sans-serif;
+  font-size: 11px;
+  padding: 9px 12px;
+  outline: none;
+  cursor: pointer;
+}
 
-  .modal h2 {
-    font-family: var(--font-display);
-    font-size: 24px;
-    letter-spacing: 2px;
-    color: var(--green);
-    margin-bottom: 20px;
-  }
+.btn {
+  background: var(--forest);
+  border: none;
+  border-radius: 4px;
+  color: rgba(255,255,255,.9);
+  font-family: 'Geologica', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 9px 20px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn:hover { background: var(--moss); transform: translateY(-1px); }
+.btn.ml { margin-left: auto; }
+.btn.secondary {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: #888;
+}
+.btn.secondary:hover { border-color: var(--fern); color: var(--fern); background: var(--mist); transform: none; }
 
-  .form-group { margin-bottom: 14px; }
-  .form-group label { display: block; font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 5px; }
-  .form-group input, .form-group select, .form-group textarea {
-    width: 100%;
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-family: var(--font-body);
-    font-size: 13px;
-    padding: 10px 12px;
-    outline: none;
-    transition: border-color .2s;
-  }
-  .form-group input:focus, .form-group select:focus { border-color: var(--green-dim); }
-  .form-group textarea { resize: vertical; min-height: 80px; }
+/* ════ TABLE ════ */
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th {
+  text-align: left;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--fern);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--dew);
+}
+td {
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--mist);
+  color: #777;
+  vertical-align: middle;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--mist); color: var(--ink); }
 
-  .service-picker { position: relative; }
-  .service-picker-input-wrap { display: flex; gap: 8px; }
-  .service-picker-input-wrap input { flex: 1; }
-  .service-add-btn {
-    border: 1px dashed var(--green-dim);
-    border-radius: 8px;
-    background: transparent;
-    color: var(--green);
-    font-family: var(--font-body);
-    font-size: 12px;
-    padding: 0 12px;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-  .service-suggest {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: calc(100% - 2px);
-    z-index: 5;
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    max-height: 220px;
-    overflow-y: auto;
-    display: none;
-  }
-  .service-suggest.open { display: block; }
-  .service-option {
-    padding: 10px 12px;
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
-    border-bottom: 1px solid var(--bg3);
-    cursor: pointer;
-  }
-  .service-option:hover { background: var(--card); }
-  .service-option:last-child { border-bottom: none; }
-  .service-option-name { color: var(--text); font-size: 12px; }
-  .service-option-meta { color: var(--text3); font-size: 11px; white-space: nowrap; }
-  .selected-services { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
-  .selected-service-row {
-    display: grid;
-    grid-template-columns: 1fr 90px 64px 24px;
-    gap: 8px;
-    align-items: center;
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 10px;
-  }
-  .selected-service-row .name { font-size: 12px; color: var(--text); }
-  .selected-service-row .meta { font-size: 10px; color: var(--text3); }
-  .selected-service-row input {
-    width: 100%;
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: 6px;
-    padding: 6px 8px;
-    font-size: 12px;
-  }
-  .selected-service-row .sum { color: var(--green); font-size: 12px; text-align: right; }
-  .remove-service {
-    border: none;
-    background: transparent;
-    color: var(--text3);
-    font-size: 18px;
-    line-height: 1;
-    cursor: pointer;
-  }
-  .selected-services-empty {
-    border: 1px dashed var(--border);
-    border-radius: 8px;
-    padding: 10px 12px;
-    color: var(--text3);
-    font-size: 11px;
-  }
+.badge {
+  display: inline-block;
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+}
 
-  .contacts-editor {
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 10px;
-    background: var(--bg3);
-    margin-top: 8px;
-  }
-  .contacts-toolbar { display: flex; gap: 8px; margin-top: 8px; }
-  .contacts-toolbar .btn-cancel,
-  .contacts-toolbar .btn-save { padding: 8px; font-size: 11px; }
+.money {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--forest);
+}
 
-  .modal-footer { display: flex; gap: 10px; margin-top: 20px; }
-  .btn-cancel {
-    flex: 1;
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text3);
-    font-family: var(--font-body);
-    font-size: 12px;
-    padding: 10px;
-    cursor: pointer;
-    transition: all .2s;
-  }
-  .btn-cancel:hover { color: var(--text); }
-  .btn-save {
-    flex: 2;
-    background: var(--green-dim);
-    border: 1px solid var(--green2);
-    border-radius: 8px;
-    color: var(--green);
-    font-family: var(--font-body);
-    font-size: 12px;
-    font-weight: 600;
-    padding: 10px;
-    cursor: pointer;
-    transition: all .2s;
-    text-transform: uppercase;
-    letter-spacing: .8px;
-  }
-  .btn-save:hover { background: var(--green2); color: #fff; }
+/* ════ KANBAN ════ */
+.kanban { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 16px; }
 
-  /* ── УВЕДОМЛЕНИЕ ── */
-  .toast {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    background: var(--card2);
-    border: 1px solid var(--green-dim);
-    border-radius: 10px;
-    padding: 12px 20px;
-    font-size: 13px;
-    color: var(--green);
-    z-index: 300;
-    transform: translateY(80px);
-    opacity: 0;
-    transition: all .3s ease;
-  }
-  .toast.show { transform: translateY(0); opacity: 1; }
+.kanban-col {
+  background: var(--mist);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 160px);
+}
 
-  /* ── СКРОЛЛБАР ── */
-  ::-webkit-scrollbar { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track { background: var(--bg); }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.col-head {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--dew);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.col-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.col-head h4 {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  flex: 1;
+  color: #888;
+}
+.col-count {
+  background: var(--mist);
+  color: #aaa;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
 
-  /* ── АДАПТИВ ── */
-  @media (max-width: 768px) {
-    .dash-grid { grid-template-columns: repeat(2, 1fr); }
-    .dash-bottom { grid-template-columns: 1fr; }
-    nav button span { display: none; }
-  }
-  @media (max-width: 480px) {
-    .dash-grid { grid-template-columns: 1fr 1fr; }
-    header { padding: 0 12px; }
-    .header-stat { display: none; }
-  }
+.col-cards { padding: 8px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.col-cards.drag-over { background: var(--mist); border-radius: 4px; outline: 1px dashed var(--fern); }
 
-  /* ── ЭКРАН ВХОДА ── */
-  #login-screen {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    background: var(--bg);
-    position: fixed;
-    inset: 0;
-    z-index: 999;
-  }
-  .login-box {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 48px 40px;
-    width: 360px;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-  }
-  .login-box::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--green-dim), var(--green), var(--green-dim));
-  }
-  .login-logo {
-    font-family: var(--font-display);
-    font-size: 42px;
-    letter-spacing: 4px;
-    color: var(--green);
-    margin-bottom: 4px;
-  }
-  .login-logo span { color: var(--text3); }
-  .login-sub {
-    font-size: 12px;
-    color: var(--text3);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-bottom: 36px;
-  }
-  .login-field {
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    color: var(--text);
-    font-family: var(--font-body);
-    font-size: 14px;
-    padding: 13px 16px;
-    width: 100%;
-    outline: none;
-    transition: border-color .2s;
-    margin-bottom: 12px;
-  }
-  .login-field:focus { border-color: var(--green-dim); }
-  .login-field::placeholder { color: var(--text3); }
-  .login-btn {
-    background: var(--green-dim);
-    border: 1px solid var(--green2);
-    border-radius: 10px;
-    color: var(--green);
-    font-family: var(--font-body);
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    padding: 14px;
-    width: 100%;
-    cursor: pointer;
-    transition: all .2s;
-    margin-top: 4px;
-  }
-  .login-btn:hover { background: var(--green2); color: #fff; }
-  .login-error {
-    color: #ef4444;
-    font-size: 12px;
-    margin-top: 12px;
-    min-height: 18px;
-  }
-  .login-footer { margin-top: 28px; font-size: 11px; color: var(--text3); }
-  #app { display: none; }
+.deal-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 14px 12px;
+  cursor: pointer;
+  transition: all .2s;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(20,40,16,.05);
+}
+.deal-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--stage-color, var(--fern));
+  border-radius: 8px 0 0 8px;
+}
+.deal-card:hover { border-color: var(--stage-color, var(--fern)); transform: translateY(-2px); box-shadow: 0 6px 20px var(--shadow); }
+.deal-card.dragging { opacity: .4; }
 
+/* Цвет акцента зависит от колонки — задаётся через JS на .kanban-col */
+.kanban-col[data-color] .deal-card { --stage-color: attr(data-color); }
+
+.deal-client {
+  font-size: 10px;
+  color: #bbb;
+  margin-bottom: 8px;
+  letter-spacing: .3px;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.deal-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--forest);
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+.deal-address {
+  font-size: 11px;
+  color: #aaa;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+.deal-notes {
+  font-size: 11px;
+  color: #888;
+  font-style: italic;
+  margin-bottom: 10px;
+  line-height: 1.5;
+  border-left: 2px solid var(--dew);
+  padding-left: 8px;
+}
+.deal-divider {
+  height: 1px;
+  background: var(--dew);
+  margin: 10px 0;
+}
+.deal-footer { display: flex; justify-content: space-between; align-items: flex-end; }
+.deal-sum {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--forest);
+  line-height: 1;
+}
+.deal-date { font-size: 10px; color: #ccc; }
+
+/* ════ EQUIPMENT ════ */
+.equip-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+
+.tiny-btn {
+  font-size: 10px;
+  letter-spacing: .5px;
+  border: 1px solid var(--border);
+  background: var(--cream);
+  color: #aaa;
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.tiny-btn:hover { border-color: var(--fern); color: var(--fern); }
+
+.status-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 5px;
+  animation: pulse 2.5s infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity: 1; } 50% { opacity: .35; }
+}
+
+/* ════ MODALS ════ */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(20,40,16,.5);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+}
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 36px;
+  width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: modalIn .25s ease;
+  position: relative;
+}
+.modal::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--moss), var(--sage), var(--moss));
+  border-radius: 16px 16px 0 0;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(.97) translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+
+.modal h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--forest);
+  margin-bottom: 24px;
+  line-height: 1;
+}
+.modal h2 em { font-style: italic; color: var(--fern); }
+
+.form-group { margin-bottom: 16px; }
+.form-group label {
+  display: block;
+  font-size: 9px;
+  color: var(--fern);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--ink);
+  font-family: 'Geologica', sans-serif;
+  font-size: 13px;
+  font-weight: 300;
+  padding: 11px 14px;
+  outline: none;
+  transition: border-color .2s;
+}
+.form-group input:focus, .form-group select:focus { border-color: var(--fern); }
+.form-group textarea { resize: vertical; min-height: 80px; }
+
+.contacts-editor {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--mist);
+  margin-top: 8px;
+}
+.contacts-editor input { margin-bottom: 8px; }
+.contacts-editor input:last-of-type { margin-bottom: 0; }
+.contacts-toolbar { display: flex; gap: 8px; margin-top: 10px; }
+
+.service-picker { position: relative; }
+.service-picker-input-wrap { display: flex; gap: 8px; }
+.service-picker-input-wrap input { flex: 1; }
+.service-add-btn {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--fern);
+  font-family: 'Geologica', sans-serif;
+  font-size: 11px;
+  padding: 0 14px;
+  cursor: pointer;
+  transition: all .2s;
+  white-space: nowrap;
+}
+.service-add-btn:hover { background: var(--mist); border-color: var(--fern); }
+.service-suggest {
+  position: absolute;
+  left: 0; right: 0;
+  top: calc(100% + 4px);
+  z-index: 5;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  display: none;
+  box-shadow: 0 8px 32px var(--shadow);
+}
+.service-suggest.open { display: block; }
+.service-option {
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid var(--dew);
+  cursor: pointer;
+  transition: background .15s;
+}
+.service-option:hover { background: var(--mist); }
+.service-option:last-child { border-bottom: none; }
+.service-option-name { color: var(--ink); font-size: 12px; }
+.service-option-meta { color: #aaa; font-size: 10px; white-space: nowrap; }
+.selected-services { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.selected-service-row {
+  display: grid;
+  grid-template-columns: 1fr 90px 64px 24px;
+  gap: 8px;
+  align-items: center;
+  background: var(--mist);
+  border: 1px solid var(--dew);
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+.selected-service-row .name { font-size: 12px; color: var(--ink); }
+.selected-service-row .meta { font-size: 10px; color: #aaa; }
+.selected-service-row input {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 12px;
+  color: var(--ink);
+}
+.selected-service-row .sum { color: var(--forest); font-size: 13px; font-family: 'Cormorant Garamond', serif; font-weight: 700; text-align: right; }
+.remove-service { border: none; background: transparent; color: #ccc; font-size: 18px; cursor: pointer; transition: color .2s; }
+.remove-service:hover { color: var(--rust); }
+.selected-services-empty {
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  color: #bbb;
+  font-size: 11px;
+}
+
+.modal-footer { display: flex; gap: 10px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--dew); }
+.btn-cancel {
+  flex: 1;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: #aaa;
+  font-family: 'Geologica', sans-serif;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 12px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-cancel:hover { border-color: var(--fern); color: var(--fern); }
+.btn-save {
+  flex: 2;
+  background: var(--forest);
+  border: none;
+  border-radius: 4px;
+  color: rgba(255,255,255,.9);
+  font-family: 'Geologica', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 12px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-save:hover { background: var(--moss); }
+
+.btn-danger {
+  background: transparent;
+  border: 1px solid #fca5a5;
+  color: var(--rust);
+  border-radius: 4px;
+  font-family: 'Geologica', sans-serif;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-danger:hover { background: #fff5f5; }
+
+/* ════ TOAST ════ */
+.toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  background: var(--forest);
+  border: 1px solid var(--moss);
+  border-radius: 8px;
+  padding: 14px 22px;
+  font-size: 12px;
+  letter-spacing: .5px;
+  color: rgba(255,255,255,.85);
+  z-index: 300;
+  transform: translateY(80px);
+  opacity: 0;
+  transition: all .35s cubic-bezier(.25,.46,.45,.94);
+  max-width: 320px;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* ════ SCROLLBAR ════ */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--mist); }
+::-webkit-scrollbar-thumb { background: var(--dew); border-radius: 3px; }
+
+/* ════ RESPONSIVE ════ */
+@media (max-width: 900px) {
+  .dash-grid { grid-template-columns: repeat(2, 1fr); }
+  .dash-bottom { grid-template-columns: 1fr; }
+  .equip-layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  nav button span { display: none; }
+  .page { padding: 20px 16px; }
+  header { padding: 0 16px; }
+  .header-stat { display: none; }
+}
 </style>
 </head>
 <body>
 
 <!-- ════ ЭКРАН ВХОДА ════ -->
 <div id="login-screen">
+  <div class="login-bg"></div>
+  <div class="login-pattern"></div>
   <div class="login-box">
-    <div class="login-logo">GREEN<span>CRM</span></div>
-    <div class="login-sub">Система управления бизнесом</div>
-    <input class="login-field" id="l-user" type="text" placeholder="Логин" autocomplete="username"
-      onkeydown="if(event.key==='Enter') document.getElementById('l-pass').focus()">
-    <input class="login-field" id="l-pass" type="password" placeholder="Пароль" autocomplete="current-password"
-      onkeydown="if(event.key==='Enter') doLogin()">
+    <div class="login-logo">Green<em>CRM</em></div>
+    <div class="login-eyebrow"><span>Система управления</span></div>
+    <input class="login-field" id="l-user" type="text" placeholder="Логин"
+      autocomplete="username" onkeydown="if(event.key==='Enter') document.getElementById('l-pass').focus()">
+    <input class="login-field" id="l-pass" type="password" placeholder="Пароль"
+      autocomplete="current-password" onkeydown="if(event.key==='Enter') doLogin()">
     <button class="login-btn" onclick="doLogin()">Войти</button>
     <div class="login-error" id="l-err"></div>
-    <div class="login-footer">🌿 GreenCRM &nbsp;·&nbsp; Только для сотрудников</div>
+    <div class="login-footer">🌿 &nbsp; Только для сотрудников</div>
   </div>
 </div>
 
@@ -684,14 +877,14 @@
 
 <!-- ШАПКА -->
 <header>
-  <div class="logo">GREEN<span>CRM</span></div>
+  <div class="logo">Green<em>CRM</em></div>
   <nav>
-    <button class="active" onclick="showPage('dash',this)">📊 <span>Дашборд</span></button>
-    <button onclick="showPage('kanban',this)">🗂 <span>Сделки</span></button>
-    <button onclick="showPage('expenses',this)">💸 <span>Расходы</span></button>
-    <button onclick="showPage('equipment',this)">🔧 <span>Техника</span></button>
-    <button onclick="showPage('services',this)">🌿 <span>Прайс</span></button>
-    <button onclick="showPage('contacts',this)">👥 <span>Контакты</span></button>
+    <button class="active" onclick="showPage('dash',this)"><span>Дашборд</span></button>
+    <button onclick="showPage('kanban',this)"><span>Сделки</span></button>
+    <button onclick="showPage('expenses',this)"><span>Расходы</span></button>
+    <button onclick="showPage('equipment',this)"><span>Техника</span></button>
+    <button onclick="showPage('services',this)"><span>Прайс</span></button>
+    <button onclick="showPage('contacts',this)"><span>Контакты</span></button>
   </nav>
   <div class="header-stat">
     <div class="val" id="hdr-revenue">—</div>
@@ -699,12 +892,14 @@
   </div>
 </header>
 
-<!-- ════════════════════════════════════════
-     ДАШБОРД
-════════════════════════════════════════ -->
+<!-- ════ ДАШБОРД ════ -->
 <div class="page active" id="page-dash">
 
-  <div class="dash-toolbar">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:28px;">
+    <div>
+      <div class="section-label"><div class="label-line"></div><span class="label-text">Обзор</span></div>
+      <div class="page-title">Ключевые <em>показатели</em></div>
+    </div>
     <select class="filter-sel" id="dash-year" onchange="changeDashYear(this.value)"></select>
   </div>
 
@@ -712,19 +907,19 @@
     <div class="kpi">
       <div class="icon">💰</div>
       <div class="val" id="kpi-revenue">—</div>
-      <div class="lbl" id="kpi-revenue-label">Выручка 2025</div>
+      <div class="lbl" id="kpi-revenue-label">Выручка</div>
       <div class="sub" id="kpi-deals-count">— успешных сделок</div>
     </div>
-    <div class="kpi" style="--green:#d4a017">
+    <div class="kpi">
       <div class="icon">📉</div>
-      <div class="val" id="kpi-expenses" style="color:var(--yellow)">—</div>
-      <div class="lbl">Расходы 2025</div>
+      <div class="val" id="kpi-expenses" style="color:var(--gold)">—</div>
+      <div class="lbl">Расходы</div>
       <div class="sub" id="kpi-exp-count">— записей</div>
     </div>
-    <div class="kpi" style="">
+    <div class="kpi">
       <div class="icon">📈</div>
       <div class="val" id="kpi-profit">—</div>
-      <div class="lbl">Прибыль 2025</div>
+      <div class="lbl">Прибыль</div>
       <div class="sub" id="kpi-margin">маржа —%</div>
     </div>
     <div class="kpi">
@@ -736,21 +931,16 @@
   </div>
 
   <div class="dash-bottom">
-    <!-- График по месяцам -->
     <div class="card">
       <div class="card-head">
-        <h3>Выручка по месяцам (2025)</h3>
+        <h3 id="bar-chart-title">Выручка по месяцам</h3>
       </div>
       <div class="card-body">
         <div class="bar-chart" id="bar-chart"></div>
       </div>
     </div>
-
-    <!-- Расходы по категориям -->
     <div class="card">
-      <div class="card-head">
-        <h3>Расходы по категориям</h3>
-      </div>
+      <div class="card-head"><h3>Расходы по категориям</h3></div>
       <div class="card-body">
         <div class="expense-list" id="exp-cat-list"></div>
       </div>
@@ -759,73 +949,80 @@
 
 </div>
 
-<!-- ════════════════════════════════════════
-     КАНБАН
-════════════════════════════════════════ -->
+<!-- ════ КАНБАН ════ -->
 <div class="page" id="page-kanban">
-  <div class="table-toolbar">
-    <input class="search-input" placeholder="🔍  Поиск клиента..." oninput="filterKanban(this.value)">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px;">
+    <div>
+      <div class="section-label"><div class="label-line"></div><span class="label-text">CRM</span></div>
+      <div class="page-title">Воронка <em>продаж</em></div>
+    </div>
+  </div>
+  <div class="table-toolbar" style="margin-bottom:16px;">
+    <input class="search-input" placeholder="Поиск клиента..." oninput="filterKanban(this.value)">
     <button class="btn ml" onclick="openDealModal()">+ Новая сделка</button>
   </div>
   <div class="kanban" id="kanban-board"></div>
 </div>
 
-<!-- ════════════════════════════════════════
-     РАСХОДЫ
-════════════════════════════════════════ -->
+<!-- ════ РАСХОДЫ ════ -->
 <div class="page" id="page-expenses">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px;">
+    <div>
+      <div class="section-label"><div class="label-line"></div><span class="label-text">Финансы</span></div>
+      <div class="page-title">Учёт <em>расходов</em></div>
+    </div>
+  </div>
   <div class="table-toolbar">
-    <input class="search-input" placeholder="🔍  Поиск расхода..." oninput="filterExpenses(this.value)">
+    <input class="search-input" placeholder="Поиск расхода..." oninput="filterExpenses(this.value)">
     <select class="filter-sel" onchange="filterExpensesCat(this.value)" id="cat-filter">
       <option value="">Все категории</option>
     </select>
     <select class="filter-sel" onchange="filterExpensesYear(this.value)" id="exp-year-filter">
       <option value="">Все годы</option>
     </select>
-    <button class="btn ml" onclick="openExpenseModal()">+ Расход</button>
+    <button class="btn ml" onclick="openExpenseModal()">+ Добавить</button>
   </div>
   <div class="card">
     <table id="exp-table">
       <thead>
         <tr>
-          <th>Дата</th>
-          <th>Наименование</th>
-          <th>Категория</th>
-          <th>Техника</th>
-          <th>Сумма</th>
-          <th>Действия</th>
+          <th>Дата</th><th>Наименование</th><th>Категория</th><th>Техника</th><th>Сумма</th><th>Действия</th>
         </tr>
       </thead>
       <tbody id="exp-tbody"></tbody>
     </table>
   </div>
-  <div style="margin-top:12px; text-align:right; font-size:13px; color:var(--text3)">
+  <div style="margin-top:16px; text-align:right; font-size:12px; color:#aaa; letter-spacing:.5px;">
     Итого: <span class="money" id="exp-total">—</span>
   </div>
 </div>
 
-<!-- ════════════════════════════════════════
-     ТЕХНИКА
-════════════════════════════════════════ -->
+<!-- ════ ТЕХНИКА ════ -->
 <div class="page" id="page-equipment">
-  <div class="table-toolbar">
-    <button class="btn ml" onclick="openEquipModal()">+ Добавить технику</button>
-    <button class="btn" onclick="openMaintenanceModal()">+ Добавить ТО</button>
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px;">
+    <div>
+      <div class="section-label"><div class="label-line"></div><span class="label-text">Парк</span></div>
+      <div class="page-title">Учёт <em>техники</em></div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn secondary" onclick="openMaintenanceModal()">+ ТО</button>
+      <button class="btn" onclick="openEquipModal()">+ Техника</button>
+    </div>
   </div>
   <div class="equip-layout">
     <div class="card">
       <table>
         <thead>
-          <tr><th>Техника</th><th>Статус</th><th>Покупка</th><th>Стоимость</th><th>Последнее ТО</th><th>Следующее ТО</th><th>Действия</th></tr>
+          <tr><th>Техника</th><th>Статус</th><th>Покупка</th><th>Стоимость</th><th>Посл. ТО</th><th>След. ТО</th><th></th></tr>
         </thead>
         <tbody id="equip-tbody"></tbody>
       </table>
     </div>
     <div class="card">
-      <div class="card-head"><h3>График ТО</h3></div>
+      <div class="card-head"><h3>История ТО</h3></div>
       <table>
         <thead>
-          <tr><th>Техника</th><th>Тип/Работы</th><th>Стоимость</th><th>Кто</th><th>Дата</th></tr>
+          <tr><th>Техника</th><th>Работы</th><th>Стоимость</th><th>Дата</th></tr>
         </thead>
         <tbody id="maint-tbody"></tbody>
       </table>
@@ -833,12 +1030,16 @@
   </div>
 </div>
 
-<!-- ════════════════════════════════════════
-     ПРАЙС-ЛИСТ
-════════════════════════════════════════ -->
+<!-- ════ ПРАЙС ════ -->
 <div class="page" id="page-services">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px;">
+    <div>
+      <div class="section-label"><div class="label-line"></div><span class="label-text">Услуги</span></div>
+      <div class="page-title">Прайс-<em>лист</em></div>
+    </div>
+  </div>
   <div class="table-toolbar">
-    <input class="search-input" placeholder="🔍  Поиск услуги..." oninput="filterServices(this.value)">
+    <input class="search-input" placeholder="Поиск услуги..." oninput="filterServices(this.value)">
     <select class="filter-sel" onchange="filterServicesCat(this.value)">
       <option value="">Все категории</option>
     </select>
@@ -853,34 +1054,34 @@
   </div>
 </div>
 
-
-
-<!-- ════════════════════════════════════════
-     КОНТАКТЫ
-════════════════════════════════════════ -->
+<!-- ════ КОНТАКТЫ ════ -->
 <div class="page" id="page-contacts">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px;">
+    <div>
+      <div class="section-label"><div class="label-line"></div><span class="label-text">База</span></div>
+      <div class="page-title">Клиенты &amp; <em>контакты</em></div>
+    </div>
+    <button class="btn" onclick="openDealModal()">+ Сделка</button>
+  </div>
   <div class="table-toolbar">
-    <input class="search-input" placeholder="🔍  Поиск контакта..." oninput="filterContacts(this.value)">
-    <button class="btn ml" onclick="openDealModal()">+ Сделка</button>
+    <input class="search-input" placeholder="Поиск контакта..." oninput="filterContacts(this.value)">
   </div>
   <div class="card">
     <table>
       <thead>
-        <tr><th>Имя</th><th>Телефон</th><th>E-mail</th><th>Действие</th></tr>
+        <tr><th>Имя</th><th>Телефон</th><th>E-mail</th><th></th></tr>
       </thead>
       <tbody id="contacts-tbody"></tbody>
     </table>
   </div>
 </div>
 
-<!-- ════════════════════════════════════════
-     МОДАЛЬНЫЕ ОКНА
-════════════════════════════════════════ -->
+<!-- ════ МОДАЛЬНЫЕ ОКНА ════ -->
 
-<!-- Новый расход -->
+<!-- Расход -->
 <div class="modal-overlay" id="modal-expense">
   <div class="modal">
-    <h2>НОВЫЙ РАСХОД</h2>
+    <h2>Новый <em>расход</em></h2>
     <div class="form-group"><label>Дата</label><input id="fe-date" type="date"></div>
     <div class="form-group"><label>Наименование</label><input id="fe-name" placeholder="Бензин АИ-92"></div>
     <div class="form-group"><label>Категория</label>
@@ -897,10 +1098,10 @@
   </div>
 </div>
 
-<!-- Новая техника -->
+<!-- Техника -->
 <div class="modal-overlay" id="modal-equip">
   <div class="modal">
-    <h2>НОВАЯ ТЕХНИКА</h2>
+    <h2 id="equip-modal-title">Новая <em>техника</em></h2>
     <div class="form-group"><label>Название</label><input id="feq-name" placeholder="Газонокосилка"></div>
     <div class="form-group"><label>Модель</label><input id="feq-model" placeholder="Husqvarna LC 353V"></div>
     <div class="form-group"><label>Стоимость покупки (₽)</label><input id="feq-cost" type="number" placeholder="45000"></div>
@@ -919,12 +1120,13 @@
   </div>
 </div>
 
+<!-- ТО -->
 <div class="modal-overlay" id="modal-maintenance">
   <div class="modal">
-    <h2>НОВОЕ ТО</h2>
+    <h2>Новое <em>ТО</em></h2>
     <div class="form-group"><label>Техника</label><select id="fm-equip"></select></div>
     <div class="form-group"><label>Дата</label><input id="fm-date" type="date"></div>
-    <div class="form-group"><label>Проведенные работы</label><input id="fm-desc" placeholder="Замена масла, свечи..."></div>
+    <div class="form-group"><label>Проведённые работы</label><input id="fm-desc" placeholder="Замена масла, свечи..."></div>
     <div class="form-group"><label>Стоимость (₽)</label><input id="fm-cost" type="number" placeholder="1500"></div>
     <div class="form-group"><label>Кто выполнял</label><input id="fm-by" placeholder="Михаил"></div>
     <div class="modal-footer">
@@ -934,18 +1136,16 @@
   </div>
 </div>
 
-<!-- ТОСТ -->
-<div class="toast" id="toast">✅ Сохранено!</div>
-<!-- Новая сделка (исправленная) -->
+<!-- Сделка -->
 <div class="modal-overlay" id="modal-deal">
   <div class="modal">
-    <h2>НОВАЯ СДЕЛКА</h2>
+    <h2 id="deal-modal-title">Новая <em>сделка</em></h2>
     <div class="form-group">
       <label>Контакт</label>
       <select id="f-contact-select" onchange="onContactSelect(this.value)"></select>
       <div class="contacts-editor">
-        <input id="f-client" placeholder="Имя контакта" style="margin-bottom:8px;">
-        <input id="f-contact-phone" placeholder="Телефон" style="margin-bottom:8px;">
+        <input id="f-client" placeholder="Имя контакта">
+        <input id="f-contact-phone" placeholder="Телефон">
         <input id="f-contact-email" placeholder="E-mail">
         <div class="contacts-toolbar">
           <button type="button" class="btn-cancel" onclick="resetContactForm()">Очистить</button>
@@ -955,68 +1155,51 @@
     </div>
     <div class="form-group"><label>Название</label><input id="f-title" placeholder="Покос участка, 10 соток"></div>
     <div class="form-group"><label>Адрес</label><input id="f-address" placeholder="ул. Лесная, 12"></div>
-    
-    <!-- ЗАМЕНЯЕМ это поле -->
     <div class="form-group">
       <label>Услуги</label>
       <div class="service-picker" id="deal-service-picker">
         <div class="service-picker-input-wrap">
-          <input id="f-service-search" placeholder="Найти или добавить услугу">
+          <input id="f-service-search" placeholder="Найти услугу из прайса...">
           <button type="button" class="service-add-btn" onclick="focusServiceSearch()">+ добавить</button>
         </div>
         <div class="service-suggest" id="service-suggest"></div>
         <div class="selected-services" id="selected-services"></div>
       </div>
-      <small style="color: var(--text3); display: block; margin-top: 5px; font-size: 10px;">Начните вводить название и выберите услугу из выпадающего списка</small>
     </div>
-    <!-- Конец замены -->
-    
     <div class="form-group"><label>Сумма (₽)</label><input id="f-sum" type="number" placeholder="5000"></div>
     <div class="form-group"><label>Примечание</label><input id="f-notes" placeholder="..."></div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal('modal-deal')">Отмена</button>
-      <button class="btn-cancel" id="deal-delete-btn" onclick="deleteDeal()" style="display:none">Удалить</button>
-      <button class="btn-save" onclick="saveDeal()">Создать сделку</button>
+      <button class="btn-danger" id="deal-delete-btn" onclick="deleteDeal()" style="display:none">Удалить</button>
+      <button class="btn-save" id="deal-save-btn" onclick="saveDeal()">Создать</button>
     </div>
   </div>
 </div>
-<script>
-// ════════════════════════════════════════
-//  API — подключение к серверу
-// ════════════════════════════════════════
 
+<!-- Тост -->
+<div class="toast" id="toast">✅ Сохранено!</div>
+
+<script>
 const API = 'http://localhost:8000/api';
 
 async function apiFetch(path, opts={}) {
   try {
     const token = sessionStorage.getItem('crm_token') || '';
     const res = await fetch(API + path, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token ? 'Bearer ' + token : ''
-      },
+      headers: { 'Content-Type': 'application/json', 'Authorization': token ? 'Bearer ' + token : '' },
       ...opts
     });
-    
-    // Если токен протух — показываем экран входа
     if (res.status === 401) {
       sessionStorage.clear();
       document.getElementById('login-screen').style.display = 'flex';
       document.getElementById('app').style.display = 'none';
       return null;
     }
-    
     if (!res.ok) {
       let msg = '';
-      try {
-        const data = await res.json();
-        msg = data.detail || JSON.stringify(data);
-      } catch {
-        msg = await res.text();
-      }
+      try { const d = await res.json(); msg = d.detail || JSON.stringify(d); } catch { msg = await res.text(); }
       throw new Error(msg || `HTTP ${res.status}`);
     }
-    
     return await res.json();
   } catch(e) {
     console.error('API error:', e);
@@ -1025,26 +1208,12 @@ async function apiFetch(path, opts={}) {
   }
 }
 
-// ════════════════════════════════════════
-//  ДАННЫЕ (загружаются из API)
-// ════════════════════════════════════════
-
-let STAGES = [];
-let deals = [];
-let expenses = [];
-let equipment = [];
-let maintenances = [];
-let contacts = [];
-let draggedDealId = null;
-let dashYear = String(new Date().getFullYear());
-let contactsFilter = "";
-let currentEditingDealId = null;
-let currentEditingEquipmentId = null;
+let STAGES = [], deals = [], expenses = [], equipment = [], maintenances = [], contacts = [];
+let draggedDealId = null, dashYear = String(new Date().getFullYear()), contactsFilter = '';
+let currentEditingDealId = null, currentEditingEquipmentId = null;
 
 function isAdmin() {
-  try {
-    return (JSON.parse(sessionStorage.getItem('crm_user') || '{}').role || '') === 'admin';
-  } catch { return false; }
+  try { return (JSON.parse(sessionStorage.getItem('crm_user') || '{}').role || '') === 'admin'; } catch { return false; }
 }
 
 const SERVICES = [
@@ -1087,10 +1256,7 @@ const SERVICES = [
   { name:'Известкование почвы',        cat:'Удобрение газона',     unit:'сотка', min:3,  price:350  },
 ];
 
-// ════════════════════════════════════════
-//  НАВИГАЦИЯ
-// ════════════════════════════════════════
-
+/* ── НАВИГАЦИЯ ── */
 function showPage(id, btn) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
@@ -1098,86 +1264,61 @@ function showPage(id, btn) {
   btn.classList.add('active');
 }
 
-// ════════════════════════════════════════
-//  ДАШБОРД
-// ════════════════════════════════════════
-
+/* ── ДАШБОРД ── */
 function getAvailableYears() {
   const years = new Set();
-  deals.forEach(d => {
-    const y = (d.date || '').slice(0, 4);
-    if (y) years.add(y);
-  });
-  expenses.forEach(e => {
-    const y = (e.date || '').slice(0, 4);
-    if (y) years.add(y);
-  });
+  deals.forEach(d => { const y=(d.date||'').slice(0,4); if(y) years.add(y); });
+  expenses.forEach(e => { const y=(e.date||'').slice(0,4); if(y) years.add(y); });
   years.add(String(new Date().getFullYear()));
-  return [...years].sort((a, b) => Number(b) - Number(a));
+  return [...years].sort((a,b)=>Number(b)-Number(a));
 }
 
 function buildDashYearFilter() {
   const select = document.getElementById('dash-year');
   if (!select) return;
-
   const years = getAvailableYears();
   if (!years.includes(dashYear)) dashYear = years[0];
-
   select.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
   select.value = dashYear;
 }
 
-function changeDashYear(year) {
-  dashYear = year;
-  buildDash();
-}
+function changeDashYear(year) { dashYear = year; buildDash(); }
 
 function buildDash() {
-  const dealsForYear = deals.filter(d => (d.date || '').startsWith(dashYear));
-  const expensesForYear = expenses.filter(e => (e.date || '').startsWith(dashYear));
+  const dealsYear = deals.filter(d => (d.date||'').startsWith(dashYear));
+  const expYear   = expenses.filter(e => (e.date||'').startsWith(dashYear));
+  const success   = dealsYear.filter(d => d.stage_id === 6);
+  const revenue   = success.reduce((s,d) => s+d.sum, 0);
+  const totalExp  = expYear.reduce((s,e) => s+e.amt, 0);
+  const profit    = revenue - totalExp;
+  const margin    = revenue ? Math.round(profit/revenue*100) : 0;
+  const inRepair  = equipment.filter(e => e.status === 'repair').length;
 
-  const successDeals = dealsForYear.filter(d => d.stage_id === 6);
-  const revenue = successDeals.reduce((s, d) => s + d.sum, 0);
-  const totalExp = expensesForYear.reduce((s, e) => s + e.amt, 0);
-  const profit = revenue - totalExp;
-  const margin = revenue ? Math.round(profit / revenue * 100) : 0;
-  const inRepair = equipment.filter(e => e.status === 'repair').length;
+  const fmt = v => v >= 1000000 ? (v/1000000).toFixed(1)+' млн' : v >= 1000 ? Math.round(v/1000)+' тыс' : v;
 
-  const fmt = v => v >= 1000000
-    ? (v/1000000).toFixed(1) + ' млн'
-    : v >= 1000 ? Math.round(v/1000) + ' тыс' : v;
-
-  document.getElementById('kpi-revenue').textContent   = fmt(revenue) + ' ₽';
-  document.getElementById('kpi-deals-count').textContent = successDeals.length + ' успешных сделок';
-  document.getElementById('kpi-expenses').textContent  = fmt(totalExp) + ' ₽';
-  document.getElementById('kpi-exp-count').textContent = expensesForYear.length + ' записей';
+  document.getElementById('kpi-revenue').textContent = fmt(revenue)+' ₽';
+  document.getElementById('kpi-deals-count').textContent = success.length+' успешных сделок';
+  document.getElementById('kpi-revenue-label').textContent = `Выручка ${dashYear}`;
+  document.getElementById('kpi-expenses').textContent = fmt(totalExp)+' ₽';
+  document.getElementById('kpi-exp-count').textContent = expYear.length+' записей';
 
   const profitEl = document.getElementById('kpi-profit');
-  profitEl.textContent = fmt(profit) + ' ₽';
-  profitEl.style.color = profit >= 0 ? 'var(--green)' : 'var(--red)';
-  document.getElementById('kpi-margin').textContent = 'маржа ' + margin + '%';
-
-  document.getElementById('kpi-equip').textContent  = equipment.length;
-  document.getElementById('kpi-repair').textContent = inRepair + ' в ремонте';
-  document.getElementById('hdr-revenue').textContent = fmt(revenue) + ' ₽';
+  profitEl.textContent = fmt(profit)+' ₽';
+  profitEl.className = 'val'+(profit < 0 ? ' profit-neg' : '');
+  document.getElementById('kpi-margin').textContent = 'маржа '+margin+'%';
+  document.getElementById('kpi-equip').textContent = equipment.length;
+  document.getElementById('kpi-repair').textContent = inRepair+' в ремонте';
+  document.getElementById('hdr-revenue').textContent = fmt(revenue)+' ₽';
   document.getElementById('hdr-revenue-label').textContent = `Выручка ${dashYear}`;
 
-  document.getElementById('kpi-revenue-label').textContent = `Выручка ${dashYear}`;
-  document.getElementById('kpi-expenses').nextElementSibling.textContent = `Расходы ${dashYear}`;
-  document.getElementById('kpi-profit').nextElementSibling.textContent = `Прибыль ${dashYear}`;
-
-  const chartTitle = document.querySelector('#page-dash .dash-bottom .card:first-child .card-head h3');
+  const chartTitle = document.getElementById('bar-chart-title');
   if (chartTitle) chartTitle.textContent = `Выручка по месяцам (${dashYear})`;
 
   const MONTHS = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
   const byMonth = Array(12).fill(0);
-  successDeals.forEach(d => {
-    const m = new Date(d.date).getMonth();
-    byMonth[m] += d.sum;
-  });
+  success.forEach(d => { const m = new Date(d.date).getMonth(); byMonth[m] += d.sum; });
   const maxVal = Math.max(...byMonth, 1);
-  const chart = document.getElementById('bar-chart');
-  chart.innerHTML = byMonth.map((v, i) => `
+  document.getElementById('bar-chart').innerHTML = byMonth.map((v,i) => `
     <div class="bar-wrap">
       <div class="bar" style="height:${Math.max(v/maxVal*100,2)}%" title="${MONTHS[i]}: ${v.toLocaleString('ru')} ₽"></div>
       <div class="bar-lbl">${MONTHS[i]}</div>
@@ -1185,12 +1326,11 @@ function buildDash() {
   `).join('');
 
   const byCat = {};
-  expensesForYear.forEach(e => { byCat[e.cat] = (byCat[e.cat]||0) + e.amt; });
+  expYear.forEach(e => { byCat[e.cat] = (byCat[e.cat]||0)+e.amt; });
   const maxCat = Math.max(...Object.values(byCat), 1);
-  const catList = document.getElementById('exp-cat-list');
-  catList.innerHTML = Object.entries(byCat)
-    .sort((a,b) => b[1]-a[1])
-    .map(([cat, amt]) => `
+  document.getElementById('exp-cat-list').innerHTML = Object.entries(byCat)
+    .sort((a,b)=>b[1]-a[1])
+    .map(([cat,amt]) => `
       <div class="expense-row">
         <div class="name">${cat}</div>
         <div class="bar-bg"><div class="bar-fill" style="width:${amt/maxCat*100}%"></div></div>
@@ -1199,42 +1339,50 @@ function buildDash() {
     `).join('');
 }
 
-// ════════════════════════════════════════
-//  КАНБАН
-// ════════════════════════════════════════
-
+/* ── КАНБАН ── */
 function buildKanban(filter='') {
   const board = document.getElementById('kanban-board');
-  board.innerHTML = STAGES.map(stage => {
+  // Пропускаем первую стадию (начальная/новая)
+  const visibleStages = STAGES.slice(1);
+  board.innerHTML = visibleStages.map(stage => {
     const stageDeal = deals.filter(d =>
       d.stage_id === stage.id &&
       (!filter || d.client.toLowerCase().includes(filter.toLowerCase()))
     );
+    const stageColor = stage.color || '#5a9448';
+    const isSuccess = stage.id === 6 || stage.name?.toLowerCase().includes('успех');
+    const colBg = isSuccess ? '#f0faf0' : '';
+    const colStyle = colBg ? `style="background:${colBg}"` : '';
     return `
-      <div class="kanban-col">
-        <div class="col-head">
-          <div class="col-dot" style="background:${stage.color}"></div>
-          <h4>${stage.name}</h4>
-          <div class="col-count">${stageDeal.length}</div>
+      <div class="kanban-col" ${colStyle}>
+        <div class="col-head" style="border-bottom:2px solid ${stageColor}22">
+          <div class="col-dot" style="background:${stageColor}"></div>
+          <h4 style="color:${stageColor}">${stage.name}</h4>
+          <div class="col-count" style="background:${stageColor}18;color:${stageColor}">${stageDeal.length}</div>
         </div>
-        <div class="col-cards" ondragover="onColumnDragOver(event)" ondragleave="onColumnDragLeave(event)" ondrop="onDealDrop(event, ${stage.id})">
-          ${stageDeal.map(d => `
-            <div class="deal-card" draggable="true" ondragstart="onDealDragStart(event, ${d.id})" ondragend="onDealDragEnd(event)" onclick="openDealDetails(${d.id})">
-              <div class="deal-title">${d.title}</div>
+        <div class="col-cards" ondragover="onColumnDragOver(event)" ondragleave="onColumnDragLeave(event)" ondrop="onDealDrop(event,${stage.id})">
+          ${stageDeal.map(d => {
+            const addrHtml = d.address ? `<div class="deal-address">📍 ${d.address}</div>` : '';
+            const notesHtml = d.notes ? `<div class="deal-notes">${d.notes}</div>` : '';
+            return `
+            <div class="deal-card" style="--stage-color:${stageColor};border-left:3px solid ${stageColor}"
+              draggable="true" ondragstart="onDealDragStart(event,${d.id})" ondragend="onDealDragEnd(event)" onclick="openDealDetails(${d.id})">
               <div class="deal-client">${d.client}</div>
+              <div class="deal-title">${d.title}</div>
+              ${addrHtml}
+              ${notesHtml}
+              <div class="deal-divider"></div>
               <div class="deal-footer">
-                <div class="deal-sum">${d.sum.toLocaleString('ru')} ₽</div>
+                <div class="deal-sum" style="color:${stageColor}">${d.sum.toLocaleString('ru')} ₽</div>
                 <div class="deal-date">${formatDate(d.date)}</div>
               </div>
-            </div>
-          `).join('')}
+            </div>`;
+          }).join('')}
         </div>
       </div>
     `;
   }).join('');
 }
-
-
 
 function onDealDragStart(event, dealId) {
   draggedDealId = dealId;
@@ -1242,85 +1390,56 @@ function onDealDragStart(event, dealId) {
   event.dataTransfer.setData('text/plain', String(dealId));
   event.currentTarget.classList.add('dragging');
 }
-
 function onDealDragEnd(event) {
   event.currentTarget.classList.remove('dragging');
-  document.querySelectorAll('.col-cards').forEach(col => col.classList.remove('drag-over'));
+  document.querySelectorAll('.col-cards').forEach(c => c.classList.remove('drag-over'));
 }
-
-function onColumnDragOver(event) {
-  event.preventDefault();
-  event.currentTarget.classList.add('drag-over');
-}
-
-function onColumnDragLeave(event) {
-  event.currentTarget.classList.remove('drag-over');
-}
+function onColumnDragOver(event) { event.preventDefault(); event.currentTarget.classList.add('drag-over'); }
+function onColumnDragLeave(event) { event.currentTarget.classList.remove('drag-over'); }
 
 async function onDealDrop(event, stageId) {
   event.preventDefault();
   event.currentTarget.classList.remove('drag-over');
-
-  const idFromTransfer = parseInt(event.dataTransfer.getData('text/plain'), 10);
-  const dealId = Number.isFinite(idFromTransfer) ? idFromTransfer : draggedDealId;
-  if (!dealId) return;
-
-  const deal = deals.find(d => d.id === dealId);
+  const id = parseInt(event.dataTransfer.getData('text/plain'), 10) || draggedDealId;
+  if (!id) return;
+  const deal = deals.find(d => d.id === id);
   if (!deal || deal.stage_id === stageId) return;
-
   const stage = STAGES.find(s => s.id === stageId);
   if (!stage) return;
-
-  const oldStage = deal.stage_id;
+  const old = deal.stage_id;
   deal.stage_id = stageId;
-  buildKanban();
-  buildDash();
-
-  const res = await apiFetch(`/deals/${dealId}/stage`, {
-    method: 'PATCH',
-    body: JSON.stringify({ stage_name: stage.name })
-  });
-
-  if (!res) {
-    deal.stage_id = oldStage;
-    buildKanban();
-    buildDash();
-    showToast('❌ Не удалось переместить сделку');
-    return;
-  }
-
-  showToast(`✅ Сделка перемещена: ${stage.name}`);
+  buildKanban(); buildDash();
+  const res = await apiFetch(`/deals/${id}/stage`, { method:'PATCH', body:JSON.stringify({ stage_name: stage.name }) });
+  if (!res) { deal.stage_id = old; buildKanban(); buildDash(); showToast('❌ Не удалось переместить'); return; }
+  showToast(`✅ ${stage.name}`);
 }
 function filterKanban(val) { buildKanban(val); }
 
-// ════════════════════════════════════════
-//  РАСХОДЫ
-// ════════════════════════════════════════
-
+/* ── РАСХОДЫ ── */
 let expFilter = { search:'', cat:'', year:'' };
 
 function renderExpenses() {
-  let filtered = expenses.filter(e => {
-    const matchSearch = !expFilter.search || e.name.toLowerCase().includes(expFilter.search.toLowerCase());
-    const matchCat = !expFilter.cat || e.cat === expFilter.cat;
-    const matchYear = !expFilter.year || e.date.startsWith(expFilter.year);
-    return matchSearch && matchCat && matchYear;
+  const filtered = expenses.filter(e => {
+    const ms = !expFilter.search || e.name.toLowerCase().includes(expFilter.search.toLowerCase());
+    const mc = !expFilter.cat || e.cat === expFilter.cat;
+    const my = !expFilter.year || e.date.startsWith(expFilter.year);
+    return ms && mc && my;
   });
-
   const tbody = document.getElementById('exp-tbody');
-  tbody.innerHTML = filtered.map(e => `
-    <tr>
+  const catColors = { 'Топливо':'#fef3c7;color:#92400e', 'Расходники':'#dbeafe;color:#1e40af', 'Техника':'#d1fae5;color:#065f46', 'Реклама':'#fce7f3;color:#9d174d' };
+  tbody.innerHTML = filtered.map(e => {
+    const badgeStyle = catColors[e.cat] ? `background:#${catColors[e.cat]}` : 'background:var(--dew);color:var(--fern)';
+    return `<tr>
       <td>${formatDate(e.date)}</td>
-      <td style="color:var(--text)">${e.name}</td>
-      <td><span class="badge" style="background:#2a1f00;color:var(--yellow)">${e.cat}</span></td>
-      <td>${e.equip || '—'}</td>
+      <td style="color:var(--ink);font-weight:400">${e.name}</td>
+      <td><span class="badge" style="${badgeStyle}">${e.cat}</span></td>
+      <td>${e.equip||'—'}</td>
       <td class="money">${e.amt.toLocaleString('ru')} ₽</td>
       <td>${isAdmin() ? `<button class="tiny-btn" onclick="deleteExpense(${e.id})">Удалить</button>` : '—'}</td>
-    </tr>
-  `).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:32px">Нет данных</td></tr>';
-
-  const total = filtered.reduce((s,e) => s+e.amt, 0);
-  document.getElementById('exp-total').textContent = total.toLocaleString('ru') + ' ₽';
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" style="text-align:center;color:#ccc;padding:40px;font-size:13px;">Нет данных</td></tr>';
+  const total = filtered.reduce((s,e)=>s+e.amt, 0);
+  document.getElementById('exp-total').textContent = total.toLocaleString('ru')+' ₽';
 }
 
 function filterExpenses(val) { expFilter.search = val; renderExpenses(); }
@@ -1328,69 +1447,56 @@ function filterExpensesCat(val) { expFilter.cat = val; renderExpenses(); }
 function filterExpensesYear(val) { expFilter.year = val; renderExpenses(); }
 
 function buildExpenseYearFilter() {
-  const yearSel = document.getElementById('exp-year-filter');
-  if (!yearSel) return;
-
-  const years = [...new Set(expenses.map(e => (e.date || '').slice(0, 4)).filter(Boolean))]
-    .sort((a, b) => Number(b) - Number(a));
-
-  yearSel.innerHTML = '<option value="">Все годы</option>' + years.map(y => `<option value="${y}">${y}</option>`).join('');
-  yearSel.value = expFilter.year || '';
+  const sel = document.getElementById('exp-year-filter');
+  if (!sel) return;
+  const years = [...new Set(expenses.map(e=>(e.date||'').slice(0,4)).filter(Boolean))].sort((a,b)=>Number(b)-Number(a));
+  sel.innerHTML = '<option value="">Все годы</option>'+years.map(y=>`<option value="${y}">${y}</option>`).join('');
+  sel.value = expFilter.year || '';
 }
 
-// ════════════════════════════════════════
-//  ТЕХНИКА
-// ════════════════════════════════════════
-
+/* ── ТЕХНИКА ── */
 function buildEquipment() {
   const statusMap = {
-    active: { label:'Активна',   color:'#10B981', dot:'#10B981' },
-    repair: { label:'В ремонте', color:'#F59E0B', dot:'#F59E0B' },
-    retired:{ label:'Списана',   color:'#EF4444', dot:'#EF4444' },
+    active:  { label:'Активна',   bg:'#d1fae5', color:'#065f46' },
+    repair:  { label:'В ремонте', bg:'#fef3c7', color:'#92400e' },
+    retired: { label:'Списана',   bg:'#fee2e2', color:'#991b1b' }
   };
   document.getElementById('equip-tbody').innerHTML = equipment.map(e => {
-    const st = statusMap[e.status];
-    return `
-      <tr>
-        <td style="color:var(--text)">${e.name}<div style="font-size:10px;color:var(--text3)">${e.model || ''}</div></td>
-        <td><span class="badge" style="background:${st.dot}22;color:${st.dot}">${st.label}</span></td>
-        <td>${e.purchase_date ? formatDate(e.purchase_date) : '—'}</td>
-        <td>${(e.cost || 0).toLocaleString('ru')} ₽</td>
-        <td>${e.last_maintenance ? formatDate(e.last_maintenance) : '—'}</td>
-        <td>${e.next_maintenance ? formatDate(e.next_maintenance) : '—'}</td>
-        <td>${isAdmin() ? `<button class="tiny-btn" onclick="openEquipModal(${e.id})">Изменить</button>` : '—'}</td>
-      </tr>
-    `;
+    const st = statusMap[e.status] || statusMap.active;
+    return `<tr>
+      <td style="color:var(--ink);font-weight:400">${e.name}<br><span style="font-size:10px;color:#bbb">${e.model||''}</span></td>
+      <td><span class="badge" style="background:${st.bg};color:${st.color}">${st.label}</span></td>
+      <td>${e.purchase_date ? formatDate(e.purchase_date) : '—'}</td>
+      <td class="money" style="font-size:14px">${(e.cost||0).toLocaleString('ru')} ₽</td>
+      <td>${e.last_maintenance ? formatDate(e.last_maintenance) : '—'}</td>
+      <td>${e.next_maintenance ? formatDate(e.next_maintenance) : '—'}</td>
+      <td>${isAdmin() ? `<button class="tiny-btn" onclick="openEquipModal(${e.id})">Изменить</button>` : ''}</td>
+    </tr>`;
   }).join('');
 
-  document.getElementById('maint-tbody').innerHTML = maintenances.slice(0, 20).map(m => `
+  document.getElementById('maint-tbody').innerHTML = maintenances.slice(0,15).map(m => `
     <tr>
-      <td>${m.equipment || '—'}</td>
-      <td>${m.description || '—'}</td>
-      <td>${(m.cost || 0).toLocaleString('ru')} ₽</td>
-      <td>${m.performed_by || '—'}</td>
+      <td>${m.equipment||'—'}</td>
+      <td style="font-size:11px;max-width:140px;white-space:normal">${m.description||'—'}</td>
+      <td class="money" style="font-size:13px">${(m.cost||0).toLocaleString('ru')} ₽</td>
       <td>${formatDate(m.date)}</td>
     </tr>
-  `).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">ТО пока нет</td></tr>';
+  `).join('') || '<tr><td colspan="4" style="text-align:center;color:#ccc;padding:24px;font-size:12px">ТО пока нет</td></tr>';
 }
 
-// ════════════════════════════════════════
-//  ПРАЙС-ЛИСТ
-// ════════════════════════════════════════
-
+/* ── ПРАЙС ── */
 let svcFilter = { search:'', cat:'' };
 
 function renderServices() {
   const filtered = SERVICES.filter(s => {
-    const matchS = !svcFilter.search || s.name.toLowerCase().includes(svcFilter.search.toLowerCase());
-    const matchC = !svcFilter.cat || s.cat === svcFilter.cat;
-    return matchS && matchC;
+    const ms = !svcFilter.search || s.name.toLowerCase().includes(svcFilter.search.toLowerCase());
+    const mc = !svcFilter.cat || s.cat === svcFilter.cat;
+    return ms && mc;
   });
-
   document.getElementById('svc-tbody').innerHTML = filtered.map(s => `
     <tr>
-      <td style="color:var(--text)">${s.name}</td>
-      <td><span class="badge" style="background:#0d2e14;color:#7ec832">${s.cat}</span></td>
+      <td style="color:var(--ink);font-weight:400">${s.name}</td>
+      <td><span class="badge" style="background:var(--mist);color:var(--fern)">${s.cat}</span></td>
       <td>${s.unit}</td>
       <td>${s.min} ${s.unit}</td>
       <td class="money">${s.price.toLocaleString('ru')} ₽</td>
@@ -1399,793 +1505,380 @@ function renderServices() {
 }
 
 function buildServiceFilter() {
-  const cats = [...new Set(SERVICES.map(s => s.cat))];
+  const cats = [...new Set(SERVICES.map(s=>s.cat))];
   const sel = document.querySelector('#page-services .filter-sel');
-  if (sel) {
-    cats.forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c; opt.textContent = c;
-      sel.appendChild(opt);
-    });
-  }
+  if (sel) cats.forEach(c => { const o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
 }
-
 function filterServices(val) { svcFilter.search = val; renderServices(); }
 function filterServicesCat(val) { svcFilter.cat = val; renderServices(); }
 
+/* ── КОНТАКТЫ ── */
 function loadContactsFromStorage() {
-  try {
-    contacts = JSON.parse(localStorage.getItem('crm_contacts') || '[]');
-    if (!Array.isArray(contacts)) contacts = [];
-  } catch {
-    contacts = [];
-  }
-
-  const namesFromDeals = [...new Set(deals.map(d => (d.client || '').trim()).filter(Boolean))];
-  namesFromDeals.forEach(name => {
-    if (!contacts.some(c => c.name === name)) {
-      contacts.push({ id: Date.now() + Math.random(), name, phone: '', email: '' });
-    }
-  });
-
-  persistContacts();
-  renderContactsSelect();
-  renderContactsPage();
+  try { contacts = JSON.parse(localStorage.getItem('crm_contacts')||'[]'); if(!Array.isArray(contacts)) contacts=[]; } catch { contacts=[]; }
+  const namesFromDeals = [...new Set(deals.map(d=>(d.client||'').trim()).filter(Boolean))];
+  namesFromDeals.forEach(name => { if(!contacts.some(c=>c.name===name)) contacts.push({id:Date.now()+Math.random(),name,phone:'',email:''}); });
+  persistContacts(); renderContactsSelect(); renderContactsPage();
 }
-
-function persistContacts() {
-  localStorage.setItem('crm_contacts', JSON.stringify(contacts));
-}
-
+function persistContacts() { localStorage.setItem('crm_contacts', JSON.stringify(contacts)); }
 function renderContactsSelect() {
-  const select = document.getElementById('f-contact-select');
-  if (!select) return;
-
-  select.innerHTML = '<option value="">Новый контакт…</option>' + contacts
-    .sort((a, b) => a.name.localeCompare(b.name, 'ru'))
-    .map(c => `<option value="${c.id}">${c.name}${c.phone ? ' — ' + c.phone : ''}</option>`)
-    .join('');
+  const sel = document.getElementById('f-contact-select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Новый контакт…</option>' + contacts.sort((a,b)=>a.name.localeCompare(b.name,'ru')).map(c=>`<option value="${c.id}">${c.name}${c.phone?' — '+c.phone:''}</option>`).join('');
 }
-
 function onContactSelect(contactId) {
-  const contact = contacts.find(c => String(c.id) === String(contactId));
-  if (!contact) {
-    resetContactForm();
-    return;
-  }
-
-  document.getElementById('f-client').value = contact.name || '';
-  document.getElementById('f-contact-phone').value = contact.phone || '';
-  document.getElementById('f-contact-email').value = contact.email || '';
+  const c = contacts.find(x=>String(x.id)===String(contactId));
+  if (!c) { resetContactForm(); return; }
+  document.getElementById('f-client').value = c.name||'';
+  document.getElementById('f-contact-phone').value = c.phone||'';
+  document.getElementById('f-contact-email').value = c.email||'';
 }
-
 function resetContactForm() {
-  document.getElementById('f-contact-select').value = '';
-  document.getElementById('f-client').value = '';
-  document.getElementById('f-contact-phone').value = '';
-  document.getElementById('f-contact-email').value = '';
+  document.getElementById('f-contact-select').value='';
+  ['f-client','f-contact-phone','f-contact-email'].forEach(id=>document.getElementById(id).value='');
 }
-
 function saveContactFromForm() {
   const name = document.getElementById('f-client').value.trim();
+  if (!name) { showToast('⚠️ Укажите имя'); return; }
   const phone = document.getElementById('f-contact-phone').value.trim();
   const email = document.getElementById('f-contact-email').value.trim();
-  if (!name) {
-    showToast('⚠️ Укажите имя контакта');
-    return;
-  }
-
-  let contact = contacts.find(c => c.name.toLowerCase() === name.toLowerCase());
-  if (contact) {
-    contact.phone = phone;
-    contact.email = email;
-  } else {
-    contact = { id: Date.now(), name, phone, email };
-    contacts.push(contact);
-  }
-
-  persistContacts();
-  renderContactsSelect();
-  renderContactsPage();
-  document.getElementById('f-contact-select').value = String(contact.id);
+  let c = contacts.find(x=>x.name.toLowerCase()===name.toLowerCase());
+  if (c) { c.phone=phone; c.email=email; } else { c={id:Date.now(),name,phone,email}; contacts.push(c); }
+  persistContacts(); renderContactsSelect(); renderContactsPage();
+  document.getElementById('f-contact-select').value = String(c.id);
   showToast('✅ Контакт сохранён');
 }
-
 function saveContactSilentlyFromDealForm() {
   const name = document.getElementById('f-client').value.trim();
   if (!name) return;
   const phone = document.getElementById('f-contact-phone').value.trim();
   const email = document.getElementById('f-contact-email').value.trim();
-
-  let contact = contacts.find(c => c.name.toLowerCase() === name.toLowerCase());
-  if (!contact) {
-    contact = { id: Date.now(), name, phone, email };
-    contacts.push(contact);
-  } else {
-    contact.phone = phone;
-    contact.email = email;
-  }
-
-  persistContacts();
-  renderContactsSelect();
-  renderContactsPage();
+  let c = contacts.find(x=>x.name.toLowerCase()===name.toLowerCase());
+  if (!c) { c={id:Date.now(),name,phone,email}; contacts.push(c); } else { c.phone=phone; c.email=email; }
+  persistContacts(); renderContactsSelect(); renderContactsPage();
 }
-
 function renderContactsPage() {
   const tbody = document.getElementById('contacts-tbody');
   if (!tbody) return;
-
   const q = contactsFilter.toLowerCase();
-  const filtered = contacts.filter(c => {
-    if (!q) return true;
-    return [c.name, c.phone, c.email].some(v => (v || '').toLowerCase().includes(q));
-  });
-
+  const filtered = contacts.filter(c => !q || [c.name,c.phone,c.email].some(v=>(v||'').toLowerCase().includes(q)));
   tbody.innerHTML = filtered.map(c => `
     <tr>
-      <td style="color:var(--text)">${c.name || '—'}</td>
-      <td>${c.phone || '—'}</td>
-      <td>${c.email || '—'}</td>
+      <td style="color:var(--ink);font-weight:400">${c.name||'—'}</td>
+      <td>${c.phone||'—'}</td>
+      <td>${c.email||'—'}</td>
       <td><button class="btn" onclick="createDealForContact('${String(c.id)}')">Сделка</button></td>
     </tr>
-  `).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:22px">Контактов нет</td></tr>';
+  `).join('') || '<tr><td colspan="4" style="text-align:center;color:#ccc;padding:32px;font-size:12px">Контактов нет</td></tr>';
 }
-
-function filterContacts(val) {
-  contactsFilter = val || '';
-  renderContactsPage();
-}
-
+function filterContacts(val) { contactsFilter = val||''; renderContactsPage(); }
 function createDealForContact(contactId) {
   openDealModal();
-  const contact = contacts.find(c => String(c.id) === String(contactId));
-  if (!contact) return;
-  document.getElementById('f-contact-select').value = String(contact.id);
-  onContactSelect(String(contact.id));
+  const c = contacts.find(x=>String(x.id)===String(contactId));
+  if (!c) return;
+  document.getElementById('f-contact-select').value = String(c.id);
+  onContactSelect(String(c.id));
 }
 
-// ════════════════════════════════════════
-//  МОДАЛЬНЫЕ ОКНА
-// ════════════════════════════════════════
-
+/* ── МОДАЛЬНЫЕ ОКНА ── */
 function resetDealModalState() {
-  const modalTitle = document.querySelector('#modal-deal h2');
-  if (modalTitle) modalTitle.textContent = 'НОВАЯ СДЕЛКА';
-
-  const saveBtn = document.querySelector('#modal-deal .btn-save');
-  if (saveBtn) {
-    saveBtn.textContent = 'Создать сделку';
-    saveBtn.setAttribute('onclick', 'saveDeal()');
-  }
-
-  ['f-client', 'f-contact-phone', 'f-contact-email', 'f-title', 'f-address', 'f-sum', 'f-notes', 'f-service-search'].forEach(id => {
-    const field = document.getElementById(id);
-    if (field) field.value = '';
-  });
-
+  document.getElementById('deal-modal-title').innerHTML = 'Новая <em>сделка</em>';
+  document.getElementById('deal-save-btn').textContent = 'Создать';
+  document.getElementById('deal-save-btn').setAttribute('onclick','saveDeal()');
+  ['f-client','f-contact-phone','f-contact-email','f-title','f-address','f-sum','f-notes','f-service-search'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   fillSelectedServicesFromString('');
   document.getElementById('service-suggest')?.classList.remove('open');
   document.getElementById('f-contact-select').value = '';
   currentEditingDealId = null;
-  const delBtn = document.getElementById('deal-delete-btn');
-  if (delBtn) delBtn.style.display = 'none';
+  document.getElementById('deal-delete-btn').style.display = 'none';
 }
 
+function openDealModal() { resetDealModalState(); document.getElementById('modal-deal').classList.add('open'); }
+function openExpenseModal() { document.getElementById('fe-date').value = new Date().toISOString().split('T')[0]; document.getElementById('modal-expense').classList.add('open'); }
 
-function openDealModal() {
-  resetDealModalState();
-  document.getElementById('modal-deal').classList.add('open');
-}
-function openExpenseModal() {
-  document.getElementById('fe-date').value = new Date().toISOString().split('T')[0];
-  document.getElementById('modal-expense').classList.add('open');
-}
-function openEquipModal(equipmentId = null) {
+function openEquipModal(equipmentId=null) {
   currentEditingEquipmentId = equipmentId;
-  const saveBtn = document.getElementById('equip-save-btn');
-  const titleEl = document.querySelector('#modal-equip h2');
+  const title = document.getElementById('equip-modal-title');
+  const btn = document.getElementById('equip-save-btn');
   if (equipmentId) {
-    const e = equipment.find(x => x.id === equipmentId);
+    const e = equipment.find(x=>x.id===equipmentId);
     if (e) {
-      document.getElementById('feq-name').value = e.name || '';
-      document.getElementById('feq-model').value = e.model || '';
-      document.getElementById('feq-cost').value = e.cost || 0;
-      document.getElementById('feq-status').value = e.status || 'active';
-      document.getElementById('feq-notes').value = e.notes || '';
+      document.getElementById('feq-name').value = e.name||'';
+      document.getElementById('feq-model').value = e.model||'';
+      document.getElementById('feq-cost').value = e.cost||0;
+      document.getElementById('feq-status').value = e.status||'active';
+      document.getElementById('feq-notes').value = e.notes||'';
     }
-    if (titleEl) titleEl.textContent = 'РЕДАКТИРОВАНИЕ ТЕХНИКИ';
-    if (saveBtn) saveBtn.textContent = 'Сохранить';
+    title.innerHTML = 'Редактирование <em>техники</em>';
+    btn.textContent = 'Сохранить';
   } else {
-    ['feq-name','feq-model','feq-cost','feq-notes'].forEach(id => document.getElementById(id).value = '');
+    ['feq-name','feq-model','feq-cost','feq-notes'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('feq-status').value = 'active';
-    if (titleEl) titleEl.textContent = 'НОВАЯ ТЕХНИКА';
-    if (saveBtn) saveBtn.textContent = 'Добавить';
+    title.innerHTML = 'Новая <em>техника</em>';
+    btn.textContent = 'Добавить';
   }
   document.getElementById('modal-equip').classList.add('open');
 }
 
 function openMaintenanceModal() {
   const sel = document.getElementById('fm-equip');
-  if (sel) {
-    sel.innerHTML = equipment.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
-  }
+  if (sel) sel.innerHTML = equipment.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
   document.getElementById('fm-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('modal-maintenance').classList.add('open');
 }
+
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
-  if (id === 'modal-deal') {
-    resetDealModalState();
-  }
-  if (id === 'modal-equip') {
-    currentEditingEquipmentId = null;
-  }
+  if (id === 'modal-deal') resetDealModalState();
+  if (id === 'modal-equip') currentEditingEquipmentId = null;
 }
-// Открытие деталей сделки
-function openDealDetails(dealId) {
-  const deal = deals.find(d => d.id === dealId);
-  if (!deal) {
-    showToast('❌ Сделка не найдена');
-    return;
-  }
-  
-  // Заполняем форму данными
-  document.getElementById('f-client').value = deal.client || '';
-  const contact = contacts.find(c => c.name === (deal.client || ''));
-  document.getElementById('f-contact-phone').value = contact?.phone || '';
-  document.getElementById('f-contact-email').value = contact?.email || '';
-  document.getElementById('f-contact-select').value = contact ? String(contact.id) : '';
-  document.getElementById('f-title').value = deal.title || '';
-  document.getElementById('f-address').value = deal.address || '';
-  fillSelectedServicesFromString(deal.services || '');
-  document.getElementById('f-sum').value = deal.sum || '';
-  document.getElementById('f-notes').value = deal.notes || '';
-  
-  // Меняем заголовок модального окна
-  const modalTitle = document.querySelector('#modal-deal h2');
-  if (modalTitle) modalTitle.textContent = '✏️ РЕДАКТИРОВАНИЕ СДЕЛКИ';
-  
-  // Добавляем кнопку сохранения с обновленной логикой
-  const saveBtn = document.querySelector('#modal-deal .btn-save');
-  saveBtn.textContent = 'Сохранить изменения';
-  saveBtn.setAttribute('onclick', `updateDeal(${dealId})`);
 
-  const delBtn = document.getElementById('deal-delete-btn');
-  if (delBtn) delBtn.style.display = isAdmin() ? 'block' : 'none';
-  
-  // Открываем модальное окно
-  document.getElementById('modal-deal').classList.add('open');
-}
 document.querySelectorAll('.modal-overlay').forEach(m => {
   m.addEventListener('click', e => {
     if (e.target !== m) return;
     m.classList.remove('open');
-    if (m.id === 'modal-deal') {
-      resetDealModalState();
-    }
+    if (m.id === 'modal-deal') resetDealModalState();
   });
 });
 
+function openDealDetails(dealId) {
+  const deal = deals.find(d=>d.id===dealId);
+  if (!deal) return;
+  document.getElementById('f-client').value = deal.client||'';
+  const c = contacts.find(x=>x.name===(deal.client||''));
+  document.getElementById('f-contact-phone').value = c?.phone||'';
+  document.getElementById('f-contact-email').value = c?.email||'';
+  document.getElementById('f-contact-select').value = c ? String(c.id) : '';
+  document.getElementById('f-title').value = deal.title||'';
+  document.getElementById('f-address').value = deal.address||'';
+  fillSelectedServicesFromString(deal.services||'');
+  document.getElementById('f-sum').value = deal.sum||'';
+  document.getElementById('f-notes').value = deal.notes||'';
+  document.getElementById('deal-modal-title').innerHTML = 'Редактирование <em>сделки</em>';
+  document.getElementById('deal-save-btn').textContent = 'Сохранить';
+  document.getElementById('deal-save-btn').setAttribute('onclick', `updateDeal(${dealId})`);
+  document.getElementById('deal-delete-btn').style.display = isAdmin() ? 'block' : 'none';
+  currentEditingDealId = dealId;
+  document.getElementById('modal-deal').classList.add('open');
+}
+
+/* ── CRUD ОПЕРАЦИИ ── */
 async function saveDeal() {
   const client = document.getElementById('f-client').value.trim();
   const title  = document.getElementById('f-title').value.trim();
   saveContactSilentlyFromDealForm();
-  if (!client || !title) { alert('Заполните клиента и название'); return; }
-
-  const res = await apiFetch('/deals', {
-    method: 'POST',
-    body: JSON.stringify({ 
-      title, 
-      client, 
-      notes: document.getElementById('f-notes').value, 
-      address: document.getElementById('f-address').value,
-      services: getSelectedServices(),
-      total: parseFloat(document.getElementById('f-sum').value) || 0
-    })
-  });
+  if (!client||!title) { alert('Заполните клиента и название'); return; }
+  const res = await apiFetch('/deals', { method:'POST', body:JSON.stringify({ title, client, notes: document.getElementById('f-notes').value, address: document.getElementById('f-address').value, services: getSelectedServices(), total: parseFloat(document.getElementById('f-sum').value)||0 }) });
   if (!res) return;
-
-  closeModal('modal-deal');
-  await loadAll();
-  showToast('✅ Сделка создана!');
+  closeModal('modal-deal'); await loadAll(); showToast('✅ Сделка создана');
 }
-
-// Обновление существующей сделки
 async function updateDeal(dealId) {
   const client = document.getElementById('f-client').value.trim();
   const title  = document.getElementById('f-title').value.trim();
   saveContactSilentlyFromDealForm();
-  if (!client || !title) {
-    alert('Заполните клиента и название');
-    return;
-  }
-
-  const res = await apiFetch(`/deals/${dealId}`, {
-    method: 'PUT',
-    body: JSON.stringify({ 
-      title, 
-      client, 
-      notes: document.getElementById('f-notes').value, 
-      address: document.getElementById('f-address').value,
-      services: getSelectedServices(),
-      total: parseFloat(document.getElementById('f-sum').value) || 0
-    })
-  });
-
+  if (!client||!title) { alert('Заполните клиента и название'); return; }
+  const res = await apiFetch(`/deals/${dealId}`, { method:'PUT', body:JSON.stringify({ title, client, notes: document.getElementById('f-notes').value, address: document.getElementById('f-address').value, services: getSelectedServices(), total: parseFloat(document.getElementById('f-sum').value)||0 }) });
   if (!res) return;
-
-  closeModal('modal-deal');
-  await loadAll();
-  showToast('✅ Сделка обновлена!');
+  closeModal('modal-deal'); await loadAll(); showToast('✅ Сделка обновлена');
 }
-
 async function saveExpense() {
-  const name   = document.getElementById('fe-name').value.trim();
-  const date   = document.getElementById('fe-date').value;
-  const cat    = document.getElementById('fe-cat').value;
-  const amount = parseFloat(document.getElementById('fe-amount').value) || 0;
-  if (!name || !date || !amount) { alert('Заполните все поля'); return; }
-
-  const res = await apiFetch('/expenses', {
-    method: 'POST',
-    body: JSON.stringify({ date, name, category: cat, amount })
-  });
+  const name = document.getElementById('fe-name').value.trim();
+  const date = document.getElementById('fe-date').value;
+  const cat  = document.getElementById('fe-cat').value;
+  const amt  = parseFloat(document.getElementById('fe-amount').value)||0;
+  if (!name||!date||!amt) { alert('Заполните все поля'); return; }
+  const res = await apiFetch('/expenses', { method:'POST', body:JSON.stringify({ date, name, category:cat, amount:amt }) });
   if (!res) return;
-
-  closeModal('modal-expense');
-  await loadAll();
-  showToast('✅ Расход добавлен!');
+  closeModal('modal-expense'); await loadAll(); showToast('✅ Расход добавлен');
 }
-
 async function saveEquip() {
-  const name   = document.getElementById('feq-name').value.trim();
-  const model  = document.getElementById('feq-model').value.trim();
-  const cost   = parseFloat(document.getElementById('feq-cost').value) || 0;
-  const status = document.getElementById('feq-status').value;
+  const name = document.getElementById('feq-name').value.trim();
   if (!name) { alert('Введите название'); return; }
-
-  const payload = { name, model, purchase_cost: cost, status, notes: document.getElementById('feq-notes').value };
+  const payload = { name, model:document.getElementById('feq-model').value.trim(), purchase_cost:parseFloat(document.getElementById('feq-cost').value)||0, status:document.getElementById('feq-status').value, notes:document.getElementById('feq-notes').value };
   const isEdit = !!currentEditingEquipmentId;
-  const res = await apiFetch(isEdit ? `/equipment/${currentEditingEquipmentId}` : '/equipment', {
-    method: isEdit ? 'PUT' : 'POST',
-    body: JSON.stringify(payload)
-  });
+  const res = await apiFetch(isEdit ? `/equipment/${currentEditingEquipmentId}` : '/equipment', { method:isEdit?'PUT':'POST', body:JSON.stringify(payload) });
   if (!res) return;
-
-  closeModal('modal-equip');
-  await loadAll();
-  showToast(isEdit ? '✅ Техника обновлена!' : '✅ Техника добавлена!');
+  closeModal('modal-equip'); await loadAll(); showToast(isEdit?'✅ Техника обновлена':'✅ Техника добавлена');
 }
-
 async function saveMaintenance() {
-  const equipment_id = parseInt(document.getElementById('fm-equip').value, 10);
+  const equipment_id = parseInt(document.getElementById('fm-equip').value,10);
   const date = document.getElementById('fm-date').value;
   const description = document.getElementById('fm-desc').value.trim();
-  const cost = parseFloat(document.getElementById('fm-cost').value) || 0;
+  const cost = parseFloat(document.getElementById('fm-cost').value)||0;
   const performed_by = document.getElementById('fm-by').value.trim();
-  if (!equipment_id || !date || !description) { alert('Заполните технику, дату и работы'); return; }
-
-  const res = await apiFetch(`/equipment/${equipment_id}/maintenance`, {
-    method: 'POST',
-    body: JSON.stringify({ date, description, cost, performed_by })
-  });
+  if (!equipment_id||!date||!description) { alert('Заполните технику, дату и работы'); return; }
+  const res = await apiFetch(`/equipment/${equipment_id}/maintenance`, { method:'POST', body:JSON.stringify({ date, description, cost, performed_by }) });
   if (!res) return;
-  closeModal('modal-maintenance');
-  await loadAll();
-  showToast('✅ ТО добавлено');
+  closeModal('modal-maintenance'); await loadAll(); showToast('✅ ТО добавлено');
 }
-
-async function deleteExpense(expenseId) {
-  if (!isAdmin()) return;
-  if (!confirm('Удалить расход?')) return;
-  const res = await apiFetch(`/expenses/${expenseId}`, { method: 'DELETE' });
+async function deleteExpense(id) {
+  if (!isAdmin()||!confirm('Удалить расход?')) return;
+  const res = await apiFetch(`/expenses/${id}`, { method:'DELETE' });
   if (!res) return;
-  await loadAll();
-  showToast('✅ Расход удалён');
+  await loadAll(); showToast('✅ Расход удалён');
 }
-
 async function deleteDeal() {
-  if (!isAdmin() || !currentEditingDealId) return;
+  if (!isAdmin()||!currentEditingDealId) return;
   if (!confirm('Удалить сделку?')) return;
-  const res = await apiFetch(`/deals/${currentEditingDealId}`, { method: 'DELETE' });
+  const res = await apiFetch(`/deals/${currentEditingDealId}`, { method:'DELETE' });
   if (!res) return;
-  closeModal('modal-deal');
-  await loadAll();
-  showToast('✅ Сделка удалена');
+  closeModal('modal-deal'); await loadAll(); showToast('✅ Сделка удалена');
 }
 
-// ════════════════════════════════════════
-//  УТИЛИТЫ
-// ════════════════════════════════════════
-
+/* ── УТИЛИТЫ ── */
 function formatDate(str) {
   if (!str) return '—';
   const [y,m,d] = str.split('-');
   return `${d}.${m}.${y}`;
 }
-
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2800);
+  setTimeout(()=>t.classList.remove('show'), 3000);
 }
 
-// ════════════════════════════════════════
-//  ЗАГРУЗКА ДАННЫХ ИЗ API
-// ════════════════════════════════════════
-
-function equip_icon(name) {
-  const n = name.toLowerCase();
-  if (n.includes('косилк')) return '🚜';
-  if (n.includes('триммер')) return '🌀';
-  if (n.includes('бензопил') || n.includes('пила')) return '⚙️';
-  if (n.includes('скариф') || n.includes('вертик')) return '🌱';
-  if (n.includes('воздух') || n.includes('дувк')) return '💨';
-  if (n.includes('кусторез')) return '✂️';
-  return '🔧';
-}
-
+/* ── ЗАГРУЗКА ДАННЫХ ── */
 async function loadAll() {
-  showToast('⏳ Загружаем данные...');
-
-  // Этапы
+  showToast('⏳ Загружаем...');
   const stagesData = await apiFetch('/stages');
-  if (stagesData) STAGES = stagesData.map(s => ({ ...s, color: s.color || '#6B7280' }));
-
-  // Сделки
+  if (stagesData) STAGES = stagesData.map(s=>({...s, color: s.color||'#94a3b8'}));
   const dealsData = await apiFetch('/deals');
-  if (dealsData && dealsData.deals) {
+  if (dealsData?.deals) {
     deals = dealsData.deals.map(d => ({
-  id: d.id,
-  client: d.client,
-  title: d.title,
-  address: d.address || '',
-  services: Array.isArray(d.services)
-    ? d.services.map(s => `${s.name}:${s.qty}`).join(',')
-    : (d.services || ''),
-  notes: d.notes || '',
-  stage_id: STAGES.find(s => s.name === d.stage)?.id || 1,
-  sum: d.total || 0,
-  date: d.created_at?.split('T')[0] || d.created_at?.split(' ')[0] || new Date().toISOString().split('T')[0]
-}));
+      id:d.id, client:d.client, title:d.title, address:d.address||'',
+      services:Array.isArray(d.services)?d.services.map(s=>`${s.name}:${s.qty}`).join(','):(d.services||''),
+      notes:d.notes||'', stage_id:STAGES.find(s=>s.name===d.stage)?.id||1,
+      sum:d.total||0, date:d.created_at?.split('T')[0]||d.created_at?.split(' ')[0]||new Date().toISOString().split('T')[0]
+    }));
   }
-
-  // Расходы
   const expData = await apiFetch('/expenses');
-  if (expData && expData.expenses) {
-    expenses = expData.expenses.map(e => ({
-      id: e.id, date: e.date, name: e.name,
-      cat: e.category || 'Прочее',
-      equip: e.equipment || '',
-      amt: e.amount
-    }));
-  }
-
-  // Техника
+  if (expData?.expenses) expenses = expData.expenses.map(e=>({ id:e.id, date:e.date, name:e.name, cat:e.category||'Прочее', equip:e.equipment||'', amt:e.amount }));
   const equipData = await apiFetch('/equipment');
-  if (equipData) {
-    equipment = equipData.map(e => ({
-      id: e.id, name: e.name, model: e.model,
-      cost: e.purchase_cost, status: e.status,
-      purchase_date: e.purchase_date || '',
-      last_maintenance: e.last_maintenance || '',
-      next_maintenance: e.next_maintenance || '',
-      notes: e.notes || '',
-      icon: equip_icon(e.name)
-    }));
-  }
-
-  // ТО
+  if (equipData) equipment = equipData.map(e=>({ id:e.id, name:e.name, model:e.model, cost:e.purchase_cost, status:e.status, purchase_date:e.purchase_date||'', last_maintenance:e.last_maintenance||'', next_maintenance:e.next_maintenance||'', notes:e.notes||'' }));
   const maintData = await apiFetch('/maintenances');
   maintenances = Array.isArray(maintData) ? maintData : [];
-
-  // Обновляем контакты
   loadContactsFromStorage();
-
-  // Фильтр годов дашборда
   buildDashYearFilter();
-
-  // Перерисовываем всё
-  buildDash();
-  buildKanban();
-
-  // Обновляем фильтры расходов
+  buildDash(); buildKanban();
   buildExpenseYearFilter();
-
   const catSel = document.getElementById('cat-filter');
   if (catSel) {
     catSel.innerHTML = '<option value="">Все категории</option>';
-    const cats = [...new Set(expenses.map(e => e.cat))].sort();
-    cats.forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c; opt.textContent = c;
-      catSel.appendChild(opt);
-    });
+    [...new Set(expenses.map(e=>e.cat))].sort().forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; catSel.appendChild(o); });
   }
-  
-  renderExpenses();
-  buildEquipment();
-  renderServices();
-
-  showToast('✅ Данные загружены!');
+  renderExpenses(); buildEquipment(); renderServices();
+  showToast('✅ Данные загружены');
 }
 
-// ════════════════════════════════════════
-//  АВТОРИЗАЦИЯ (через сервер)
-// ════════════════════════════════════════
-
+/* ── АВТОРИЗАЦИЯ ── */
 async function doLogin() {
   const username = document.getElementById('l-user').value.trim().toLowerCase();
   const password = document.getElementById('l-pass').value;
-  const err      = document.getElementById('l-err');
-  const btn      = document.querySelector('.login-btn');
-
-  if (!username || !password) {
-    err.textContent = '⚠️ Введите логин и пароль';
-    return;
-  }
-
-  btn.textContent = 'Проверяем...';
-  btn.disabled = true;
-  err.textContent = '';
-
+  const err = document.getElementById('l-err');
+  const btn = document.querySelector('.login-btn');
+  if (!username||!password) { err.textContent = '⚠️ Введите логин и пароль'; return; }
+  btn.textContent = 'Проверяем...'; btn.disabled = true; err.textContent = '';
   try {
-    console.log('Пытаемся подключиться к:', API + '/auth/login');
-    
-    const res = await fetch(API + '/auth/login', {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({ username, password })
-    });
-
-    console.log('Статус ответа:', res.status);
-
+    const res = await fetch(API+'/auth/login', { method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json'}, body:JSON.stringify({username,password}) });
     if (res.ok) {
       const data = await res.json();
-      console.log('Ответ сервера:', data);
-      
-      if (!data.access_token) {
-        throw new Error('Сервер не вернул токен доступа');
-      }
-      
+      if (!data.access_token) throw new Error('Сервер не вернул токен');
       sessionStorage.setItem('crm_token', data.access_token);
-      sessionStorage.setItem('crm_user',  JSON.stringify({
-        username:  data.username || username,
-        full_name: data.full_name || username,
-        role:      data.role || 'user',
-        expires:   Date.now() + (data.expires_in || 3600) * 1000
-      }));
-      
+      sessionStorage.setItem('crm_user', JSON.stringify({ username:data.username||username, full_name:data.full_name||username, role:data.role||'user', expires:Date.now()+(data.expires_in||3600)*1000 }));
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('app').style.display = 'block';
-      
       await loadAll();
-      
     } else {
-      let errorMsg = 'Ошибка сервера';
-      try {
-        const errorData = await res.json();
-        errorMsg = errorData.detail || JSON.stringify(errorData);
-      } catch {
-        errorMsg = await res.text() || `HTTP ошибка ${res.status}`;
-      }
-      
-      console.error('Ошибка входа:', errorMsg);
-      err.textContent = '❌ ' + errorMsg;
-      document.getElementById('l-pass').value = '';
+      let msg='Ошибка сервера';
+      try { const d=await res.json(); msg=d.detail||JSON.stringify(d); } catch { msg=await res.text()||`HTTP ${res.status}`; }
+      err.textContent = '❌ '+msg;
+      document.getElementById('l-pass').value='';
     }
-  } catch(e) {
-    console.error('Исключение при входе:', e);
-    err.textContent = '❌ ' + (e.message || 'Сервер недоступен. Проверьте подключение к серверу.');
-  } finally {
-    btn.textContent = 'Войти';
-    btn.disabled = false;
-  }
+  } catch(e) { err.textContent = '❌ '+(e.message||'Сервер недоступен'); }
+  finally { btn.textContent='Войти'; btn.disabled=false; }
 }
 
 function checkAuth() {
-  const raw   = sessionStorage.getItem('crm_user');
+  const raw = sessionStorage.getItem('crm_user');
   const token = sessionStorage.getItem('crm_token');
-  
-  if (!raw || !token) return false;
-  
+  if (!raw||!token) return false;
   try {
     const user = JSON.parse(raw);
     if (Date.now() < user.expires) {
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('app').style.display = 'block';
-      loadAll();
-      return true;
-    } else {
-      sessionStorage.clear();
-      return false;
-    }
-  } catch(e) {
-    console.error('Ошибка парсинга user data:', e);
-    sessionStorage.clear();
-    return false;
-  }
+      loadAll(); return true;
+    } else { sessionStorage.clear(); return false; }
+  } catch { sessionStorage.clear(); return false; }
 }
-// ========== НОВЫЙ КОД ДЛЯ УСЛУГ ==========
 
+/* ── УСЛУГИ В СДЕЛКЕ ── */
 let selectedDealServices = [];
 
-function focusServiceSearch() {
-  const input = document.getElementById('f-service-search');
-  if (input) {
-    input.focus();
-    renderServiceSuggestions(input.value.trim());
-  }
-}
+function focusServiceSearch() { const i=document.getElementById('f-service-search'); if(i){i.focus();renderServiceSuggestions(i.value.trim());} }
 
 function initDealServicePicker() {
   const input = document.getElementById('f-service-search');
   const suggest = document.getElementById('service-suggest');
-  if (!input || !suggest) return;
-
-  input.addEventListener('focus', () => renderServiceSuggestions(input.value.trim()));
-  input.addEventListener('input', () => renderServiceSuggestions(input.value.trim()));
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter') e.preventDefault();
+  if (!input||!suggest) return;
+  input.addEventListener('focus', ()=>renderServiceSuggestions(input.value.trim()));
+  input.addEventListener('input', ()=>renderServiceSuggestions(input.value.trim()));
+  input.addEventListener('keydown', e=>{if(e.key==='Enter')e.preventDefault();});
+  document.addEventListener('click', e=>{
+    const picker=document.getElementById('deal-service-picker');
+    if(picker&&!picker.contains(e.target)) suggest.classList.remove('open');
   });
-
-  document.addEventListener('click', e => {
-    const picker = document.getElementById('deal-service-picker');
-    if (picker && !picker.contains(e.target)) {
-      suggest.classList.remove('open');
-    }
-  });
-
   renderSelectedServices();
 }
 
-function renderServiceSuggestions(search = '') {
+function renderServiceSuggestions(search='') {
   const suggest = document.getElementById('service-suggest');
   if (!suggest) return;
-
   const q = search.toLowerCase();
-  const filtered = SERVICES
-    .filter(s => !selectedDealServices.some(item => item.name === s.name))
-    .filter(s => !q || s.name.toLowerCase().includes(q) || s.cat.toLowerCase().includes(q))
-    .slice(0, 12);
-
+  const filtered = SERVICES.filter(s=>!selectedDealServices.some(i=>i.name===s.name)).filter(s=>!q||s.name.toLowerCase().includes(q)||s.cat.toLowerCase().includes(q)).slice(0,12);
   if (!filtered.length) {
-    suggest.innerHTML = '<div class="service-option"><span class="service-option-name">Ничего не найдено</span></div>';
-    suggest.classList.add('open');
-    return;
+    suggest.innerHTML='<div class="service-option"><span class="service-option-name" style="color:#bbb">Ничего не найдено</span></div>';
+    suggest.classList.add('open'); return;
   }
-
-  suggest.innerHTML = filtered.map(s => `
-    <div class="service-option" onclick="addServiceToDeal('${s.name.replace(/'/g, "\\'")}')">
-      <div>
-        <div class="service-option-name">${s.name}</div>
-        <div class="service-option-meta">${s.cat}</div>
-      </div>
-      <div class="service-option-meta">${s.price.toLocaleString('ru')} ₽/${s.unit}</div>
-    </div>
-  `).join('');
-
+  suggest.innerHTML = filtered.map(s=>`<div class="service-option" onclick="addServiceToDeal('${s.name.replace(/'/g,"\\'")}')"><div><div class="service-option-name">${s.name}</div><div class="service-option-meta">${s.cat}</div></div><div class="service-option-meta">${s.price.toLocaleString('ru')} ₽/${s.unit}</div></div>`).join('');
   suggest.classList.add('open');
 }
 
-function addServiceToDeal(serviceName) {
-  const service = SERVICES.find(s => s.name === serviceName);
-  if (!service || selectedDealServices.some(item => item.name === service.name)) return;
-
-  selectedDealServices.push({
-    name: service.name,
-    price: service.price,
-    unit: service.unit,
-    qty: service.min || 1
-  });
-
-  const input = document.getElementById('f-service-search');
-  if (input) input.value = '';
-
-  renderSelectedServices();
-  calculateTotalFromServices();
-  renderServiceSuggestions('');
+function addServiceToDeal(name) {
+  const s = SERVICES.find(x=>x.name===name);
+  if (!s||selectedDealServices.some(i=>i.name===s.name)) return;
+  selectedDealServices.push({name:s.name,price:s.price,unit:s.unit,qty:s.min||1});
+  const i=document.getElementById('f-service-search'); if(i) i.value='';
+  renderSelectedServices(); calculateTotalFromServices(); renderServiceSuggestions('');
 }
-
-function removeSelectedService(name) {
-  selectedDealServices = selectedDealServices.filter(item => item.name !== name);
-  renderSelectedServices();
-  calculateTotalFromServices();
-}
-
-function updateSelectedServiceQty(name, val) {
-  const service = selectedDealServices.find(item => item.name === name);
-  if (!service) return;
-  service.qty = Math.max(0, parseFloat(val) || 0);
-  calculateTotalFromServices();
-  renderSelectedServices();
-}
-
+function removeSelectedService(name) { selectedDealServices=selectedDealServices.filter(i=>i.name!==name); renderSelectedServices(); calculateTotalFromServices(); }
+function updateSelectedServiceQty(name,val) { const s=selectedDealServices.find(i=>i.name===name); if(!s)return; s.qty=Math.max(0,parseFloat(val)||0); calculateTotalFromServices(); renderSelectedServices(); }
 function renderSelectedServices() {
-  const box = document.getElementById('selected-services');
-  if (!box) return;
-
-  if (!selectedDealServices.length) {
-    box.innerHTML = '<div class="selected-services-empty">Услуги не добавлены</div>';
-    return;
-  }
-
-  box.innerHTML = selectedDealServices.map(item => `
-    <div class="selected-service-row">
-      <div>
-        <div class="name">${item.name}</div>
-        <div class="meta">${item.price.toLocaleString('ru')} ₽ / ${item.unit}</div>
-      </div>
-      <input type="number" min="0" step="0.1" value="${item.qty}" onchange="updateSelectedServiceQty('${item.name.replace(/'/g, "\\'")}', this.value)">
-      <div class="sum">${Math.round(item.qty * item.price).toLocaleString('ru')} ₽</div>
-      <button class="remove-service" type="button" onclick="removeSelectedService('${item.name.replace(/'/g, "\\'")}')">×</button>
-    </div>
-  `).join('');
+  const box=document.getElementById('selected-services'); if(!box) return;
+  if (!selectedDealServices.length) { box.innerHTML='<div class="selected-services-empty">Услуги не добавлены</div>'; return; }
+  box.innerHTML=selectedDealServices.map(item=>`<div class="selected-service-row"><div><div class="name">${item.name}</div><div class="meta">${item.price.toLocaleString('ru')} ₽ / ${item.unit}</div></div><input type="number" min="0" step="0.1" value="${item.qty}" onchange="updateSelectedServiceQty('${item.name.replace(/'/g,"\\'")}',this.value)"><div class="sum">${Math.round(item.qty*item.price).toLocaleString('ru')} ₽</div><button class="remove-service" type="button" onclick="removeSelectedService('${item.name.replace(/'/g,"\\'")}')">×</button></div>`).join('');
 }
-
-function calculateTotalFromServices() {
-  const sumInput = document.getElementById('f-sum');
-  if (!sumInput) return;
-
-  const total = selectedDealServices.reduce((acc, item) => acc + item.qty * item.price, 0);
-  sumInput.value = Math.round(total);
-}
-
-function getSelectedServices() {
-  return selectedDealServices
-    .filter(item => item.qty > 0)
-    .map(item => `${item.name}:${item.qty}`)
-    .join(',');
-}
-
-function fillSelectedServicesFromString(rawServices = '') {
-  selectedDealServices = [];
-  if (!rawServices) {
-    renderSelectedServices();
-    return;
-  }
-
-  rawServices
-    .split(',')
-    .map(item => item.trim())
-    .filter(Boolean)
-    .forEach(pair => {
-      const [rawName, rawQty] = pair.split(':');
-      const name = (rawName || '').trim();
-      if (!name) return;
-
-      const source = SERVICES.find(s => s.name === name);
-      selectedDealServices.push({
-        name,
-        price: source?.price || 0,
-        unit: source?.unit || 'шт',
-        qty: Math.max(0, parseFloat(rawQty) || 0)
-      });
-    });
-
+function calculateTotalFromServices() { const s=document.getElementById('f-sum'); if(!s)return; s.value=Math.round(selectedDealServices.reduce((acc,i)=>acc+i.qty*i.price,0)); }
+function getSelectedServices() { return selectedDealServices.filter(i=>i.qty>0).map(i=>`${i.name}:${i.qty}`).join(','); }
+function fillSelectedServicesFromString(raw='') {
+  selectedDealServices=[];
+  if (raw) raw.split(',').map(i=>i.trim()).filter(Boolean).forEach(pair=>{
+    const [rn,rq]=pair.split(':'); const name=(rn||'').trim(); if(!name)return;
+    const src=SERVICES.find(s=>s.name===name);
+    selectedDealServices.push({name,price:src?.price||0,unit:src?.unit||'шт',qty:Math.max(0,parseFloat(rq)||0)});
+  });
   renderSelectedServices();
 }
 
-// Инициализация при загрузке страницы
+/* ── ИНИЦИАЛИЗАЦИЯ ── */
 document.addEventListener('DOMContentLoaded', function() {
-  // Проверяем авторизацию
   checkAuth();
-  
-  // Строим фильтры для прайса
   buildServiceFilter();
-  
-  // Рендерим прайс (он не требует API)
   renderServices();
-  
-  // Инициализируем блок выбора услуг
   initDealServicePicker();
 });
 </script>
+
 </div><!-- /app -->
 </body>
 </html>
-  currentEditingDealId = dealId;

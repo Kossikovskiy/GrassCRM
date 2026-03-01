@@ -959,6 +959,9 @@ tr:hover td { background: var(--mist); color: var(--ink); }
   </div>
   <div class="table-toolbar" style="margin-bottom:16px;">
     <input class="search-input" placeholder="Поиск клиента..." oninput="filterKanban(this.value)">
+    <select class="filter-sel" id="kanban-year-filter" onchange="filterKanbanYear(this.value)">
+      <option value="">Все годы</option>
+    </select>
     <button class="btn ml" onclick="openDealModal()">+ Новая сделка</button>
   </div>
   <div class="kanban" id="kanban-board"></div>
@@ -1212,6 +1215,7 @@ async function apiFetch(path, opts={}) {
 let STAGES = [], deals = [], expenses = [], equipment = [], maintenances = [], contacts = [];
 let draggedDealId = null, dashYear = String(new Date().getFullYear()), contactsFilter = '';
 let currentEditingDealId = null, currentEditingEquipmentId = null;
+let kanbanFilter = { search:'', year:String(new Date().getFullYear()) };
 
 function isAdmin() {
   try { return (JSON.parse(sessionStorage.getItem('crm_user') || '{}').role || '') === 'admin'; } catch { return false; }
@@ -1342,13 +1346,40 @@ function buildDash() {
 }
 
 /* ── КАНБАН ── */
-function buildKanban(filter='') {
+function buildKanbanYearFilter() {
+  const select = document.getElementById('kanban-year-filter');
+  if (!select) return;
+
+  const years = [...new Set(deals.map(d => (d.date||'').slice(0,4)).filter(Boolean))]
+    .sort((a,b)=>Number(b)-Number(a));
+  const currentYear = String(new Date().getFullYear());
+
+  select.innerHTML = '<option value="">Все годы</option>' + years.map(y => `<option value="${y}">${y}</option>`).join('');
+  if (!kanbanFilter.year) kanbanFilter.year = currentYear;
+  if (kanbanFilter.year && !years.includes(kanbanFilter.year) && kanbanFilter.year !== currentYear) {
+    kanbanFilter.year = currentYear;
+  }
+  if (kanbanFilter.year) {
+    const hasOpt = [...select.options].some(o => o.value === kanbanFilter.year);
+    if (!hasOpt) {
+      const opt = document.createElement('option');
+      opt.value = kanbanFilter.year;
+      opt.textContent = kanbanFilter.year;
+      select.appendChild(opt);
+    }
+  }
+  select.value = kanbanFilter.year || '';
+}
+
+function buildKanban() {
   const board = document.getElementById('kanban-board');
   const visibleStages = STAGES;
+  const search = (kanbanFilter.search || '').toLowerCase();
   board.innerHTML = visibleStages.map(stage => {
     const stageDeal = deals.filter(d =>
       d.stage_id === stage.id &&
-      (!filter || d.client.toLowerCase().includes(filter.toLowerCase()))
+      (!search || (d.client||'').toLowerCase().includes(search)) &&
+      (!kanbanFilter.year || (d.date||'').startsWith(kanbanFilter.year))
     );
     const stageColor = stage.color || '#5a9448';
     const isSuccess = stage.type === 'success' || stage.name?.toLowerCase().includes('успех');
@@ -1414,7 +1445,8 @@ async function onDealDrop(event, stageId) {
   if (!res) { deal.stage_id = old; buildKanban(); buildDash(); showToast('❌ Не удалось переместить'); return; }
   showToast(`✅ ${stage.name}`);
 }
-function filterKanban(val) { buildKanban(val); }
+function filterKanban(val) { kanbanFilter.search = val||''; buildKanban(); }
+function filterKanbanYear(year) { kanbanFilter.year = year||''; buildKanban(); }
 
 /* ── РАСХОДЫ ── */
 let expFilter = { search:'', cat:'', year:'' };
@@ -1762,6 +1794,7 @@ async function loadAll() {
   maintenances = Array.isArray(maintData) ? maintData : [];
   loadContactsFromStorage();
   buildDashYearFilter();
+  buildKanbanYearFilter();
   buildDash(); buildKanban();
   buildExpenseYearFilter();
   const catSel = document.getElementById('cat-filter');

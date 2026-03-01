@@ -115,6 +115,7 @@ def import_bitrix(filepath: str, skip_existing: bool = True):
         'stage':     col('Стадия сделки'),
         'sum':       col('Сумма'),
         'date':      col('Дата создания'),
+        'start_date':col('Дата начала'),
         'manager':   col('Ответственный'),
         'notes':     col('Комментарий'),
         'first':     col('Контакт: Имя'),
@@ -154,6 +155,7 @@ def import_bitrix(filepath: str, skip_existing: bool = True):
                 'phone':     phone,
                 'stage':     get('stage'),
                 'date':      get('date'),
+                'start_date':get('start_date'),
                 'manager':   get('manager'),
                 'notes':     get('notes'),
                 'closed':    get('closed'),
@@ -209,7 +211,9 @@ def import_bitrix(filepath: str, skip_existing: bool = True):
             stage = stage_objs.get(our_stage_name) or stage_objs.get('Начальная')
 
             # Дата
-            created_at = parse_date(d['date']) or datetime.utcnow()
+            # В выгрузке Битрикса "Дата создания" может отражать массовую миграцию (например 2025),
+            # а реальная рабочая дата сделки хранится в поле "Дата начала".
+            created_at = parse_date(d.get('start_date')) or parse_date(d.get('date')) or datetime.utcnow()
             closed_at  = parse_date(d['closed']) if d['closed'] else None
             if not closed_at and stage and stage.is_final:
                 closed_at = created_at

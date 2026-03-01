@@ -8,7 +8,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from datetime import datetime, date
-from typing import Optional, List
+from typing import Optional, List, Any
 from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -29,6 +29,7 @@ from models.database import (
     Stage, Service, ServiceCategory, Deal, DealService,
     Equipment, Maintenance, ExpenseCategory, Expense
 )
+from scripts.init_db import seed_database
 
 engine = get_engine()
 init_db(engine)
@@ -39,6 +40,10 @@ from models.user import User as UserModel
 Base.metadata.create_all(engine)
 
 SessionFactory = get_session_factory(engine)
+
+# Автозаполнение БД начальными данными (если база пустая)
+with SessionFactory() as seed_session:
+    seed_database(seed_session)
 
 app = FastAPI(title="Grass CRM API", version="1.0.0")
 
@@ -149,7 +154,15 @@ class DealCreate(BaseModel):
     manager: str = ""
     address: str = ""
     notes: str = ""
-    services: List[DealServiceIn] = []
+    services: Any = []
+
+class DealUpdate(BaseModel):
+    title: str
+    client: str
+    manager: str = ""
+    address: str = ""
+    notes: str = ""
+    services: Any = []
 
 class StageUpdate(BaseModel):
     stage_name: str
@@ -229,6 +242,48 @@ def get_deals(
     return {"deals": result, "count": len(result), "total_sum": sum(d["total"] for d in result)}
 
 
+def _add_services_to_deal(db: DBSession, deal_id: int, services_raw: Any):
+    """Поддерживает оба формата услуг: старый API-список и фронтовую строку name:qty,name2:qty."""
+    if not services_raw:
+        return
+
+    # Формат API: [{service_id, quantity}, ...]
+    if isinstance(services_raw, list):
+        for svc_in in services_raw:
+            try:
+                service_id = int(svc_in.get("service_id")) if isinstance(svc_in, dict) else int(getattr(svc_in, "service_id"))
+                quantity = float(svc_in.get("quantity")) if isinstance(svc_in, dict) else float(getattr(svc_in, "quantity"))
+            except Exception:
+                continue
+            svc = db.query(Service).get(service_id)
+            if svc:
+                qty = max(quantity, svc.min_volume)
+                db.add(DealService(deal_id=deal_id, service_id=svc.id, quantity=qty, price_at_moment=svc.price))
+        return
+
+    # Формат фронта: "Название:2,Название2:1"
+    if isinstance(services_raw, str):
+        for chunk in services_raw.split(','):
+            if ':' not in chunk:
+                continue
+            name, qty_raw = chunk.split(':', 1)
+            name = name.strip()
+            if not name:
+                continue
+            try:
+                qty = max(float(qty_raw), 0)
+            except Exception:
+                qty = 0
+            if qty <= 0:
+                continue
+
+            svc = db.query(Service).filter(Service.name == name).first()
+            if not svc:
+                svc = db.query(Service).filter(Service.name.ilike(f"%{name}%")).first()
+            if svc:
+                db.add(DealService(deal_id=deal_id, service_id=svc.id, quantity=max(qty, svc.min_volume), price_at_moment=svc.price))
+
+
 @app.post("/api/deals", status_code=201)
 def create_deal(body: DealCreate, db: DBSession = Depends(get_db), _=Depends(get_current_user)):
     stage = db.query(Stage).filter_by(name="Начальная").first()
@@ -241,14 +296,40 @@ def create_deal(body: DealCreate, db: DBSession = Depends(get_db), _=Depends(get
     db.add(deal)
     db.flush()
 
-    for svc_in in body.services:
-        svc = db.query(Service).get(svc_in.service_id)
-        if svc:
-            qty = max(svc_in.quantity, svc.min_volume)
-            db.add(DealService(deal_id=deal.id, service_id=svc.id, quantity=qty, price_at_moment=svc.price))
+    _add_services_to_deal(db, deal.id, body.services)
 
     db.commit()
     return {"id": deal.id, "title": deal.title, "client": deal.client}
+
+
+@app.put("/api/deals/{deal_id}")
+def update_deal(deal_id: int, body: DealUpdate, db: DBSession = Depends(get_db), _=Depends(get_current_user)):
+    deal = db.query(Deal).get(deal_id)
+    if not deal:
+        raise HTTPException(404, "Сделка не найдена")
+
+    deal.title = body.title
+    deal.client = body.client
+    deal.manager = body.manager
+    deal.address = body.address
+    deal.notes = body.notes
+    deal.updated_at = datetime.utcnow()
+
+    db.query(DealService).filter(DealService.deal_id == deal.id).delete()
+    _add_services_to_deal(db, deal.id, body.services)
+
+    db.commit()
+    return {"id": deal.id, "title": deal.title, "client": deal.client}
+
+
+@app.delete("/api/deals/{deal_id}", dependencies=[Depends(require_admin)])
+def delete_deal(deal_id: int, db: DBSession = Depends(get_db)):
+    deal = db.query(Deal).get(deal_id)
+    if not deal:
+        raise HTTPException(404, "Сделка не найдена")
+    db.delete(deal)
+    db.commit()
+    return {"detail": "Сделка удалена", "id": deal_id}
 
 
 @app.patch("/api/deals/{deal_id}/stage")
@@ -296,6 +377,7 @@ def get_equipment(status: Optional[str] = Query(None), db: DBSession = Depends(g
         q = q.filter(Equipment.status == status)
     eqs = q.order_by(Equipment.name).all()
     return [{"id": e.id, "name": e.name, "model": e.model, "status": e.status,
+             "purchase_date": str(e.purchase_date) if e.purchase_date else None,
              "purchase_cost": e.purchase_cost,
              "last_maintenance": str(e.last_maintenance) if e.last_maintenance else None,
              "next_maintenance": str(e.next_maintenance) if e.next_maintenance else None,
@@ -316,6 +398,44 @@ def create_equipment(body: EquipmentCreate, db: DBSession = Depends(get_db)):
     db.add(eq)
     db.commit()
     return {"id": eq.id, "name": eq.name}
+
+
+@app.put("/api/equipment/{equipment_id}", dependencies=[Depends(require_admin)])
+def update_equipment(equipment_id: int, body: EquipmentCreate, db: DBSession = Depends(get_db)):
+    eq = db.query(Equipment).get(equipment_id)
+    if not eq:
+        raise HTTPException(404, "Техника не найдена")
+
+    eq.name = body.name
+    eq.model = body.model
+    eq.serial = body.serial
+    eq.purchase_cost = body.purchase_cost
+    eq.status = body.status
+    eq.notes = body.notes
+    if body.purchase_date:
+        try:
+            eq.purchase_date = datetime.strptime(body.purchase_date, "%Y-%m-%d").date()
+        except ValueError:
+            pass
+    db.commit()
+    return {"id": eq.id, "name": eq.name}
+
+
+@app.get("/api/maintenances")
+def get_maintenances(equipment_id: Optional[int] = Query(None), db: DBSession = Depends(get_db)):
+    q = db.query(Maintenance)
+    if equipment_id:
+        q = q.filter(Maintenance.equipment_id == equipment_id)
+    rows = q.order_by(Maintenance.date.desc()).all()
+    return [{
+        "id": m.id,
+        "equipment_id": m.equipment_id,
+        "equipment": m.equipment.name if m.equipment else None,
+        "date": str(m.date),
+        "description": m.description,
+        "cost": m.cost,
+        "performed_by": m.performed_by,
+    } for m in rows]
 
 
 @app.post("/api/equipment/{equipment_id}/maintenance")
@@ -394,6 +514,16 @@ def create_expense(body: ExpenseCreate, db: DBSession = Depends(get_db), _=Depen
     db.add(exp)
     db.commit()
     return {"id": exp.id, "name": exp.name, "amount": exp.amount}
+
+
+@app.delete("/api/expenses/{expense_id}", dependencies=[Depends(require_admin)])
+def delete_expense(expense_id: int, db: DBSession = Depends(get_db)):
+    exp = db.query(Expense).get(expense_id)
+    if not exp:
+        raise HTTPException(404, "Расход не найден")
+    db.delete(exp)
+    db.commit()
+    return {"detail": "Расход удалён", "id": expense_id}
 
 
 # ── SERVICES ──────────────────────────────────

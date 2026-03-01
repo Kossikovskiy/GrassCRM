@@ -90,67 +90,145 @@ SERVICES = [
 
 EQUIPMENT = [
     {
-        "name": "Газонокосилка самоходная",
-        "model": "HUSQVARNA LC 353V",
+        "name": "Газонокосилка #1",
+        "model": "Nocord NLG-46.144. S",
         "serial": "",
-        "purchase_cost": 45000,
+        "purchase_date": "2024-06-01",
+        "purchase_cost": 26481,
         "status": "active",
-        "notes": "Основная косилка"
+        "notes": "Рабочая"
     },
     {
-        "name": "Газонокосилка аккумуляторная",
-        "model": "GREENWORKS",
+        "name": "Газонокосилка #2",
+        "model": "Nocord NLG-51.170.S",
         "serial": "",
-        "purchase_cost": 28000,
+        "purchase_date": "2025-06-01",
+        "purchase_cost": 21438,
         "status": "active",
-        "notes": "Для небольших участков"
+        "notes": "Рабочая"
     },
     {
-        "name": "Триммер бензиновый",
-        "model": "HUSQVARNA 128R",
+        "name": "Триммер #1",
+        "model": "NOCORD NTG-52S",
         "serial": "",
-        "purchase_cost": 18000,
-        "status": "active",
-        "notes": "Основной триммер"
+        "purchase_date": "2024-06-01",
+        "purchase_cost": 8052,
+        "status": "repair",
+        "notes": "Неисправна"
     },
     {
-        "name": "Триммер аккумуляторный",
-        "model": "GREENWORKS",
+        "name": "Триммер #2",
+        "model": "NOCORD NTG-52S",
         "serial": "",
-        "purchase_cost": 12000,
+        "purchase_date": "2025-06-01",
+        "purchase_cost": 7644,
         "status": "active",
-        "notes": "Для точной работы"
+        "notes": "Рабочие"
     },
     {
-        "name": "Бензопила",
-        "model": "HUSQVARNA 135",
+        "name": "Триммер #3",
+        "model": "NOCORD NTG-52S",
         "serial": "",
-        "purchase_cost": 22000,
+        "purchase_date": None,
+        "purchase_cost": 8052,
         "status": "active",
-        "notes": "Для спила деревьев"
+        "notes": "Рабочий"
     },
     {
         "name": "Скарификатор",
-        "model": "AL-KO",
+        "model": "PATRIOT SCE 155",
         "serial": "",
-        "purchase_cost": 20000,
+        "purchase_date": "2025-05-01",
+        "purchase_cost": 9691,
         "status": "active",
-        "notes": "Для вертикуляции газона"
+        "notes": "Рабочий"
     },
     {
-        "name": "Воздуходувка бензиновая",
-        "model": "HUSQVARNA 125B",
+        "name": "Ножницы-кусторез",
+        "model": "Boxbot CGS-7",
         "serial": "",
-        "purchase_cost": 10000,
+        "purchase_date": "2025-06-01",
+        "purchase_cost": 3094,
         "status": "active",
-        "notes": "Уборка листьев"
+        "notes": "Обслужить"
     },
     {
-        "name": "Кусторез",
-        "model": "HUSQVARNA 115iHD55",
+        "name": "Бензопила",
+        "model": "Nocord NS-5820",
         "serial": "",
-        "purchase_cost": 25000,
+        "purchase_date": "2025-08-01",
+        "purchase_cost": 6686,
         "status": "active",
-        "notes": "Стрижка живых изгородей"
+        "notes": "Обслужить"
     },
+    {
+        "name": "DAEWOO DABC 43T (план. покупка, #1)",
+        "model": "",
+        "serial": "",
+        "purchase_date": None,
+        "purchase_cost": 18179,
+        "status": "active",
+        "notes": "План 2026"
+    },
+    {
+        "name": "DAEWOO DABC 420E (план. покупка, #2)",
+        "model": "электрозапуск",
+        "serial": "",
+        "purchase_date": None,
+        "purchase_cost": 19990,
+        "status": "active",
+        "notes": "План 2026"
+    },
+]
+
+EXPENSES = [
+    {"date": "2024-07-06", "name": "Триммер бензиновый NOCORD NTG-52S", "category": "Техника", "amount": 8052},
+    {"date": "2024-07-15", "name": "Газонокосилка (покупка)", "category": "Техника", "amount": 26481},
+    {"date": "2024-09-21", "name": "Топливо", "category": "Топливо", "amount": 7000},
+    {"date": "2025-04-21", "name": "Свеча зажигания DDE LR5YC (газонокосилка)", "category": "Тех. жидкости/запчасти", "amount": 249},
+    {"date": "2025-04-21", "name": "Свечи Bosch WSR6F x2 (триммеры)", "category": "Тех. жидкости/запчасти", "amount": 772},
+    {"date": "2025-04-21", "name": "Нож для газонокосилки Boxbot BM-46S", "category": "Тех. жидкости/запчасти", "amount": 595},
+    {"date": "2025-04-21", "name": "Перчатки нейлоновые Gward Gray 12 пар", "category": "Расходники", "amount": 788},
+    {"date": "2025-04-21", "name": "Очки защитные DOG Expert", "category": "Расходники", "amount": 815},
+    {"date": "2025-04-24", "name": "Нож для газонокосилки NOCORD NLG-46.144. S", "category": "Тех. жидкости/запчасти", "amount": 870},
+    {"date": "2025-05-12", "name": "Смазка для редукторов ВМПАВТО MC-Ultra 50г", "category": "Тех. жидкости/запчасти", "amount": 260},
+    {"date": "2025-05-12", "name": "Головка для триммера Boxbot BTH-101 x2", "category": "Тех. жидкости/запчасти", "amount": 506},
+    {"date": "2025-05-13", "name": "Скарификатор электрический PATRIOT SCE 155", "category": "Техника", "amount": 9691},
+    {"date": "2025-05-27", "name": "Леска для триммера 4мм 15м витой квадрат", "category": "Расходники", "amount": 289},
+    {"date": "2025-05-27", "name": "Болт крепления ножа газонокосилки L-35мм", "category": "Тех. жидкости/запчасти", "amount": 286},
+    {"date": "2025-05-27", "name": "Леска для триммера 4мм 30м витой квадрат", "category": "Расходники", "amount": 500},
+    {"date": "2025-05-29", "name": "Масло моторное 2Т ВМПАВТО 4л", "category": "Тех. жидкости/запчасти", "amount": 1933},
+    {"date": "2025-06-04", "name": "Ножницы-кусторез аккумуляторные Boxbot CGS-7", "category": "Техника", "amount": 3094},
+    {"date": "2025-06-04", "name": "Опрыскиватель садовый аккумуляторный 10л", "category": "Расходники", "amount": 2967},
+    {"date": "2025-06-11", "name": "Масло DDE 4T SAE 30, 1л", "category": "Тех. жидкости/запчасти", "amount": 490},
+    {"date": "2025-06-11", "name": "Перчатки резиновые хозяйственные L x3 пары", "category": "Расходники", "amount": 341},
+    {"date": "2025-06-11", "name": "Канистра для смешивания бензина DDE 2л", "category": "Расходники", "amount": 541},
+    {"date": "2025-06-11", "name": "Леска для триммера 4мм 80м витой квадрат", "category": "Расходники", "amount": 713},
+    {"date": "2025-06-13", "name": "Ремень для триммера ранцевый DENZEL двухплечевой", "category": "Расходники", "amount": 1028},
+    {"date": "2025-06-14", "name": "Триммер бензиновый Nocord NTG-52S (3й)", "category": "Техника", "amount": 7644},
+    {"date": "2025-06-14", "name": "Газонокосилка бензиновая Nocord NLG-51.170.S (2я)", "category": "Техника", "amount": 21438},
+    {"date": "2025-06-17", "name": "Масло DDE 4T SAE 30, 1л", "category": "Тех. жидкости/запчасти", "amount": 487},
+    {"date": "2025-06-21", "name": "Смазка для редукторов ВМПАВТО Ultra-0 200г", "category": "Тех. жидкости/запчасти", "amount": 450},
+    {"date": "2025-06-21", "name": "Масло моторное 2Т ВМПАВТО 4л", "category": "Тех. жидкости/запчасти", "amount": 1758},
+    {"date": "2025-06-21", "name": "Чехол для газонокосилки 155x55x100 см", "category": "Расходники", "amount": 1310},
+    {"date": "2025-06-21", "name": "Леска для триммера 4мм 80м витой квадрат", "category": "Расходники", "amount": 682},
+    {"date": "2025-06-21", "name": "Щиток защитный для лица сетчатый Champion", "category": "Расходники", "amount": 700},
+    {"date": "2025-06-30", "name": "Коннектор с аквастопом Plantic Light 1/2\"", "category": "Расходники", "amount": 302},
+    {"date": "2025-06-30", "name": "Совок Plantic Light Ergo", "category": "Расходники", "amount": 599},
+    {"date": "2025-06-30", "name": "Ножницы для растений Plantic Light L62", "category": "Расходники", "amount": 896},
+    {"date": "2025-06-30", "name": "Пистолет-распылитель Plantic Light 8 режимов", "category": "Расходники", "amount": 757},
+    {"date": "2025-07-07", "name": "Леска для триммера 4мм 80м витой квадрат", "category": "Расходники", "amount": 789},
+    {"date": "2025-07-09", "name": "Масло DDE 4T SAE 30, 1л x2", "category": "Тех. жидкости/запчасти", "amount": 816},
+    {"date": "2025-07-28", "name": "Нож для газонокосилки PATRIOT MBS 520 (508мм)", "category": "Тех. жидкости/запчасти", "amount": 1293},
+    {"date": "2025-07-28", "name": "Крепления ножа газонокосилки L-35мм x2", "category": "Тех. жидкости/запчасти", "amount": 520},
+    {"date": "2025-08-03", "name": "Нож для газонокосилки PATRIOT MBS 520 (508мм)", "category": "Тех. жидкости/запчасти", "amount": 1269},
+    {"date": "2025-08-08", "name": "Леска для триммера 4мм 80м витой квадрат", "category": "Расходники", "amount": 783},
+    {"date": "2025-08-14", "name": "Масло для цепей бензопил ВМПАВТО 1л", "category": "Тех. жидкости/запчасти", "amount": 362},
+    {"date": "2025-08-14", "name": "Масло Garden 4T 10W-30 ВМПАВТО полусинт. 1л", "category": "Тех. жидкости/запчасти", "amount": 476},
+    {"date": "2025-08-14", "name": "Масло Garden 4T 5W-30 ВМПАВТО полусинт. 1л", "category": "Тех. жидкости/запчасти", "amount": 506},
+    {"date": "2025-08-14", "name": "Бензиновая цепная пила Nocord NS-5820 58см3", "category": "Техника", "amount": 6686},
+    {"date": "2025-08-17", "name": "Перчатки нейлоновые Gward Gray 12 пар", "category": "Расходники", "amount": 772},
+    {"date": "2025-08-23", "name": "Праймер (подкачка) для бензокосы/триммера", "category": "Тех. жидкости/запчасти", "amount": 182},
+    {"date": "2025-10-04", "name": "Леска для триммера 4мм MTX звезда 15м", "category": "Расходники", "amount": 186},
+    {"date": "2026-02-22", "name": "Хостинг", "category": "Реклама", "amount": 130},
 ]

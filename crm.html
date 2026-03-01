@@ -144,6 +144,7 @@
   .kpi .sub { font-size: 12px; color: var(--text2); margin-top: 8px; }
 
   .dash-bottom { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+  .dash-toolbar { display: flex; justify-content: flex-end; margin-bottom: 12px; }
 
   .card {
     background: var(--card);
@@ -225,6 +226,7 @@
   .col-cards::-webkit-scrollbar { width: 3px; }
   .col-cards::-webkit-scrollbar-track { background: transparent; }
   .col-cards::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .col-cards.drag-over { outline: 1px dashed var(--green); background: #21301255; border-radius: 8px; }
 
   .deal-card {
     background: var(--card);
@@ -247,6 +249,7 @@
   }
   .deal-card:hover { border-color: var(--green-dim); transform: translateY(-1px); }
   .deal-card:hover::before { opacity: 1; }
+  .deal-card.dragging { opacity: .5; }
 
   .deal-client { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
   .deal-title { font-size: 11px; color: var(--text3); margin-bottom: 8px; line-height: 1.4; }
@@ -413,6 +416,96 @@
   }
   .form-group input:focus, .form-group select:focus { border-color: var(--green-dim); }
   .form-group textarea { resize: vertical; min-height: 80px; }
+
+  .service-picker { position: relative; }
+  .service-picker-input-wrap { display: flex; gap: 8px; }
+  .service-picker-input-wrap input { flex: 1; }
+  .service-add-btn {
+    border: 1px dashed var(--green-dim);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--green);
+    font-family: var(--font-body);
+    font-size: 12px;
+    padding: 0 12px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .service-suggest {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% - 2px);
+    z-index: 5;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    max-height: 220px;
+    overflow-y: auto;
+    display: none;
+  }
+  .service-suggest.open { display: block; }
+  .service-option {
+    padding: 10px 12px;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    border-bottom: 1px solid var(--bg3);
+    cursor: pointer;
+  }
+  .service-option:hover { background: var(--card); }
+  .service-option:last-child { border-bottom: none; }
+  .service-option-name { color: var(--text); font-size: 12px; }
+  .service-option-meta { color: var(--text3); font-size: 11px; white-space: nowrap; }
+  .selected-services { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .selected-service-row {
+    display: grid;
+    grid-template-columns: 1fr 90px 64px 24px;
+    gap: 8px;
+    align-items: center;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+  .selected-service-row .name { font-size: 12px; color: var(--text); }
+  .selected-service-row .meta { font-size: 10px; color: var(--text3); }
+  .selected-service-row input {
+    width: 100%;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+  .selected-service-row .sum { color: var(--green); font-size: 12px; text-align: right; }
+  .remove-service {
+    border: none;
+    background: transparent;
+    color: var(--text3);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .selected-services-empty {
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text3);
+    font-size: 11px;
+  }
+
+  .contacts-editor {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+    background: var(--bg3);
+    margin-top: 8px;
+  }
+  .contacts-toolbar { display: flex; gap: 8px; margin-top: 8px; }
+  .contacts-toolbar .btn-cancel,
+  .contacts-toolbar .btn-save { padding: 8px; font-size: 11px; }
 
   .modal-footer { display: flex; gap: 10px; margin-top: 20px; }
   .btn-cancel {
@@ -595,10 +688,11 @@
     <button onclick="showPage('expenses',this)">💸 <span>Расходы</span></button>
     <button onclick="showPage('equipment',this)">🔧 <span>Техника</span></button>
     <button onclick="showPage('services',this)">🌿 <span>Прайс</span></button>
+    <button onclick="showPage('contacts',this)">👥 <span>Контакты</span></button>
   </nav>
   <div class="header-stat">
     <div class="val" id="hdr-revenue">—</div>
-    <div class="lbl">Выручка 2025</div>
+    <div class="lbl" id="hdr-revenue-label">Выручка 2025</div>
   </div>
 </header>
 
@@ -607,11 +701,15 @@
 ════════════════════════════════════════ -->
 <div class="page active" id="page-dash">
 
+  <div class="dash-toolbar">
+    <select class="filter-sel" id="dash-year" onchange="changeDashYear(this.value)"></select>
+  </div>
+
   <div class="dash-grid">
     <div class="kpi">
       <div class="icon">💰</div>
       <div class="val" id="kpi-revenue">—</div>
-      <div class="lbl">Выручка 2025</div>
+      <div class="lbl" id="kpi-revenue-label">Выручка 2025</div>
       <div class="sub" id="kpi-deals-count">— успешных сделок</div>
     </div>
     <div class="kpi" style="--green:#d4a017">
@@ -733,6 +831,26 @@
   </div>
 </div>
 
+
+
+<!-- ════════════════════════════════════════
+     КОНТАКТЫ
+════════════════════════════════════════ -->
+<div class="page" id="page-contacts">
+  <div class="table-toolbar">
+    <input class="search-input" placeholder="🔍  Поиск контакта..." oninput="filterContacts(this.value)">
+    <button class="btn ml" onclick="openDealModal()">+ Сделка</button>
+  </div>
+  <div class="card">
+    <table>
+      <thead>
+        <tr><th>Имя</th><th>Телефон</th><th>E-mail</th><th>Действие</th></tr>
+      </thead>
+      <tbody id="contacts-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
 <!-- ════════════════════════════════════════
      МОДАЛЬНЫЕ ОКНА
 ════════════════════════════════════════ -->
@@ -785,21 +903,34 @@
 <div class="modal-overlay" id="modal-deal">
   <div class="modal">
     <h2>НОВАЯ СДЕЛКА</h2>
-    <div class="form-group"><label>Клиент</label><input id="f-client" placeholder="Иванов А.П."></div>
+    <div class="form-group">
+      <label>Контакт</label>
+      <select id="f-contact-select" onchange="onContactSelect(this.value)"></select>
+      <div class="contacts-editor">
+        <input id="f-client" placeholder="Имя контакта" style="margin-bottom:8px;">
+        <input id="f-contact-phone" placeholder="Телефон" style="margin-bottom:8px;">
+        <input id="f-contact-email" placeholder="E-mail">
+        <div class="contacts-toolbar">
+          <button type="button" class="btn-cancel" onclick="resetContactForm()">Очистить</button>
+          <button type="button" class="btn-save" onclick="saveContactFromForm()">Сохранить контакт</button>
+        </div>
+      </div>
+    </div>
     <div class="form-group"><label>Название</label><input id="f-title" placeholder="Покос участка, 10 соток"></div>
     <div class="form-group"><label>Адрес</label><input id="f-address" placeholder="ул. Лесная, 12"></div>
     
     <!-- ЗАМЕНЯЕМ это поле -->
     <div class="form-group">
       <label>Услуги</label>
-      <select id="f-services" multiple size="6" style="height: auto; min-height: 120px;">
-        <!-- услуги будут добавлены через JavaScript -->
-      </select>
-      <small style="color: var(--text3); display: block; margin-top: 5px; font-size: 10px;">✓ Удерживайте Ctrl для выбора нескольких услуг</small>
-    </div>
-    <div class="form-group" id="service-quantities" style="display: none;">
-      <label>Количество (для выбранных услуг)</label>
-      <div id="quantity-inputs"></div>
+      <div class="service-picker" id="deal-service-picker">
+        <div class="service-picker-input-wrap">
+          <input id="f-service-search" placeholder="Найти или добавить услугу">
+          <button type="button" class="service-add-btn" onclick="focusServiceSearch()">+ добавить</button>
+        </div>
+        <div class="service-suggest" id="service-suggest"></div>
+        <div class="selected-services" id="selected-services"></div>
+      </div>
+      <small style="color: var(--text3); display: block; margin-top: 5px; font-size: 10px;">Начните вводить название и выберите услугу из выпадающего списка</small>
     </div>
     <!-- Конец замены -->
     
@@ -858,6 +989,10 @@ let STAGES = [];
 let deals = [];
 let expenses = [];
 let equipment = [];
+let contacts = [];
+let draggedDealId = null;
+let dashYear = String(new Date().getFullYear());
+let contactsFilter = "";
 
 const SERVICES = [
   { name:'Покос травы (до 20 см)',         cat:'Покос травы',         unit:'сотка', min:3,  price:350  },
@@ -914,10 +1049,43 @@ function showPage(id, btn) {
 //  ДАШБОРД
 // ════════════════════════════════════════
 
+function getAvailableYears() {
+  const years = new Set();
+  deals.forEach(d => {
+    const y = (d.date || '').slice(0, 4);
+    if (y) years.add(y);
+  });
+  expenses.forEach(e => {
+    const y = (e.date || '').slice(0, 4);
+    if (y) years.add(y);
+  });
+  years.add(String(new Date().getFullYear()));
+  return [...years].sort((a, b) => Number(b) - Number(a));
+}
+
+function buildDashYearFilter() {
+  const select = document.getElementById('dash-year');
+  if (!select) return;
+
+  const years = getAvailableYears();
+  if (!years.includes(dashYear)) dashYear = years[0];
+
+  select.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+  select.value = dashYear;
+}
+
+async function changeDashYear(year) {
+  dashYear = year;
+  await loadAll();
+}
+
 function buildDash() {
-  const successDeals = deals.filter(d => d.stage_id === 6);
+  const dealsForYear = deals.filter(d => (d.date || '').startsWith(dashYear));
+  const expensesForYear = expenses.filter(e => (e.date || '').startsWith(dashYear));
+
+  const successDeals = dealsForYear.filter(d => d.stage_id === 6);
   const revenue = successDeals.reduce((s, d) => s + d.sum, 0);
-  const totalExp = expenses.reduce((s, e) => s + e.amt, 0);
+  const totalExp = expensesForYear.reduce((s, e) => s + e.amt, 0);
   const profit = revenue - totalExp;
   const margin = revenue ? Math.round(profit / revenue * 100) : 0;
   const inRepair = equipment.filter(e => e.status === 'repair').length;
@@ -929,7 +1097,7 @@ function buildDash() {
   document.getElementById('kpi-revenue').textContent   = fmt(revenue) + ' ₽';
   document.getElementById('kpi-deals-count').textContent = successDeals.length + ' успешных сделок';
   document.getElementById('kpi-expenses').textContent  = fmt(totalExp) + ' ₽';
-  document.getElementById('kpi-exp-count').textContent = expenses.length + ' записей';
+  document.getElementById('kpi-exp-count').textContent = expensesForYear.length + ' записей';
 
   const profitEl = document.getElementById('kpi-profit');
   profitEl.textContent = fmt(profit) + ' ₽';
@@ -939,8 +1107,15 @@ function buildDash() {
   document.getElementById('kpi-equip').textContent  = equipment.length;
   document.getElementById('kpi-repair').textContent = inRepair + ' в ремонте';
   document.getElementById('hdr-revenue').textContent = fmt(revenue) + ' ₽';
+  document.getElementById('hdr-revenue-label').textContent = `Выручка ${dashYear}`;
 
-  // График по месяцам
+  document.getElementById('kpi-revenue-label').textContent = `Выручка ${dashYear}`;
+  document.getElementById('kpi-expenses').nextElementSibling.textContent = `Расходы ${dashYear}`;
+  document.getElementById('kpi-profit').nextElementSibling.textContent = `Прибыль ${dashYear}`;
+
+  const chartTitle = document.querySelector('#page-dash .dash-bottom .card:first-child .card-head h3');
+  if (chartTitle) chartTitle.textContent = `Выручка по месяцам (${dashYear})`;
+
   const MONTHS = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
   const byMonth = Array(12).fill(0);
   successDeals.forEach(d => {
@@ -956,9 +1131,8 @@ function buildDash() {
     </div>
   `).join('');
 
-  // Расходы по категориям
   const byCat = {};
-  expenses.forEach(e => { byCat[e.cat] = (byCat[e.cat]||0) + e.amt; });
+  expensesForYear.forEach(e => { byCat[e.cat] = (byCat[e.cat]||0) + e.amt; });
   const maxCat = Math.max(...Object.values(byCat), 1);
   const catList = document.getElementById('exp-cat-list');
   catList.innerHTML = Object.entries(byCat)
@@ -990,9 +1164,9 @@ function buildKanban(filter='') {
           <h4>${stage.name}</h4>
           <div class="col-count">${stageDeal.length}</div>
         </div>
-        <div class="col-cards">
+        <div class="col-cards" ondragover="onColumnDragOver(event)" ondragleave="onColumnDragLeave(event)" ondrop="onDealDrop(event, ${stage.id})">
           ${stageDeal.map(d => `
-            <div class="deal-card" onclick="openDealDetails(${d.id})">
+            <div class="deal-card" draggable="true" ondragstart="onDealDragStart(event, ${d.id})" ondragend="onDealDragEnd(event)" onclick="openDealDetails(${d.id})">
               <div class="deal-client">${d.client}</div>
               <div class="deal-title">${d.title}</div>
               <div class="deal-footer">
@@ -1007,6 +1181,63 @@ function buildKanban(filter='') {
   }).join('');
 }
 
+
+
+function onDealDragStart(event, dealId) {
+  draggedDealId = dealId;
+  event.dataTransfer.effectAllowed = 'move';
+  event.dataTransfer.setData('text/plain', String(dealId));
+  event.currentTarget.classList.add('dragging');
+}
+
+function onDealDragEnd(event) {
+  event.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.col-cards').forEach(col => col.classList.remove('drag-over'));
+}
+
+function onColumnDragOver(event) {
+  event.preventDefault();
+  event.currentTarget.classList.add('drag-over');
+}
+
+function onColumnDragLeave(event) {
+  event.currentTarget.classList.remove('drag-over');
+}
+
+async function onDealDrop(event, stageId) {
+  event.preventDefault();
+  event.currentTarget.classList.remove('drag-over');
+
+  const idFromTransfer = parseInt(event.dataTransfer.getData('text/plain'), 10);
+  const dealId = Number.isFinite(idFromTransfer) ? idFromTransfer : draggedDealId;
+  if (!dealId) return;
+
+  const deal = deals.find(d => d.id === dealId);
+  if (!deal || deal.stage_id === stageId) return;
+
+  const stage = STAGES.find(s => s.id === stageId);
+  if (!stage) return;
+
+  const oldStage = deal.stage_id;
+  deal.stage_id = stageId;
+  buildKanban();
+  buildDash();
+
+  const res = await apiFetch(`/deals/${dealId}/stage`, {
+    method: 'PATCH',
+    body: JSON.stringify({ stage_name: stage.name })
+  });
+
+  if (!res) {
+    deal.stage_id = oldStage;
+    buildKanban();
+    buildDash();
+    showToast('❌ Не удалось переместить сделку');
+    return;
+  }
+
+  showToast(`✅ Сделка перемещена: ${stage.name}`);
+}
 function filterKanban(val) { buildKanban(val); }
 
 // ════════════════════════════════════════
@@ -1110,6 +1341,137 @@ function buildServiceFilter() {
 function filterServices(val) { svcFilter.search = val; renderServices(); }
 function filterServicesCat(val) { svcFilter.cat = val; renderServices(); }
 
+function loadContactsFromStorage() {
+  try {
+    contacts = JSON.parse(localStorage.getItem('crm_contacts') || '[]');
+    if (!Array.isArray(contacts)) contacts = [];
+  } catch {
+    contacts = [];
+  }
+
+  const namesFromDeals = [...new Set(deals.map(d => (d.client || '').trim()).filter(Boolean))];
+  namesFromDeals.forEach(name => {
+    if (!contacts.some(c => c.name === name)) {
+      contacts.push({ id: Date.now() + Math.random(), name, phone: '', email: '' });
+    }
+  });
+
+  persistContacts();
+  renderContactsSelect();
+  renderContactsPage();
+}
+
+function persistContacts() {
+  localStorage.setItem('crm_contacts', JSON.stringify(contacts));
+}
+
+function renderContactsSelect() {
+  const select = document.getElementById('f-contact-select');
+  if (!select) return;
+
+  select.innerHTML = '<option value="">Новый контакт…</option>' + contacts
+    .sort((a, b) => a.name.localeCompare(b.name, 'ru'))
+    .map(c => `<option value="${c.id}">${c.name}${c.phone ? ' — ' + c.phone : ''}</option>`)
+    .join('');
+}
+
+function onContactSelect(contactId) {
+  const contact = contacts.find(c => String(c.id) === String(contactId));
+  if (!contact) {
+    resetContactForm();
+    return;
+  }
+
+  document.getElementById('f-client').value = contact.name || '';
+  document.getElementById('f-contact-phone').value = contact.phone || '';
+  document.getElementById('f-contact-email').value = contact.email || '';
+}
+
+function resetContactForm() {
+  document.getElementById('f-contact-select').value = '';
+  document.getElementById('f-client').value = '';
+  document.getElementById('f-contact-phone').value = '';
+  document.getElementById('f-contact-email').value = '';
+}
+
+function saveContactFromForm() {
+  const name = document.getElementById('f-client').value.trim();
+  const phone = document.getElementById('f-contact-phone').value.trim();
+  const email = document.getElementById('f-contact-email').value.trim();
+  if (!name) {
+    showToast('⚠️ Укажите имя контакта');
+    return;
+  }
+
+  let contact = contacts.find(c => c.name.toLowerCase() === name.toLowerCase());
+  if (contact) {
+    contact.phone = phone;
+    contact.email = email;
+  } else {
+    contact = { id: Date.now(), name, phone, email };
+    contacts.push(contact);
+  }
+
+  persistContacts();
+  renderContactsSelect();
+  renderContactsPage();
+  document.getElementById('f-contact-select').value = String(contact.id);
+  showToast('✅ Контакт сохранён');
+}
+
+function saveContactSilentlyFromDealForm() {
+  const name = document.getElementById('f-client').value.trim();
+  if (!name) return;
+  const phone = document.getElementById('f-contact-phone').value.trim();
+  const email = document.getElementById('f-contact-email').value.trim();
+
+  let contact = contacts.find(c => c.name.toLowerCase() === name.toLowerCase());
+  if (!contact) {
+    contact = { id: Date.now(), name, phone, email };
+    contacts.push(contact);
+  } else {
+    contact.phone = phone;
+    contact.email = email;
+  }
+
+  persistContacts();
+  renderContactsSelect();
+  renderContactsPage();
+}
+
+function renderContactsPage() {
+  const tbody = document.getElementById('contacts-tbody');
+  if (!tbody) return;
+
+  const q = contactsFilter.toLowerCase();
+  const filtered = contacts.filter(c => {
+    if (!q) return true;
+    return [c.name, c.phone, c.email].some(v => (v || '').toLowerCase().includes(q));
+  });
+
+  tbody.innerHTML = filtered.map(c => `
+    <tr>
+      <td style="color:var(--text)">${c.name || '—'}</td>
+      <td>${c.phone || '—'}</td>
+      <td>${c.email || '—'}</td>
+      <td><button class="btn" onclick="createDealForContact('${String(c.id)}')">Сделка</button></td>
+    </tr>
+  `).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:22px">Контактов нет</td></tr>';
+}
+
+function filterContacts(val) {
+  contactsFilter = val || '';
+  renderContactsPage();
+}
+
+function createDealForContact(contactId) {
+  openDealModal();
+  const contact = contacts.find(c => String(c.id) === String(contactId));
+  if (!contact) return;
+  document.getElementById('f-contact-select').value = String(contact.id);
+  onContactSelect(String(contact.id));
+}
+
 // ════════════════════════════════════════
 //  МОДАЛЬНЫЕ ОКНА
 // ════════════════════════════════════════
@@ -1124,11 +1486,16 @@ function resetDealModalState() {
     saveBtn.setAttribute('onclick', 'saveDeal()');
   }
 
-  ['f-client', 'f-title', 'f-address', 'f-services', 'f-sum', 'f-notes'].forEach(id => {
+  ['f-client', 'f-contact-phone', 'f-contact-email', 'f-title', 'f-address', 'f-sum', 'f-notes', 'f-service-search'].forEach(id => {
     const field = document.getElementById(id);
     if (field) field.value = '';
   });
+
+  fillSelectedServicesFromString('');
+  document.getElementById('service-suggest')?.classList.remove('open');
+  document.getElementById('f-contact-select').value = '';
 }
+
 
 function openDealModal() {
   resetDealModalState();
@@ -1155,9 +1522,13 @@ function openDealDetails(dealId) {
   
   // Заполняем форму данными
   document.getElementById('f-client').value = deal.client || '';
+  const contact = contacts.find(c => c.name === (deal.client || ''));
+  document.getElementById('f-contact-phone').value = contact?.phone || '';
+  document.getElementById('f-contact-email').value = contact?.email || '';
+  document.getElementById('f-contact-select').value = contact ? String(contact.id) : '';
   document.getElementById('f-title').value = deal.title || '';
   document.getElementById('f-address').value = deal.address || '';
-  document.getElementById('f-services').value = deal.services || '';
+  fillSelectedServicesFromString(deal.services || '');
   document.getElementById('f-sum').value = deal.sum || '';
   document.getElementById('f-notes').value = deal.notes || '';
   
@@ -1186,6 +1557,7 @@ document.querySelectorAll('.modal-overlay').forEach(m => {
 async function saveDeal() {
   const client = document.getElementById('f-client').value.trim();
   const title  = document.getElementById('f-title').value.trim();
+  saveContactSilentlyFromDealForm();
   if (!client || !title) { alert('Заполните клиента и название'); return; }
 
   const res = await apiFetch('/deals', {
@@ -1195,6 +1567,7 @@ async function saveDeal() {
       client, 
       notes: document.getElementById('f-notes').value, 
       address: document.getElementById('f-address').value,
+      services: getSelectedServices(),
       total: parseFloat(document.getElementById('f-sum').value) || 0
     })
   });
@@ -1209,6 +1582,7 @@ async function saveDeal() {
 async function updateDeal(dealId) {
   const client = document.getElementById('f-client').value.trim();
   const title  = document.getElementById('f-title').value.trim();
+  saveContactSilentlyFromDealForm();
   if (!client || !title) {
     alert('Заполните клиента и название');
     return;
@@ -1309,14 +1683,16 @@ async function loadAll() {
   if (stagesData) STAGES = stagesData.map(s => ({ ...s, color: s.color || '#6B7280' }));
 
   // Сделки
-  const dealsData = await apiFetch('/deals?year=2025');
+  const dealsData = await apiFetch(`/deals?year=${dashYear}`);
   if (dealsData && dealsData.deals) {
     deals = dealsData.deals.map(d => ({
   id: d.id,
   client: d.client,
   title: d.title,
   address: d.address || '',
-  services: d.services || '',
+  services: Array.isArray(d.services)
+    ? d.services.map(s => `${s.name}:${s.qty}`).join(',')
+    : (d.services || ''),
   notes: d.notes || '',
   stage_id: STAGES.find(s => s.name === d.stage)?.id || 1,
   sum: d.total || 0,
@@ -1325,7 +1701,7 @@ async function loadAll() {
   }
 
   // Расходы
-  const expData = await apiFetch('/expenses?year=2025');
+  const expData = await apiFetch('/expenses');
   if (expData && expData.expenses) {
     expenses = expData.expenses.map(e => ({
       id: e.id, date: e.date, name: e.name,
@@ -1344,6 +1720,12 @@ async function loadAll() {
       icon: equip_icon(e.name)
     }));
   }
+
+  // Обновляем контакты
+  loadContactsFromStorage();
+
+  // Фильтр годов дашборда
+  buildDashYearFilter();
 
   // Перерисовываем всё
   buildDash();
@@ -1469,127 +1851,162 @@ function checkAuth() {
 }
 // ========== НОВЫЙ КОД ДЛЯ УСЛУГ ==========
 
-// Загружает услуги в выпадающий список
-function loadServicesDropdown() {
-  const select = document.getElementById('f-services');
-  if (!select) return;
-  
-  // Группируем услуги по категориям
-  const grouped = {};
-  SERVICES.forEach(s => {
-    if (!grouped[s.cat]) grouped[s.cat] = [];
-    grouped[s.cat].push(s);
-  });
-  
-  select.innerHTML = '';
-  
-  // Добавляем опции по категориям
-  Object.keys(grouped).sort().forEach(cat => {
-    // Заголовок категории (невыбираемый)
-    const optgroup = document.createElement('optgroup');
-    optgroup.label = cat;
-    
-    // Услуги в категории
-    grouped[cat].sort((a, b) => a.name.localeCompare(b.name)).forEach(s => {
-      const option = document.createElement('option');
-      option.value = `${s.name}|${s.price}`; // Храним название и цену
-      option.textContent = `${s.name} — ${s.price} ₽/${s.unit}`;
-      option.dataset.unit = s.unit;
-      option.dataset.price = s.price;
-      option.dataset.name = s.name;
-      optgroup.appendChild(option);
-    });
-    
-    select.appendChild(optgroup);
-  });
-  
-  // Добавляем обработчик изменения выбора
-  select.removeEventListener('change', updateQuantityInputs);
-  select.addEventListener('change', updateQuantityInputs);
-}
+let selectedDealServices = [];
 
-// Обновляет поля ввода количества для выбранных услуг
-function updateQuantityInputs() {
-  const select = document.getElementById('f-services');
-  const container = document.getElementById('quantity-inputs');
-  const quantitiesDiv = document.getElementById('service-quantities');
-  
-  if (!select || !container || !quantitiesDiv) return;
-  
-  // Получаем выбранные опции
-  const selected = Array.from(select.selectedOptions);
-  
-  if (selected.length === 0) {
-    quantitiesDiv.style.display = 'none';
-    return;
-  }
-  
-  quantitiesDiv.style.display = 'block';
-  container.innerHTML = '';
-  
-  selected.forEach(option => {
-    const [name, price] = option.value.split('|');
-    const unit = option.dataset.unit || 'шт';
-    
-    const div = document.createElement('div');
-    div.style.marginBottom = '10px';
-    div.style.display = 'flex';
-    div.style.alignItems = 'center';
-    div.style.gap = '10px';
-    
-    div.innerHTML = `
-      <span style="flex: 2; font-size: 12px; color: var(--text);">${name}</span>
-      <input type="number" 
-             class="service-qty" 
-             data-service="${name}"
-             data-price="${price}"
-             min="0" 
-             step="0.1" 
-             value="0" 
-             style="flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; color: var(--text); padding: 5px;">
-      <span style="flex: 0.5; font-size: 12px; color: var(--text2);">${unit}</span>
-    `;
-    
-    container.appendChild(div);
-  });
-  
-  // Добавляем обработчики для автоматического расчета суммы
-  document.querySelectorAll('.service-qty').forEach(input => {
-    input.addEventListener('input', calculateTotalFromServices);
-  });
-}
-
-// Рассчитывает общую сумму на основе выбранных услуг и их количества
-function calculateTotalFromServices() {
-  let total = 0;
-  const quantities = document.querySelectorAll('.service-qty');
-  
-  quantities.forEach(input => {
-    const qty = parseFloat(input.value) || 0;
-    const price = parseFloat(input.dataset.price) || 0;
-    total += qty * price;
-  });
-  
-  const sumInput = document.getElementById('f-sum');
-  if (sumInput) {
-    sumInput.value = Math.round(total);
+function focusServiceSearch() {
+  const input = document.getElementById('f-service-search');
+  if (input) {
+    input.focus();
+    renderServiceSuggestions(input.value.trim());
   }
 }
 
-// Собирает выбранные услуги в строку
-function getSelectedServices() {
-  const selected = [];
-  const quantities = document.querySelectorAll('.service-qty');
-  
-  quantities.forEach(input => {
-    const qty = parseFloat(input.value) || 0;
-    if (qty > 0) {
-      const serviceName = input.dataset.service;
-      selected.push(`${serviceName}:${qty}`);
+function initDealServicePicker() {
+  const input = document.getElementById('f-service-search');
+  const suggest = document.getElementById('service-suggest');
+  if (!input || !suggest) return;
+
+  input.addEventListener('focus', () => renderServiceSuggestions(input.value.trim()));
+  input.addEventListener('input', () => renderServiceSuggestions(input.value.trim()));
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') e.preventDefault();
+  });
+
+  document.addEventListener('click', e => {
+    const picker = document.getElementById('deal-service-picker');
+    if (picker && !picker.contains(e.target)) {
+      suggest.classList.remove('open');
     }
   });
-  
-  return selected.join(',');
+
+  renderSelectedServices();
+}
+
+function renderServiceSuggestions(search = '') {
+  const suggest = document.getElementById('service-suggest');
+  if (!suggest) return;
+
+  const q = search.toLowerCase();
+  const filtered = SERVICES
+    .filter(s => !selectedDealServices.some(item => item.name === s.name))
+    .filter(s => !q || s.name.toLowerCase().includes(q) || s.cat.toLowerCase().includes(q))
+    .slice(0, 12);
+
+  if (!filtered.length) {
+    suggest.innerHTML = '<div class="service-option"><span class="service-option-name">Ничего не найдено</span></div>';
+    suggest.classList.add('open');
+    return;
+  }
+
+  suggest.innerHTML = filtered.map(s => `
+    <div class="service-option" onclick="addServiceToDeal('${s.name.replace(/'/g, "\\'")}')">
+      <div>
+        <div class="service-option-name">${s.name}</div>
+        <div class="service-option-meta">${s.cat}</div>
+      </div>
+      <div class="service-option-meta">${s.price.toLocaleString('ru')} ₽/${s.unit}</div>
+    </div>
+  `).join('');
+
+  suggest.classList.add('open');
+}
+
+function addServiceToDeal(serviceName) {
+  const service = SERVICES.find(s => s.name === serviceName);
+  if (!service || selectedDealServices.some(item => item.name === service.name)) return;
+
+  selectedDealServices.push({
+    name: service.name,
+    price: service.price,
+    unit: service.unit,
+    qty: service.min || 1
+  });
+
+  const input = document.getElementById('f-service-search');
+  if (input) input.value = '';
+
+  renderSelectedServices();
+  calculateTotalFromServices();
+  renderServiceSuggestions('');
+}
+
+function removeSelectedService(name) {
+  selectedDealServices = selectedDealServices.filter(item => item.name !== name);
+  renderSelectedServices();
+  calculateTotalFromServices();
+}
+
+function updateSelectedServiceQty(name, val) {
+  const service = selectedDealServices.find(item => item.name === name);
+  if (!service) return;
+  service.qty = Math.max(0, parseFloat(val) || 0);
+  calculateTotalFromServices();
+  renderSelectedServices();
+}
+
+function renderSelectedServices() {
+  const box = document.getElementById('selected-services');
+  if (!box) return;
+
+  if (!selectedDealServices.length) {
+    box.innerHTML = '<div class="selected-services-empty">Услуги не добавлены</div>';
+    return;
+  }
+
+  box.innerHTML = selectedDealServices.map(item => `
+    <div class="selected-service-row">
+      <div>
+        <div class="name">${item.name}</div>
+        <div class="meta">${item.price.toLocaleString('ru')} ₽ / ${item.unit}</div>
+      </div>
+      <input type="number" min="0" step="0.1" value="${item.qty}" onchange="updateSelectedServiceQty('${item.name.replace(/'/g, "\\'")}', this.value)">
+      <div class="sum">${Math.round(item.qty * item.price).toLocaleString('ru')} ₽</div>
+      <button class="remove-service" type="button" onclick="removeSelectedService('${item.name.replace(/'/g, "\\'")}')">×</button>
+    </div>
+  `).join('');
+}
+
+function calculateTotalFromServices() {
+  const sumInput = document.getElementById('f-sum');
+  if (!sumInput) return;
+
+  const total = selectedDealServices.reduce((acc, item) => acc + item.qty * item.price, 0);
+  sumInput.value = Math.round(total);
+}
+
+function getSelectedServices() {
+  return selectedDealServices
+    .filter(item => item.qty > 0)
+    .map(item => `${item.name}:${item.qty}`)
+    .join(',');
+}
+
+function fillSelectedServicesFromString(rawServices = '') {
+  selectedDealServices = [];
+  if (!rawServices) {
+    renderSelectedServices();
+    return;
+  }
+
+  rawServices
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean)
+    .forEach(pair => {
+      const [rawName, rawQty] = pair.split(':');
+      const name = (rawName || '').trim();
+      if (!name) return;
+
+      const source = SERVICES.find(s => s.name === name);
+      selectedDealServices.push({
+        name,
+        price: source?.price || 0,
+        unit: source?.unit || 'шт',
+        qty: Math.max(0, parseFloat(rawQty) || 0)
+      });
+    });
+
+  renderSelectedServices();
 }
 
 // Инициализация при загрузке страницы
@@ -1603,8 +2020,8 @@ document.addEventListener('DOMContentLoaded', function() {
   // Рендерим прайс (он не требует API)
   renderServices();
   
-  // Загружаем услуги в выпадающий список
-  loadServicesDropdown();
+  // Инициализируем блок выбора услуг
+  initDealServicePicker();
 });
 </script>
 </div><!-- /app -->

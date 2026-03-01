@@ -1,0 +1,11 @@
+# Local runtime data
+crm.db
+*.db
+
+# Local exports/imports
+*.xls
+*.xlsx
+
+# Python cache
+__pycache__/
+*.pyc

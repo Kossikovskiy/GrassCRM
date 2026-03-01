@@ -8,7 +8,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from datetime import datetime, date
-from typing import Optional, List
+from typing import Optional, List, Any
 from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -154,7 +154,15 @@ class DealCreate(BaseModel):
     manager: str = ""
     address: str = ""
     notes: str = ""
-    services: List[DealServiceIn] = []
+    services: Any = []
+
+class DealUpdate(BaseModel):
+    title: str
+    client: str
+    manager: str = ""
+    address: str = ""
+    notes: str = ""
+    services: Any = []
 
 class StageUpdate(BaseModel):
     stage_name: str
@@ -234,6 +242,48 @@ def get_deals(
     return {"deals": result, "count": len(result), "total_sum": sum(d["total"] for d in result)}
 
 
+def _add_services_to_deal(db: DBSession, deal_id: int, services_raw: Any):
+    """Поддерживает оба формата услуг: старый API-список и фронтовую строку name:qty,name2:qty."""
+    if not services_raw:
+        return
+
+    # Формат API: [{service_id, quantity}, ...]
+    if isinstance(services_raw, list):
+        for svc_in in services_raw:
+            try:
+                service_id = int(svc_in.get("service_id")) if isinstance(svc_in, dict) else int(getattr(svc_in, "service_id"))
+                quantity = float(svc_in.get("quantity")) if isinstance(svc_in, dict) else float(getattr(svc_in, "quantity"))
+            except Exception:
+                continue
+            svc = db.query(Service).get(service_id)
+            if svc:
+                qty = max(quantity, svc.min_volume)
+                db.add(DealService(deal_id=deal_id, service_id=svc.id, quantity=qty, price_at_moment=svc.price))
+        return
+
+    # Формат фронта: "Название:2,Название2:1"
+    if isinstance(services_raw, str):
+        for chunk in services_raw.split(','):
+            if ':' not in chunk:
+                continue
+            name, qty_raw = chunk.split(':', 1)
+            name = name.strip()
+            if not name:
+                continue
+            try:
+                qty = max(float(qty_raw), 0)
+            except Exception:
+                qty = 0
+            if qty <= 0:
+                continue
+
+            svc = db.query(Service).filter(Service.name == name).first()
+            if not svc:
+                svc = db.query(Service).filter(Service.name.ilike(f"%{name}%")).first()
+            if svc:
+                db.add(DealService(deal_id=deal_id, service_id=svc.id, quantity=max(qty, svc.min_volume), price_at_moment=svc.price))
+
+
 @app.post("/api/deals", status_code=201)
 def create_deal(body: DealCreate, db: DBSession = Depends(get_db), _=Depends(get_current_user)):
     stage = db.query(Stage).filter_by(name="Начальная").first()
@@ -246,11 +296,27 @@ def create_deal(body: DealCreate, db: DBSession = Depends(get_db), _=Depends(get
     db.add(deal)
     db.flush()
 
-    for svc_in in body.services:
-        svc = db.query(Service).get(svc_in.service_id)
-        if svc:
-            qty = max(svc_in.quantity, svc.min_volume)
-            db.add(DealService(deal_id=deal.id, service_id=svc.id, quantity=qty, price_at_moment=svc.price))
+    _add_services_to_deal(db, deal.id, body.services)
+
+    db.commit()
+    return {"id": deal.id, "title": deal.title, "client": deal.client}
+
+
+@app.put("/api/deals/{deal_id}")
+def update_deal(deal_id: int, body: DealUpdate, db: DBSession = Depends(get_db), _=Depends(get_current_user)):
+    deal = db.query(Deal).get(deal_id)
+    if not deal:
+        raise HTTPException(404, "Сделка не найдена")
+
+    deal.title = body.title
+    deal.client = body.client
+    deal.manager = body.manager
+    deal.address = body.address
+    deal.notes = body.notes
+    deal.updated_at = datetime.utcnow()
+
+    db.query(DealService).filter(DealService.deal_id == deal.id).delete()
+    _add_services_to_deal(db, deal.id, body.services)
 
     db.commit()
     return {"id": deal.id, "title": deal.title, "client": deal.client}

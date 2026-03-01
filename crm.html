@@ -968,14 +968,20 @@ async function apiFetch(path, opts={}) {
     }
     
     if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(errorText);
+      let msg = '';
+      try {
+        const data = await res.json();
+        msg = data.detail || JSON.stringify(data);
+      } catch {
+        msg = await res.text();
+      }
+      throw new Error(msg || `HTTP ${res.status}`);
     }
     
     return await res.json();
   } catch(e) {
     console.error('API error:', e);
-    showToast('❌ Ошибка соединения с сервером');
+    showToast('❌ ' + (e.message || 'Ошибка запроса'));
     return null;
   }
 }

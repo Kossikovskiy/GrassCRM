@@ -47,16 +47,13 @@ SessionFactory = get_session_factory(engine)
 # ════════════════════════════════════════
 #  TELEGRAM — настройки
 # ════════════════════════════════════════
-# Заполните свои данные или задайте через переменные окружения:
-#   TG_TOKEN=xxx TG_CHAT=yyy uvicorn api.main:app
 TG_TOKEN      = os.getenv("TG_TOKEN", "ВСТАВЬТЕ_ТОКЕН_ОТ_BOTFATHER")
 TG_CHAT       = os.getenv("TG_CHAT",  "-4993820220")
-NOTIFY_HOUR   = int(os.getenv("NOTIFY_HOUR",   "9"))   # час   (по МСК)
-NOTIFY_MINUTE = int(os.getenv("NOTIFY_MINUTE", "0"))   # минута
+NOTIFY_HOUR   = int(os.getenv("NOTIFY_HOUR",   "9"))
+NOTIFY_MINUTE = int(os.getenv("NOTIFY_MINUTE", "0"))
 
 
 def tg_send(text: str) -> bool:
-    """Отправить сообщение в Telegram. Возвращает True если успешно."""
     if not TG_TOKEN or TG_TOKEN.startswith("ВСТАВЬТЕ"):
         print("[TG] Токен не задан, пропускаем отправку")
         return False
@@ -76,13 +73,10 @@ def tg_send(text: str) -> bool:
 
 
 def build_morning_report() -> str:
-    """Собирает утренний отчёт из БД."""
-    from datetime import timedelta
     today   = date.today()
     in_week = today + timedelta(days=7)
 
     with SessionFactory() as session:
-        # Активные сделки (Запланировано / В работе / Ожидание)
         active_names  = ["Запланировано", "В работе", "Ожидание"]
         active_stages = session.query(Stage).filter(Stage.name.in_(active_names)).all()
         active_ids    = [s.id for s in active_stages]
@@ -90,19 +84,16 @@ def build_morning_report() -> str:
             Deal.stage_id.in_(active_ids)
         ).order_by(Deal.created_at).all() if active_ids else []
 
-        # Техника — ТО на этой неделе
         equip_soon = session.query(Equipment).filter(
             Equipment.next_maintenance >= today,
             Equipment.next_maintenance <= in_week,
             Equipment.status == "active"
         ).all()
 
-        # Техника в ремонте
         in_repair = session.query(Equipment).filter(
             Equipment.status == "repair"
         ).all()
 
-    # Определяем день недели по-русски
     DAYS = ["Понедельник","Вторник","Среда","Четверг","Пятница","Суббота","Воскресенье"]
     day_name = DAYS[today.weekday()]
 
@@ -112,7 +103,6 @@ def build_morning_report() -> str:
         "",
     ]
 
-    # Активные сделки
     if active_deals:
         lines.append(f"📋 <b>Активных сделок: {len(active_deals)}</b>")
         icons = {"Запланировано": "🗓", "В работе": "⚡", "Ожидание": "⏳"}
@@ -129,7 +119,6 @@ def build_morning_report() -> str:
 
     lines.append("")
 
-    # Техника
     if equip_soon:
         lines.append("🔧 <b>Нужно ТО на этой неделе:</b>")
         for eq in equip_soon:
@@ -150,7 +139,6 @@ def build_morning_report() -> str:
 
 
 def send_morning_report():
-    """Задача планировщика — вызывается каждый день в NOTIFY_HOUR:NOTIFY_MINUTE."""
     print(f"[Scheduler] Запуск утреннего отчёта ({datetime.now().strftime('%H:%M')})")
     try:
         report = build_morning_report()
@@ -160,12 +148,11 @@ def send_morning_report():
 
 
 # ════════════════════════════════════════
-#  LIFESPAN — запуск и остановка сервера
+#  LIFESPAN
 # ════════════════════════════════════════
 
 @asynccontextmanager
 async def lifespan(app):
-    """Запускает планировщик вместе с сервером."""
     try:
         from apscheduler.schedulers.asyncio import AsyncIOScheduler
         from apscheduler.triggers.cron import CronTrigger
@@ -182,7 +169,7 @@ async def lifespan(app):
     except ImportError:
         print("[Scheduler] ⚠️  apscheduler не установлен. Запустите: pip install apscheduler")
 
-    yield  # сервер работает
+    yield
 
     print("[Scheduler] Остановка...")
 
@@ -205,9 +192,6 @@ def get_db():
         db.close()
 
 
-# ── Pydantic schemas ──────────────────────────
-
-
 # ── Auth schemas & endpoints ──────────────────────────────────
 
 class LoginRequest(BaseModel):
@@ -223,7 +207,6 @@ class UserCreate(BaseModel):
 
 @app.post("/api/auth/login")
 def login(body: LoginRequest, db: DBSession = Depends(get_db)):
-    """Вход — возвращает JWT токен"""
     user = db.query(UserModel).filter_by(username=body.username.lower().strip()).first()
     if not user or not user.is_active:
         raise HTTPException(401, "Неверный логин или пароль")
@@ -284,6 +267,7 @@ def delete_user(username: str, db: DBSession = Depends(get_db)):
     return {"detail": f"Пользователь {username} деактивирован"}
 
 
+# ── Pydantic schemas ──────────────────────────
 
 class DealServiceIn(BaseModel):
     service_id: int
@@ -295,7 +279,9 @@ class DealCreate(BaseModel):
     manager: str = ""
     address: str = ""
     notes: str = ""
-    services: List[DealServiceIn] = []
+    services: str = ""        # строка вида "Покос травы:5,Уборка листьев:3"
+    total: float = 0          # итоговая сумма с фронтенда
+    vat_rate: str = "no_vat"  # НДС
 
 class StageUpdate(BaseModel):
     stage_name: str
@@ -314,6 +300,7 @@ class EquipmentCreate(BaseModel):
     serial: str = ""
     purchase_date: Optional[str] = None
     purchase_cost: float = 0
+    engine_hours: float = 0
     status: str = "active"
     notes: str = ""
 
@@ -322,6 +309,8 @@ class MaintenanceCreate(BaseModel):
     description: str
     cost: float = 0
     performed_by: str = ""
+    equipment_id: Optional[int] = None
+    consumables: List[dict] = []
 
 
 # ── STAGES ────────────────────────────────────
@@ -362,13 +351,19 @@ def get_deals(
     result = []
     for d in deals:
         total = sum(ds.quantity * ds.price_at_moment for ds in d.deal_services)
+        # Если сумма из deal_services равна 0, берём сохранённую total
+        if total == 0 and hasattr(d, 'total') and d.total:
+            total = d.total
         result.append({
             "id": d.id, "title": d.title, "client": d.client,
             "stage": d.stage.name if d.stage else None,
             "stage_color": d.stage.color if d.stage else "#6B7280",
             "manager": d.manager, "address": d.address,
+            "notes": d.notes if hasattr(d, 'notes') else "",
+            "vat_rate": d.vat_rate if hasattr(d, 'vat_rate') else "no_vat",
             "total": total,
-            "services": [{"name": ds.service.name if ds.service else "?", "qty": ds.quantity, "price": ds.price_at_moment}
+            "services": [{"name": ds.service.name if ds.service else "?",
+                          "qty": ds.quantity, "price": ds.price_at_moment}
                          for ds in d.deal_services],
             "created_at": d.created_at.isoformat()
         })
@@ -378,20 +373,47 @@ def get_deals(
 @app.post("/api/deals", status_code=201)
 def create_deal(body: DealCreate, db: DBSession = Depends(get_db), _=Depends(get_current_user)):
     stage = db.query(Stage).filter_by(name="Начальная").first()
-    deal = Deal(
-        title=body.title, client=body.client,
-        manager=body.manager, address=body.address,
-        notes=body.notes,
-        stage_id=stage.id if stage else None
-    )
-    db.add(deal)
-    db.flush()
+    if not stage:
+        # Берём первый этап если "Начальная" не найдена
+        stage = db.query(Stage).order_by(Stage.order).first()
 
-    for svc_in in body.services:
-        svc = db.query(Service).get(svc_in.service_id)
-        if svc:
-            qty = max(svc_in.quantity, svc.min_volume)
-            db.add(DealService(deal_id=deal.id, service_id=svc.id, quantity=qty, price_at_moment=svc.price))
+    deal = Deal(
+        title=body.title,
+        client=body.client,
+        manager=body.manager,
+        address=body.address,
+        notes=body.notes,
+        stage_id=stage.id if stage else None,
+    )
+
+    # Сохраняем vat_rate и total если модель поддерживает
+    if hasattr(deal, 'vat_rate'):
+        deal.vat_rate = body.vat_rate
+    if hasattr(deal, 'total'):
+        deal.total = body.total
+
+    db.add(deal)
+    db.commit()
+    return {"id": deal.id, "title": deal.title, "client": deal.client}
+
+
+@app.put("/api/deals/{deal_id}")
+def update_deal(deal_id: int, body: DealCreate, db: DBSession = Depends(get_db), _=Depends(get_current_user)):
+    deal = db.query(Deal).get(deal_id)
+    if not deal:
+        raise HTTPException(404, "Сделка не найдена")
+
+    deal.title   = body.title
+    deal.client  = body.client
+    deal.manager = body.manager
+    deal.address = body.address
+    deal.notes   = body.notes
+    deal.updated_at = datetime.utcnow()
+
+    if hasattr(deal, 'vat_rate'):
+        deal.vat_rate = body.vat_rate
+    if hasattr(deal, 'total'):
+        deal.total = body.total
 
     db.commit()
     return {"id": deal.id, "title": deal.title, "client": deal.client}
@@ -419,10 +441,14 @@ def get_deal(deal_id: int, db: DBSession = Depends(get_db)):
     if not deal:
         raise HTTPException(404, "Сделка не найдена")
     total = sum(ds.quantity * ds.price_at_moment for ds in deal.deal_services)
+    if total == 0 and hasattr(deal, 'total') and deal.total:
+        total = deal.total
     return {
         "id": deal.id, "title": deal.title, "client": deal.client,
         "stage": deal.stage.name if deal.stage else None,
-        "manager": deal.manager, "address": deal.address, "notes": deal.notes,
+        "manager": deal.manager, "address": deal.address,
+        "notes": deal.notes if hasattr(deal, 'notes') else "",
+        "vat_rate": deal.vat_rate if hasattr(deal, 'vat_rate') else "no_vat",
         "total": total,
         "services": [{"id": ds.id, "service_id": ds.service_id,
                       "name": ds.service.name if ds.service else "?",
@@ -431,6 +457,19 @@ def get_deal(deal_id: int, db: DBSession = Depends(get_db)):
                      for ds in deal.deal_services],
         "created_at": deal.created_at.isoformat()
     }
+
+
+@app.delete("/api/deals/{deal_id}", dependencies=[Depends(require_admin)])
+def delete_deal(deal_id: int, db: DBSession = Depends(get_db)):
+    deal = db.query(Deal).get(deal_id)
+    if not deal:
+        raise HTTPException(404, "Сделка не найдена")
+    # Удаляем связанные услуги
+    for ds in deal.deal_services:
+        db.delete(ds)
+    db.delete(deal)
+    db.commit()
+    return {"detail": "Сделка удалена"}
 
 
 # ── EQUIPMENT ─────────────────────────────────
@@ -443,17 +482,22 @@ def get_equipment(status: Optional[str] = Query(None), db: DBSession = Depends(g
     eqs = q.order_by(Equipment.name).all()
     return [{"id": e.id, "name": e.name, "model": e.model, "status": e.status,
              "purchase_cost": e.purchase_cost,
+             "engine_hours": getattr(e, 'engine_hours', 0) or 0,
+             "purchase_date": str(e.purchase_date) if getattr(e, 'purchase_date', None) else None,
              "last_maintenance": str(e.last_maintenance) if e.last_maintenance else None,
              "next_maintenance": str(e.next_maintenance) if e.next_maintenance else None,
              "notes": e.notes} for e in eqs]
 
 
-@app.post("/api/equipment")
+@app.post("/api/equipment", status_code=201)
 def create_equipment(body: EquipmentCreate, db: DBSession = Depends(get_db)):
     eq = Equipment(
-        name=body.name, model=body.model, serial=body.serial,
+        name=body.name, model=body.model,
+        serial=body.serial if hasattr(Equipment, 'serial') else None,
         purchase_cost=body.purchase_cost, status=body.status, notes=body.notes
     )
+    if hasattr(eq, 'engine_hours'):
+        eq.engine_hours = body.engine_hours
     if body.purchase_date:
         try:
             eq.purchase_date = datetime.strptime(body.purchase_date, "%Y-%m-%d").date()
@@ -464,14 +508,41 @@ def create_equipment(body: EquipmentCreate, db: DBSession = Depends(get_db)):
     return {"id": eq.id, "name": eq.name}
 
 
-@app.post("/api/equipment/{equipment_id}/maintenance")
+@app.put("/api/equipment/{equipment_id}")
+def update_equipment(equipment_id: int, body: EquipmentCreate, db: DBSession = Depends(get_db)):
+    eq = db.query(Equipment).get(equipment_id)
+    if not eq:
+        raise HTTPException(404, "Техника не найдена")
+    eq.name   = body.name
+    eq.model  = body.model
+    eq.status = body.status
+    eq.purchase_cost = body.purchase_cost
+    eq.notes  = body.notes
+    if hasattr(eq, 'engine_hours'):
+        eq.engine_hours = body.engine_hours
+    if body.purchase_date:
+        try:
+            eq.purchase_date = datetime.strptime(body.purchase_date, "%Y-%m-%d").date()
+        except ValueError:
+            pass
+    db.commit()
+    return {"id": eq.id, "name": eq.name, "status": eq.status}
+
+
+@app.post("/api/equipment/{equipment_id}/maintenance", status_code=201)
 def add_maintenance(equipment_id: int, body: MaintenanceCreate, db: DBSession = Depends(get_db)):
     eq = db.query(Equipment).get(equipment_id)
     if not eq:
         raise HTTPException(404, "Техника не найдена")
     maint_date = datetime.strptime(body.date, "%Y-%m-%d").date()
-    m = Maintenance(equipment_id=equipment_id, date=maint_date,
-                    description=body.description, cost=body.cost, performed_by=body.performed_by)
+    cost = sum(i.get('quantity', 0) * i.get('unit_cost', 0) for i in body.consumables) if body.consumables else body.cost
+    m = Maintenance(
+        equipment_id=equipment_id,
+        date=maint_date,
+        description=body.description,
+        cost=cost,
+        performed_by=body.performed_by
+    )
     db.add(m)
     today = date.today()
     if maint_date <= today:
@@ -480,6 +551,30 @@ def add_maintenance(equipment_id: int, body: MaintenanceCreate, db: DBSession = 
         eq.next_maintenance = maint_date
     db.commit()
     return {"id": m.id, "equipment": eq.name, "date": str(maint_date)}
+
+
+@app.put("/api/maintenances/{maintenance_id}")
+def update_maintenance(maintenance_id: int, body: MaintenanceCreate, db: DBSession = Depends(get_db)):
+    m = db.query(Maintenance).get(maintenance_id)
+    if not m:
+        raise HTTPException(404, "ТО не найдено")
+    maint_date = datetime.strptime(body.date, "%Y-%m-%d").date()
+    cost = sum(i.get('quantity', 0) * i.get('unit_cost', 0) for i in body.consumables) if body.consumables else body.cost
+    m.date         = maint_date
+    m.description  = body.description
+    m.cost         = cost
+    m.performed_by = body.performed_by
+    if body.equipment_id:
+        m.equipment_id = body.equipment_id
+        eq = db.query(Equipment).get(body.equipment_id)
+        if eq:
+            today = date.today()
+            if maint_date <= today:
+                eq.last_maintenance = maint_date
+            else:
+                eq.next_maintenance = maint_date
+    db.commit()
+    return {"id": m.id, "date": str(maint_date)}
 
 
 @app.patch("/api/equipment/{equipment_id}/status")
@@ -492,6 +587,54 @@ def update_equipment_status(equipment_id: int, status: str, db: DBSession = Depe
     eq.status = status
     db.commit()
     return {"id": eq.id, "name": eq.name, "status": eq.status}
+
+
+# ── MAINTENANCES ──────────────────────────────
+
+@app.get("/api/maintenances")
+def get_maintenances(db: DBSession = Depends(get_db)):
+    rows = db.query(Maintenance).order_by(Maintenance.date.desc()).all()
+    return [{
+        "id": m.id,
+        "equipment": m.equipment.name if m.equipment else "—",
+        "equipment_id": m.equipment_id,
+        "description": m.description,
+        "cost": m.cost,
+        "performed_by": getattr(m, 'performed_by', ''),
+        "date": str(m.date),
+    } for m in rows]
+
+
+# ── CONSUMABLES (заглушка) ────────────────────
+
+@app.get("/api/consumables")
+def get_consumables(db: DBSession = Depends(get_db)):
+    """Возвращает пустой список если таблица расходников не реализована."""
+    try:
+        from models.database import Consumable
+        rows = db.query(Consumable).order_by(Consumable.name).all()
+        return [{
+            "id": c.id, "name": c.name,
+            "stock_quantity": getattr(c, 'stock_quantity', 0),
+            "unit": getattr(c, 'unit', 'шт'),
+            "price_per_unit": getattr(c, 'price_per_unit', 0),
+            "stock_value": getattr(c, 'stock_value', 0),
+            "notes": getattr(c, 'notes', ''),
+        } for c in rows]
+    except Exception:
+        return []
+
+
+@app.post("/api/consumables", status_code=201)
+def create_consumable(body: dict, db: DBSession = Depends(get_db)):
+    try:
+        from models.database import Consumable
+        c = Consumable(**body)
+        db.add(c)
+        db.commit()
+        return {"id": c.id, "name": c.name}
+    except Exception:
+        raise HTTPException(501, "Модель расходников не реализована")
 
 
 # ── EXPENSES ──────────────────────────────────
@@ -523,7 +666,7 @@ def get_expenses(
     }
 
 
-@app.post("/api/expenses")
+@app.post("/api/expenses", status_code=201)
 def create_expense(body: ExpenseCreate, db: DBSession = Depends(get_db), _=Depends(get_current_user)):
     try:
         parsed_date = datetime.strptime(body.date, "%Y-%m-%d").date()
@@ -532,14 +675,27 @@ def create_expense(body: ExpenseCreate, db: DBSession = Depends(get_db), _=Depen
             parsed_date = datetime.strptime(body.date, "%d.%m.%Y").date()
         except ValueError:
             raise HTTPException(400, "Неверный формат даты")
-    
+
     cat = db.query(ExpenseCategory).filter(ExpenseCategory.name.ilike(f"%{body.category}%")).first()
-    exp = Expense(date=parsed_date, name=body.name, category_id=cat.id if cat else None,
-                  amount=body.amount, year=parsed_date.year,
-                  equipment_id=body.equipment_id, notes=body.notes)
+    exp = Expense(
+        date=parsed_date, name=body.name,
+        category_id=cat.id if cat else None,
+        amount=body.amount, year=parsed_date.year,
+        equipment_id=body.equipment_id, notes=body.notes
+    )
     db.add(exp)
     db.commit()
     return {"id": exp.id, "name": exp.name, "amount": exp.amount}
+
+
+@app.delete("/api/expenses/{expense_id}", dependencies=[Depends(require_admin)])
+def delete_expense(expense_id: int, db: DBSession = Depends(get_db)):
+    exp = db.query(Expense).get(expense_id)
+    if not exp:
+        raise HTTPException(404, "Расход не найден")
+    db.delete(exp)
+    db.commit()
+    return {"detail": "Расход удалён"}
 
 
 # ── SERVICES ──────────────────────────────────
@@ -568,18 +724,18 @@ def profit_loss(year: int, db: DBSession = Depends(get_db), _=Depends(get_curren
         extract("year", Deal.created_at) == year,
         Deal.stage_id.in_(success_ids)
     ).all() if success_ids else []
-    
+
     revenue = sum(sum(ds.quantity * ds.price_at_moment for ds in d.deal_services) for d in deals)
-    
+
     exp_rows = db.query(
         ExpenseCategory.name, func.sum(Expense.amount).label("total")
     ).join(Expense, Expense.category_id == ExpenseCategory.id)\
      .filter(Expense.year == year)\
      .group_by(ExpenseCategory.name).all()
-    
+
     total_exp = sum(r.total for r in exp_rows)
     profit = revenue - total_exp
-    
+
     return {
         "year": year, "revenue": revenue, "total_expenses": total_exp,
         "profit": profit, "margin_percent": round(profit / revenue * 100, 1) if revenue else 0,
@@ -590,30 +746,37 @@ def profit_loss(year: int, db: DBSession = Depends(get_db), _=Depends(get_curren
 
 @app.get("/api/reports/export/{report_type}/{year}")
 def export_report(report_type: str, year: int, db: DBSession = Depends(get_db)):
-    """Экспорт отчёта в CSV (Excel-совместимый)"""
     import csv
-    
+
     output = io.StringIO()
     writer = csv.writer(output, delimiter=";")
-    
+
     if report_type == "deals":
         writer.writerow(["ID", "Название", "Клиент", "Этап", "Менеджер", "Сумма", "Дата создания"])
         deals = db.query(Deal).filter(extract("year", Deal.created_at) == year).all()
         for d in deals:
             total = sum(ds.quantity * ds.price_at_moment for ds in d.deal_services)
-            writer.writerow([d.id, d.title, d.client, d.stage.name if d.stage else "", d.manager, total, d.created_at.strftime("%d.%m.%Y")])
-    
+            writer.writerow([d.id, d.title, d.client, d.stage.name if d.stage else "",
+                             d.manager, total, d.created_at.strftime("%d.%m.%Y")])
+
     elif report_type == "expenses":
         writer.writerow(["ID", "Дата", "Наименование", "Категория", "Сумма", "Техника"])
         exps = db.query(Expense).filter(Expense.year == year).order_by(Expense.date).all()
         for e in exps:
-            writer.writerow([e.id, str(e.date), e.name, e.category.name if e.category else "", e.amount, e.equipment.name if e.equipment else ""])
-    
+            writer.writerow([e.id, str(e.date), e.name,
+                             e.category.name if e.category else "", e.amount,
+                             e.equipment.name if e.equipment else ""])
+
     elif report_type == "profit-loss":
         success_ids = [s.id for s in db.query(Stage).filter_by(type="success").all()]
-        deals = db.query(Deal).filter(extract("year", Deal.created_at) == year, Deal.stage_id.in_(success_ids)).all() if success_ids else []
+        deals = db.query(Deal).filter(
+            extract("year", Deal.created_at) == year,
+            Deal.stage_id.in_(success_ids)
+        ).all() if success_ids else []
         revenue = sum(sum(ds.quantity * ds.price_at_moment for ds in d.deal_services) for d in deals)
-        exp_rows = db.query(ExpenseCategory.name, func.sum(Expense.amount).label("total")).join(Expense).filter(Expense.year == year).group_by(ExpenseCategory.name).all()
+        exp_rows = db.query(
+            ExpenseCategory.name, func.sum(Expense.amount).label("total")
+        ).join(Expense).filter(Expense.year == year).group_by(ExpenseCategory.name).all()
         total_exp = sum(r.total for r in exp_rows)
         writer.writerow(["Показатель", "Значение"])
         writer.writerow(["Год", year])
@@ -625,7 +788,7 @@ def export_report(report_type: str, year: int, db: DBSession = Depends(get_db)):
         writer.writerow(["Категория расходов", "Сумма"])
         for r in exp_rows:
             writer.writerow([r.name, r.total])
-    
+
     output.seek(0)
     filename = f"{report_type}_{year}.csv"
     return StreamingResponse(
@@ -635,12 +798,10 @@ def export_report(report_type: str, year: int, db: DBSession = Depends(get_db)):
     )
 
 
-
 # ── TELEGRAM ──────────────────────────────────
 
 @app.post("/api/telegram/test", dependencies=[Depends(require_admin)])
 def telegram_test():
-    """Отправить тестовый отчёт прямо сейчас (только для admin)"""
     report = build_morning_report()
     ok = tg_send(report)
     return {"sent": ok, "preview": report[:300] + "..."}

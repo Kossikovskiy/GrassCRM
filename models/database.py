@@ -67,6 +67,8 @@ class Deal(Base):
     manager = Column(String(100), default="")
     address = Column(String(300), default="")
     notes = Column(Text, default="")
+    equipment_id = Column(Integer, ForeignKey("equipment.id"), nullable=True)
+    planned_engine_hours = Column(Float, default=0.0)
     vat_rate = Column(String(10), default="no_vat")  # no_vat | vat_4 | vat_6
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -74,6 +76,7 @@ class Deal(Base):
 
     stage = relationship("Stage", back_populates="deals")
     deal_services = relationship("DealService", back_populates="deal", cascade="all, delete-orphan")
+    equipment = relationship("Equipment", back_populates="deals")
 
 
 class DealService(Base):
@@ -102,6 +105,8 @@ class Equipment(Base):
     purchase_date = Column(Date, nullable=True)
     purchase_cost = Column(Float, default=0.0)
     engine_hours = Column(Float, default=0.0)
+    fuel_rate = Column(Float, default=0.0)  # литров на моточас
+    fuel_type = Column(String(50), default="gasoline")
     status = Column(String(50), default="active")   # active | repair | retired
     last_maintenance = Column(Date, nullable=True)
     next_maintenance = Column(Date, nullable=True)
@@ -109,6 +114,7 @@ class Equipment(Base):
 
     maintenances = relationship("Maintenance", back_populates="equipment")
     expenses = relationship("Expense", back_populates="equipment")
+    fuel_logs = relationship("FuelConsumption", back_populates="equipment")
 
 
 class Maintenance(Base):
@@ -183,6 +189,35 @@ class Expense(Base):
 
     category = relationship("ExpenseCategory", back_populates="expenses")
     equipment = relationship("Equipment", back_populates="expenses")
+
+
+class FuelConsumption(Base):
+    """Списание ГСМ по сделкам"""
+    __tablename__ = "fuel_consumptions"
+
+    id = Column(Integer, primary_key=True)
+    deal_id = Column(Integer, ForeignKey("deals.id"), nullable=False)
+    equipment_id = Column(Integer, ForeignKey("equipment.id"), nullable=False)
+    liters = Column(Float, nullable=False, default=0.0)
+    comment = Column(String(300), default="")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    deal = relationship("Deal")
+    equipment = relationship("Equipment", back_populates="fuel_logs")
+
+
+class DealHistory(Base):
+    """История изменений по сделке"""
+    __tablename__ = "deal_history"
+
+    id = Column(Integer, primary_key=True)
+    deal_id = Column(Integer, ForeignKey("deals.id"), nullable=False)
+    changed_at = Column(DateTime, default=datetime.utcnow)
+    user = Column(String(100), default="")
+    field = Column(String(50), nullable=False)      # stage | total | services | create | duplicate | other
+    old_value = Column(Text, default="")
+    new_value = Column(Text, default="")
+    comment = Column(String(300), default="")
 
 
 class Task(Base):

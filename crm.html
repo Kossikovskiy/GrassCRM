@@ -1394,7 +1394,7 @@ tr:hover td { background: var(--mist); color: var(--ink); }
     <div class="card">
       <table>
         <thead>
-          <tr><th>Техника</th><th>Статус</th><th>Покупка</th><th>Стоимость</th><th>Моточасы</th><th>Посл. ТО</th><th>След. ТО</th><th></th></tr>
+          <tr><th>Техника</th><th>Статус</th><th>Покупка</th><th>Стоимость</th><th>Моточасы</th><th>Норма ГСМ</th><th>Посл. ТО</th><th>След. ТО</th><th></th></tr>
         </thead>
         <tbody id="equip-tbody"></tbody>
       </table>
@@ -1509,6 +1509,14 @@ tr:hover td { background: var(--mist); color: var(--ink); }
     <div class="form-group"><label>Модель</label><input id="feq-model" placeholder="Husqvarna LC 353V"></div>
     <div class="form-group"><label>Стоимость покупки (₽)</label><input id="feq-cost" type="number" placeholder="45000"></div>
     <div class="form-group"><label>Моточасы</label><input id="feq-hours" type="number" min="0" step="0.1" placeholder="0"></div>
+      <div class="form-group"><label>Норма расхода топлива (л/моточас)</label><input id="feq-fuel-rate" type="number" min="0" step="0.01" placeholder="0.8"></div>
+      <div class="form-group"><label>Тип топлива</label>
+        <select id="feq-fuel-type">
+          <option value="gasoline">Бензин</option>
+          <option value="diesel">Дизель</option>
+          <option value="mix">Смесь</option>
+        </select>
+      </div>
     <div class="form-group"><label>Статус</label>
       <select id="feq-status">
         <option value="active">✅ Активна</option>
@@ -1644,6 +1652,11 @@ tr:hover td { background: var(--mist); color: var(--ink); }
     </div>
     <div class="form-group"><label>Название</label><input id="f-title" placeholder="Покос участка, 10 соток"></div>
     <div class="form-group"><label>Адрес</label><input id="f-address" placeholder="ул. Лесная, 12"></div>
+    <div class="form-group"><label>Техника</label>
+      <select id="f-equip-for-deal">
+        <option value="">— Не назначено —</option>
+      </select>
+    </div>
     <div class="form-group">
       <label>Услуги</label>
       <div class="service-picker" id="deal-service-picker">
@@ -1657,7 +1670,10 @@ tr:hover td { background: var(--mist); color: var(--ink); }
     </div>
     <div class="form-group"><label>Сумма (₽)</label><input id="f-sum" type="number" placeholder="5000"></div>
     <div class="form-group"><label>НДС (включён в стоимость)</label><select id="f-vat"><option value="no_vat">Без НДС</option><option value="vat_4">НДС 4%</option><option value="vat_6">НДС 6%</option></select></div>
-    <div class="form-group" id="f-date-group" style="display:none"><label>Дата сделки</label><input id="f-date" type="date"></div>
+    <div class="form-row">
+      <div class="form-group" id="f-date-group" style="display:none;margin:0"><label>Дата сделки</label><input id="f-date" type="date"></div>
+      <div class="form-group" style="margin:0"><label>План. моточасы (для ГСМ)</label><input id="f-hours" type="number" min="0" step="0.1" placeholder="0"></div>
+    </div>
     <div class="form-group"><label>Примечание</label><input id="f-notes" placeholder="..."></div>
     <div class="form-group"><label>Ответственный сотрудник</label><select id="f-manager-select"><option value="">— Без ответственного —</option></select></div>
     <div class="modal-footer">
@@ -2418,6 +2434,7 @@ function buildEquipment() {
       <td>${e.purchase_date ? formatDate(e.purchase_date) : '—'}</td>
       <td class="money" style="font-size:14px">${(e.cost||0).toLocaleString('ru')} ₽</td>
       <td>${Number(e.engine_hours||0).toFixed(1)}</td>
+      <td>${Number(e.fuel_rate||0).toFixed(2)} л/ч</td>
       <td>${e.last_maintenance ? formatDate(e.last_maintenance) : '—'}</td>
       <td>${e.next_maintenance ? formatDate(e.next_maintenance) : '—'}</td>
       <td>${isAdmin() ? `<button class="tiny-btn" onclick="openEquipModal(${e.id})">Изменить</button>` : ''}</td>
@@ -2430,7 +2447,7 @@ function buildEquipment() {
       <td style="font-size:11px;max-width:140px;white-space:normal">${m.description||'—'}</td>
       <td class="money" style="font-size:13px">${(m.cost||0).toLocaleString('ru')} ₽</td>
       <td>${formatDate(m.date)}</td>
-      <td>${isAdmin() ? `<button class="tiny-btn" onclick="openMaintenanceEdit(${m.id})">Изменить</button>` : ''}</td>
+      <td>${isAdmin() ? `<button class="tiny-btn" onclick="openMaintenanceEdit(${m.id})">Изменить</button><button class="tiny-btn danger" style="margin-left:4px" onclick="event.stopPropagation();deleteMaintenance(${m.id})">Удалить</button>` : ''}</td>
     </tr>
   `).join('') || '<tr><td colspan="5" style="text-align:center;color:#ccc;padding:24px;font-size:12px">ТО пока нет</td></tr>';
 }
@@ -2868,12 +2885,13 @@ function resetDealModalState() {
   document.getElementById('deal-modal-title').innerHTML = 'Новая <em>сделка</em>';
   document.getElementById('deal-save-btn').textContent = 'Создать';
   document.getElementById('deal-save-btn').setAttribute('onclick','saveDeal()');
-  ['f-client','f-contact-phone','f-contact-email','f-title','f-address','f-sum','f-notes','f-service-search'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['f-client','f-contact-phone','f-contact-email','f-title','f-address','f-sum','f-notes','f-service-search','f-hours'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   const msel = document.getElementById('f-manager-select'); if(msel) msel.value='';
   const vatSel=document.getElementById('f-vat'); if(vatSel) vatSel.value='no_vat';
   fillSelectedServicesFromString('');
   document.getElementById('service-suggest')?.classList.remove('open');
   document.getElementById('f-contact-select').value = '';
+  const equipSel = document.getElementById('f-equip-for-deal'); if (equipSel) equipSel.value = '';
   currentEditingDealId = null;
   document.getElementById('deal-delete-btn').style.display = 'none';
   const dateGroup = document.getElementById('f-date-group');
@@ -2897,6 +2915,8 @@ function openEquipModal(equipmentId=null) {
       document.getElementById('feq-cost').value = e.cost||0;
       document.getElementById('feq-status').value = e.status||'active';
       document.getElementById('feq-hours').value = e.engine_hours||0;
+      document.getElementById('feq-fuel-rate').value = e.fuel_rate||0;
+      document.getElementById('feq-fuel-type').value = e.fuel_type||'gasoline';
       document.getElementById('feq-notes').value = e.notes||'';
     }
     title.innerHTML = 'Редактирование <em>техники</em>';
@@ -2981,6 +3001,10 @@ function openDealDetails(dealId) {
   document.getElementById('f-notes').value = deal.notes||'';
   const managerSel = document.getElementById('f-manager-select');
   if (managerSel) managerSel.value = deal.manager||'';
+  const equipSel = document.getElementById('f-equip-for-deal');
+  if (equipSel) equipSel.value = deal.equipment_id ? String(deal.equipment_id) : '';
+  const hoursInput = document.getElementById('f-hours');
+  if (hoursInput) hoursInput.value = deal.planned_engine_hours || 0;
   document.getElementById('deal-modal-title').innerHTML = 'Редактирование <em>сделки</em>';
   document.getElementById('deal-save-btn').textContent = 'Сохранить';
   document.getElementById('deal-save-btn').setAttribute('onclick', `updateDeal(${dealId})`);
@@ -3128,7 +3152,9 @@ async function saveDeal() {
     services: getSelectedServices(),
     service_items: getSelectedServiceItems(),
     total: parseFloat(document.getElementById('f-sum').value)||0,
-    manager: document.getElementById('f-manager-select')?.value||''
+    manager: document.getElementById('f-manager-select')?.value||'',
+    equipment_id: parseInt(document.getElementById('f-equip-for-deal').value,10) || null,
+    planned_engine_hours: parseFloat(document.getElementById('f-hours').value)||0
   };
   if (isAdmin()) payload.date = dateVal;
   const res = await apiFetch('/deals', { method:'POST', body:JSON.stringify(payload) });
@@ -3150,7 +3176,9 @@ async function updateDeal(dealId) {
     services: getSelectedServices(),
     service_items: getSelectedServiceItems(),
     total: parseFloat(document.getElementById('f-sum').value)||0,
-    manager: document.getElementById('f-manager-select')?.value||''
+    manager: document.getElementById('f-manager-select')?.value||'',
+    equipment_id: parseInt(document.getElementById('f-equip-for-deal').value,10) || null,
+    planned_engine_hours: parseFloat(document.getElementById('f-hours').value)||0
   };
   if (isAdmin()) payload.date = dateVal;
   const res = await apiFetch(`/deals/${dealId}`, { method:'PUT', body:JSON.stringify(payload) });
@@ -3170,7 +3198,16 @@ async function saveExpense() {
 async function saveEquip() {
   const name = document.getElementById('feq-name').value.trim();
   if (!name) { alert('Введите название'); return; }
-  const payload = { name, model:document.getElementById('feq-model').value.trim(), purchase_cost:parseFloat(document.getElementById('feq-cost').value)||0, engine_hours:parseFloat(document.getElementById('feq-hours').value)||0, status:document.getElementById('feq-status').value, notes:document.getElementById('feq-notes').value };
+  const payload = {
+    name,
+    model:document.getElementById('feq-model').value.trim(),
+    purchase_cost:parseFloat(document.getElementById('feq-cost').value)||0,
+    engine_hours:parseFloat(document.getElementById('feq-hours').value)||0,
+    fuel_rate:parseFloat(document.getElementById('feq-fuel-rate').value)||0,
+    fuel_type:document.getElementById('feq-fuel-type').value||'gasoline',
+    status:document.getElementById('feq-status').value,
+    notes:document.getElementById('feq-notes').value
+  };
   const isEdit = !!currentEditingEquipmentId;
   const res = await apiFetch(isEdit ? `/equipment/${currentEditingEquipmentId}` : '/equipment', { method:isEdit?'PUT':'POST', body:JSON.stringify(payload) });
   if (!res) return;
@@ -3190,6 +3227,14 @@ async function saveMaintenance() {
   const res = await apiFetch(url, { method, body:JSON.stringify({ date, description, performed_by, consumables: usedConsumables, equipment_id }) });
   if (!res) return;
   closeModal('modal-maintenance'); await loadAll(); showToast(isEdit ? '✅ ТО обновлено' : '✅ ТО добавлено');
+}
+async function deleteMaintenance(id) {
+  if (!isAdmin() || !id) return;
+  if (!confirm('Удалить ТО?')) return;
+  const res = await apiFetch(`/maintenances/${id}`, { method:'DELETE' });
+  if (!res) return;
+  await loadAll();
+  showToast('✅ ТО удалено');
 }
 async function deleteExpense(id) {
   if (!isAdmin()||!confirm('Удалить расход?')) return;
@@ -3237,7 +3282,20 @@ async function loadAll() {
   const expData = await apiFetch('/expenses');
   if (expData?.expenses) expenses = expData.expenses.map(e=>({ id:e.id, date:e.date, name:e.name, cat:e.category||'Прочее', equip:e.equipment||'', amt:e.amount }));
   const equipData = await apiFetch('/equipment');
-  if (equipData) equipment = equipData.map(e=>({ id:e.id, name:e.name, model:e.model, cost:e.purchase_cost, engine_hours:e.engine_hours||0, status:e.status, purchase_date:e.purchase_date||'', last_maintenance:e.last_maintenance||'', next_maintenance:e.next_maintenance||'', notes:e.notes||'' }));
+  if (equipData) equipment = equipData.map(e=>({
+    id:e.id,
+    name:e.name,
+    model:e.model,
+    cost:e.purchase_cost,
+    engine_hours:e.engine_hours||0,
+    status:e.status,
+    purchase_date:e.purchase_date||'',
+    last_maintenance:e.last_maintenance||'',
+    next_maintenance:e.next_maintenance||'',
+    fuel_rate:e.fuel_rate||0,
+    fuel_type:e.fuel_type||'gasoline',
+    notes:e.notes||''
+  }));
   const maintData = await apiFetch('/maintenances');
   maintenances = Array.isArray(maintData) ? maintData : [];
   const consData = await apiFetch('/consumables');

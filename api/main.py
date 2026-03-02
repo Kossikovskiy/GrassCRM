@@ -30,7 +30,8 @@ from api.auth_module import (
 from models.database import (
     get_engine, get_session_factory, init_db,
     Stage, Service, ServiceCategory, Deal, DealService,
-    Equipment, Maintenance, ExpenseCategory, Expense, Task
+    Equipment, Maintenance, ExpenseCategory, Expense,
+    FuelConsumption, DealHistory, Task
 )
 
 engine = get_engine()
@@ -315,6 +316,8 @@ class DealCreate(BaseModel):
     service_items: List[DealServiceItem] = []  # структурированные услуги с фронтенда
     total: float = 0          # итоговая сумма с фронтенда
     vat_rate: str = "no_vat"  # НДС
+    equipment_id: Optional[int] = None
+    planned_engine_hours: float = 0.0
 
 class StageUpdate(BaseModel):
     stage_name: str
@@ -334,6 +337,8 @@ class EquipmentCreate(BaseModel):
     purchase_date: Optional[str] = None
     purchase_cost: float = 0
     engine_hours: float = 0
+    fuel_rate: float = 0
+    fuel_type: str = "gasoline"
     status: str = "active"
     notes: str = ""
 
@@ -400,11 +405,44 @@ def _parse_services_string(raw: str) -> List[DealServiceItem]:
     return items
 
 
-def _apply_deal_services(db: DBSession, deal: Deal, body: DealCreate) -> None:
+def _services_signature(deal: Deal) -> str:
+    parts = []
+    for ds in sorted(deal.deal_services, key=lambda x: (x.service.name if x.service else "", x.quantity)):
+        name = ds.service.name if ds.service else "?"
+        parts.append(f"{name}:{ds.quantity}x{ds.price_at_moment}")
+    return ", ".join(parts)
+
+
+def _log_deal_change(
+    db: DBSession,
+    deal: Deal,
+    field: str,
+    old_value: str,
+    new_value: str,
+    user: str = "",
+    comment: str = "",
+) -> None:
+    if (old_value or "").strip() == (new_value or "").strip():
+        return
+    h = DealHistory(
+        deal_id=deal.id,
+        field=field,
+        old_value=str(old_value or ""),
+        new_value=str(new_value or ""),
+        user=user or "",
+        comment=comment or "",
+    )
+    db.add(h)
+
+
+def _apply_deal_services(db: DBSession, deal: Deal, body: DealCreate, user: str = "") -> None:
     # Приоритет: service_items (структура). Фолбэк: services (строка).
     items = body.service_items or []
     if not items and body.services:
         items = _parse_services_string(body.services)
+
+    # Фиксируем старый состав услуг до замены
+    old_sig = _services_signature(deal)
 
     # Полная замена набора услуг в сделке.
     deal.deal_services.clear()
@@ -437,6 +475,9 @@ def _apply_deal_services(db: DBSession, deal: Deal, body: DealCreate) -> None:
         )
         deal.deal_services.append(ds)
 
+    new_sig = _services_signature(deal)
+    _log_deal_change(db, deal, "services", old_sig, new_sig, user=user)
+
 
 @app.get("/api/deals")
 def get_deals(
@@ -466,23 +507,30 @@ def get_deals(
         if total == 0 and hasattr(d, 'total') and d.total:
             total = d.total
         result.append({
-            "id": d.id, "title": d.title, "client": d.client,
+            "id": d.id,
+            "title": d.title,
+            "client": d.client,
             "stage": d.stage.name if d.stage else None,
             "stage_color": d.stage.color if d.stage else "#6B7280",
-            "manager": d.manager, "address": d.address,
-            "notes": d.notes if hasattr(d, 'notes') else "",
-            "vat_rate": d.vat_rate if hasattr(d, 'vat_rate') else "no_vat",
+            "manager": d.manager,
+            "address": d.address,
+            "notes": d.notes if hasattr(d, "notes") else "",
+            "vat_rate": d.vat_rate if hasattr(d, "vat_rate") else "no_vat",
             "total": total,
-            "services": [{"name": ds.service.name if ds.service else "?",
-                          "qty": ds.quantity, "price": ds.price_at_moment}
-                         for ds in d.deal_services],
-            "created_at": d.created_at.isoformat()
+            "services": [{
+                "name": ds.service.name if ds.service else "?",
+                "qty": ds.quantity,
+                "price": ds.price_at_moment,
+            } for ds in d.deal_services],
+            "created_at": d.created_at.isoformat(),
+            "equipment_id": getattr(d, "equipment_id", None),
+            "planned_engine_hours": getattr(d, "planned_engine_hours", 0.0),
         })
     return {"deals": result, "count": len(result), "total_sum": sum(d["total"] for d in result)}
 
 
 @app.post("/api/deals", status_code=201)
-def create_deal(body: DealCreate, db: DBSession = Depends(get_db), _=Depends(get_current_user)):
+def create_deal(body: DealCreate, db: DBSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     stage = db.query(Stage).filter_by(name="Начальная").first()
     if not stage:
         # Берём первый этап если "Начальная" не найдена
@@ -503,20 +551,35 @@ def create_deal(body: DealCreate, db: DBSession = Depends(get_db), _=Depends(get
     if hasattr(deal, 'total'):
         deal.total = body.total
 
+    if hasattr(deal, 'equipment_id'):
+        deal.equipment_id = body.equipment_id
+    if hasattr(deal, 'planned_engine_hours'):
+        deal.planned_engine_hours = body.planned_engine_hours or 0.0
+
     db.add(deal)
     db.commit()
     db.refresh(deal)
 
-    _apply_deal_services(db, deal, body)
+    username = current_user.get("full_name") or current_user.get("username") or ""
+    _log_deal_change(db, deal, "create", "", f"Создана сделка '{deal.title}' для клиента '{deal.client}'", user=username)
+    _apply_deal_services(db, deal, body, user=username)
+    _maybe_log_fuel(db, deal, user=username)
     db.commit()
     return {"id": deal.id, "title": deal.title, "client": deal.client}
 
 
 @app.put("/api/deals/{deal_id}")
-def update_deal(deal_id: int, body: DealCreate, db: DBSession = Depends(get_db), _=Depends(get_current_user)):
+def update_deal(deal_id: int, body: DealCreate, db: DBSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     deal = db.query(Deal).get(deal_id)
     if not deal:
         raise HTTPException(404, "Сделка не найдена")
+
+    username = current_user.get("full_name") or current_user.get("username") or ""
+
+    old_total = float(getattr(deal, "total", 0) or 0)
+    old_stage_id = deal.stage_id
+    old_equipment_id = getattr(deal, "equipment_id", None)
+    old_hours = float(getattr(deal, "planned_engine_hours", 0) or 0)
 
     deal.title   = body.title
     deal.client  = body.client
@@ -529,25 +592,37 @@ def update_deal(deal_id: int, body: DealCreate, db: DBSession = Depends(get_db),
         deal.vat_rate = body.vat_rate
     if hasattr(deal, 'total'):
         deal.total = body.total
+    if hasattr(deal, 'equipment_id'):
+        deal.equipment_id = body.equipment_id
+    if hasattr(deal, 'planned_engine_hours'):
+        deal.planned_engine_hours = body.planned_engine_hours or 0.0
 
-    _apply_deal_services(db, deal, body)
+    if hasattr(deal, 'total'):
+        new_total = float(deal.total or 0)
+        _log_deal_change(db, deal, "total", old_total, new_total, user=username)
+
+    _apply_deal_services(db, deal, body, user=username)
+    _maybe_log_fuel(db, deal, old_equipment_id=old_equipment_id, old_hours=old_hours, user=username)
 
     db.commit()
     return {"id": deal.id, "title": deal.title, "client": deal.client}
 
 
 @app.patch("/api/deals/{deal_id}/stage")
-def update_deal_stage(deal_id: int, body: StageUpdate, db: DBSession = Depends(get_db)):
+def update_deal_stage(deal_id: int, body: StageUpdate, db: DBSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     deal = db.query(Deal).get(deal_id)
     if not deal:
         raise HTTPException(404, "Сделка не найдена")
     stage = db.query(Stage).filter(Stage.name.ilike(f"%{body.stage_name}%")).first()
     if not stage:
         raise HTTPException(404, f"Этап '{body.stage_name}' не найден")
+    old_stage = deal.stage.name if deal.stage else ""
     deal.stage_id = stage.id
     deal.updated_at = datetime.utcnow()
     if stage.is_final:
         deal.closed_at = datetime.utcnow()
+    username = current_user.get("full_name") or current_user.get("username") or ""
+    _log_deal_change(db, deal, "stage", old_stage, stage.name, user=username)
     db.commit()
     return {"deal_id": deal.id, "new_stage": stage.name}
 
@@ -567,11 +642,16 @@ def get_deal(deal_id: int, db: DBSession = Depends(get_db)):
         "notes": deal.notes if hasattr(deal, 'notes') else "",
         "vat_rate": deal.vat_rate if hasattr(deal, 'vat_rate') else "no_vat",
         "total": total,
-        "services": [{"id": ds.id, "service_id": ds.service_id,
-                      "name": ds.service.name if ds.service else "?",
-                      "quantity": ds.quantity, "price": ds.price_at_moment,
-                      "subtotal": ds.quantity * ds.price_at_moment}
-                     for ds in deal.deal_services],
+        "equipment_id": getattr(deal, "equipment_id", None),
+        "planned_engine_hours": getattr(deal, "planned_engine_hours", 0.0),
+        "services": [{
+            "id": ds.id,
+            "service_id": ds.service_id,
+            "name": ds.service.name if ds.service else "?",
+            "quantity": ds.quantity,
+            "price": ds.price_at_moment,
+            "subtotal": ds.quantity * ds.price_at_moment,
+        } for ds in deal.deal_services],
         "created_at": deal.created_at.isoformat()
     }
 
@@ -589,6 +669,96 @@ def delete_deal(deal_id: int, db: DBSession = Depends(get_db)):
     return {"detail": "Сделка удалена"}
 
 
+@app.post("/api/deals/{deal_id}/duplicate", status_code=201)
+def duplicate_deal(deal_id: int, db: DBSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    """Создаёт копию сделки с теми же услугами."""
+    src = db.query(Deal).get(deal_id)
+    if not src:
+        raise HTTPException(404, "Исходная сделка не найдена")
+
+    # По умолчанию ставим начальный этап, как при обычном создании
+    stage = db.query(Stage).filter_by(name="Начальная").first()
+    if not stage:
+        stage = db.query(Stage).order_by(Stage.order).first()
+
+    deal = Deal(
+        title=src.title,
+        client=src.client,
+        manager=src.manager,
+        address=src.address,
+        notes=src.notes,
+        stage_id=stage.id if stage else src.stage_id,
+        vat_rate=getattr(src, "vat_rate", "no_vat"),
+        total=getattr(src, "total", 0),
+        equipment_id=getattr(src, "equipment_id", None),
+        planned_engine_hours=getattr(src, "planned_engine_hours", 0.0),
+    )
+    db.add(deal)
+    db.flush()
+
+    # Копируем услуги
+    for ds in src.deal_services:
+        copy = DealService(
+            deal_id=deal.id,
+            service_id=ds.service_id,
+            quantity=ds.quantity,
+            price_at_moment=ds.price_at_moment,
+            notes=ds.notes,
+        )
+        db.add(copy)
+
+    username = current_user.get("full_name") or current_user.get("username") or ""
+    _log_deal_change(
+        db,
+        deal,
+        "duplicate",
+        "",
+        f"Сделка создана как дубликат #{src.id}",
+        user=username,
+    )
+
+    _maybe_log_fuel(db, deal, user=username)
+    db.commit()
+    db.refresh(deal)
+    return {"id": deal.id, "title": deal.title, "client": deal.client}
+
+
+def _maybe_log_fuel(
+    db: DBSession,
+    deal: Deal,
+    old_equipment_id: Optional[int] = None,
+    old_hours: float = 0.0,
+    user: str = "",
+) -> None:
+    """Автоматическое создание записи по ГСМ при назначении техники на сделку.
+
+    Простая модель: списываем fuel_rate * planned_engine_hours литров при наличии
+    техники и нормы расхода > 0 и положительных моточасов.
+    При смене техники или часов — создаём новую запись.
+    """
+    equipment_id = getattr(deal, "equipment_id", None)
+    hours = float(getattr(deal, "planned_engine_hours", 0) or 0)
+    if not equipment_id or hours <= 0:
+        return
+
+    eq = db.query(Equipment).get(equipment_id)
+    if not eq or not getattr(eq, "fuel_rate", 0):
+        return
+
+    liters = float(eq.fuel_rate or 0) * hours
+    if liters <= 0:
+        return
+
+    comment = f"Автосписание ГСМ: {hours} моточасов * {eq.fuel_rate} л/ч (сделка #{deal.id})"
+    log = FuelConsumption(
+        deal_id=deal.id,
+        equipment_id=equipment_id,
+        liters=liters,
+        comment=comment,
+    )
+    db.add(log)
+
+
 # ── EQUIPMENT ─────────────────────────────────
 
 @app.get("/api/equipment")
@@ -597,24 +767,35 @@ def get_equipment(status: Optional[str] = Query(None), db: DBSession = Depends(g
     if status:
         q = q.filter(Equipment.status == status)
     eqs = q.order_by(Equipment.name).all()
-    return [{"id": e.id, "name": e.name, "model": e.model, "status": e.status,
-             "purchase_cost": e.purchase_cost,
-             "engine_hours": getattr(e, 'engine_hours', 0) or 0,
-             "purchase_date": str(e.purchase_date) if getattr(e, 'purchase_date', None) else None,
-             "last_maintenance": str(e.last_maintenance) if e.last_maintenance else None,
-             "next_maintenance": str(e.next_maintenance) if e.next_maintenance else None,
-             "notes": e.notes} for e in eqs]
+    return [{
+        "id": e.id,
+        "name": e.name,
+        "model": e.model,
+        "status": e.status,
+        "purchase_cost": e.purchase_cost,
+        "engine_hours": getattr(e, "engine_hours", 0) or 0,
+        "purchase_date": str(e.purchase_date) if getattr(e, "purchase_date", None) else None,
+        "last_maintenance": str(e.last_maintenance) if e.last_maintenance else None,
+        "next_maintenance": str(e.next_maintenance) if e.next_maintenance else None,
+        "fuel_rate": getattr(e, "fuel_rate", 0) or 0,
+        "fuel_type": getattr(e, "fuel_type", "gasoline"),
+        "notes": e.notes,
+    } for e in eqs]
 
 
 @app.post("/api/equipment", status_code=201)
 def create_equipment(body: EquipmentCreate, db: DBSession = Depends(get_db)):
     eq = Equipment(
-        name=body.name, model=body.model,
-        serial=body.serial if hasattr(Equipment, 'serial') else None,
-        purchase_cost=body.purchase_cost, status=body.status, notes=body.notes
+        name=body.name,
+        model=body.model,
+        serial=body.serial if hasattr(Equipment, "serial") else None,
+        purchase_cost=body.purchase_cost,
+        status=body.status,
+        notes=body.notes,
+        engine_hours=body.engine_hours,
+        fuel_rate=body.fuel_rate,
+        fuel_type=body.fuel_type or "gasoline",
     )
-    if hasattr(eq, 'engine_hours'):
-        eq.engine_hours = body.engine_hours
     if body.purchase_date:
         try:
             eq.purchase_date = datetime.strptime(body.purchase_date, "%Y-%m-%d").date()
@@ -630,13 +811,17 @@ def update_equipment(equipment_id: int, body: EquipmentCreate, db: DBSession = D
     eq = db.query(Equipment).get(equipment_id)
     if not eq:
         raise HTTPException(404, "Техника не найдена")
-    eq.name   = body.name
-    eq.model  = body.model
+    eq.name = body.name
+    eq.model = body.model
     eq.status = body.status
     eq.purchase_cost = body.purchase_cost
-    eq.notes  = body.notes
-    if hasattr(eq, 'engine_hours'):
+    eq.notes = body.notes
+    if hasattr(eq, "engine_hours"):
         eq.engine_hours = body.engine_hours
+    if hasattr(eq, "fuel_rate"):
+        eq.fuel_rate = body.fuel_rate
+    if hasattr(eq, "fuel_type"):
+        eq.fuel_type = body.fuel_type or "gasoline"
     if body.purchase_date:
         try:
             eq.purchase_date = datetime.strptime(body.purchase_date, "%Y-%m-%d").date()
@@ -692,6 +877,16 @@ def update_maintenance(maintenance_id: int, body: MaintenanceCreate, db: DBSessi
                 eq.next_maintenance = maint_date
     db.commit()
     return {"id": m.id, "date": str(maint_date)}
+
+
+@app.delete("/api/maintenances/{maintenance_id}", dependencies=[Depends(require_admin)])
+def delete_maintenance(maintenance_id: int, db: DBSession = Depends(get_db)):
+    m = db.query(Maintenance).get(maintenance_id)
+    if not m:
+        raise HTTPException(404, "ТО не найдено")
+    db.delete(m)
+    db.commit()
+    return {"detail": "ТО удалено"}
 
 
 @app.patch("/api/equipment/{equipment_id}/status")

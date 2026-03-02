@@ -510,16 +510,9 @@ tr:hover td { background: var(--mist); color: var(--ink); }
   cursor: pointer;
   transition: all .2s;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  flex-shrink: 0;
   box-shadow: 0 1px 4px rgba(20,40,16,.05);
-}
-.deal-card::before {
-  content: '';
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 3px;
-  background: var(--stage-color, var(--fern));
-  border-radius: 8px 0 0 8px;
 }
 .deal-card:hover { border-color: var(--stage-color, var(--fern)); transform: translateY(-2px); box-shadow: 0 6px 20px var(--shadow); }
 .deal-card.dragging { opacity: .4; }

@@ -27,6 +27,24 @@
   --border: #dde8d9;
 }
 
+html[data-theme="dark"] {
+  --ink: #e9f6e6;
+  --forest: #0f2311;
+  --moss: #1c3a18;
+  --fern: #7ccf6a;
+  --sage: #9fe089;
+  --dew: #132916;
+  --mist: #0c180d;
+  --parchment: #0b120b;
+  --cream: #070e07;
+  --gold: #e0b84a;
+  --gold-light: #f0d37a;
+  --rust: #ff7a64;
+  --shadow: rgba(0,0,0,.35);
+  --shadow-deep: rgba(0,0,0,.55);
+  --border: #203a22;
+}
+
 html { scroll-behavior: smooth; }
 
 body {
@@ -285,6 +303,8 @@ nav button.active::after { transform: scaleX(1); }
   transition: background .2s;
   position: relative;
 }
+.kpi.clickable { cursor: pointer; }
+.kpi.clickable:active { transform: translateY(1px); }
 .kpi:hover { background: var(--mist); }
 .kpi::after {
   content: '';
@@ -293,6 +313,8 @@ nav button.active::after { transform: scaleX(1); }
   height: 1px;
   background: var(--dew);
 }
+.card.clickable { cursor: pointer; }
+.card.clickable:active { transform: translateY(1px); }
 
 .kpi .icon { font-size: 22px; margin-bottom: 16px; opacity: .7; }
 .kpi .val {
@@ -399,6 +421,24 @@ select.filter-sel {
   outline: none;
   cursor: pointer;
 }
+
+.icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--cream);
+  color: var(--fern);
+  cursor: pointer;
+  font-family: 'Geologica', sans-serif;
+  font-size: 14px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .2s;
+}
+.icon-btn:hover { background: var(--mist); border-color: var(--dew); }
 
 .btn {
   background: var(--forest);
@@ -1063,6 +1103,29 @@ tr:hover td { background: var(--mist); color: var(--ink); }
   .page { padding: 20px 16px; }
   header { padding: 0 16px; }
   .header-stat { display: none; }
+
+  /* Верхние панели страниц (заголовок + кнопки) */
+  .page > div[style*="justify-content:space-between"][style*="margin-bottom:24px"],
+  .page > div[style*="justify-content:space-between"][style*="margin-bottom:28px"] {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .page > div[style*="justify-content:space-between"] > button.btn { width: 100%; }
+
+  /* Тулбары таблиц (поиск/фильтры/кнопка) */
+  .table-toolbar { flex-wrap: wrap; align-items: stretch; }
+  .search-input { width: 100%; }
+  select.filter-sel { flex: 1; min-width: 140px; }
+  .btn.ml { margin-left: 0; width: 100%; }
+
+  /* Таблицы на "Прайс/Склад/Техника" — горизонтальный скролл вместо выхода за экран */
+  #page-services .card,
+  #page-stock .card,
+  #page-equipment .card { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  #page-services table,
+  #page-stock table,
+  #page-equipment table { min-width: 720px; }
 }
 
 /* ════ MOBILE BOTTOM NAV ════ */
@@ -1150,6 +1213,7 @@ tr:hover td { background: var(--mist); color: var(--ink); }
     <button onclick="showPage('services',this)"><span>Прайс</span></button>
     <button onclick="showPage('contacts',this)"><span>Контакты</span></button>
   </nav>
+  <button class="icon-btn" id="theme-toggle" onclick="toggleTheme()" title="Тёмная тема">🌙</button>
   <div class="header-stat">
     <div class="val" id="hdr-revenue">—</div>
     <div class="lbl" id="hdr-revenue-label">Выручка 2025</div>
@@ -1163,29 +1227,32 @@ tr:hover td { background: var(--mist); color: var(--ink); }
       <div class="section-label"><div class="label-line"></div><span class="label-text">Обзор</span></div>
       <div class="page-title">Ключевые <em>показатели</em></div>
     </div>
-    <select class="filter-sel" id="dash-year" onchange="changeDashYear(this.value)"></select>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button class="icon-btn" onclick="refreshAll()" title="Обновить данные">↻</button>
+      <select class="filter-sel" id="dash-year" onchange="changeDashYear(this.value)"></select>
+    </div>
   </div>
 
   <div class="dash-grid">
-    <div class="kpi">
+    <div class="kpi clickable" onclick="dashGo('revenue')">
       <div class="icon">💰</div>
       <div class="val" id="kpi-revenue">—</div>
       <div class="lbl" id="kpi-revenue-label">Выручка</div>
       <div class="sub" id="kpi-deals-count">— успешных сделок</div>
     </div>
-    <div class="kpi">
+    <div class="kpi clickable" onclick="dashGo('expenses')">
       <div class="icon">📉</div>
       <div class="val" id="kpi-expenses" style="color:var(--gold)">—</div>
       <div class="lbl">Расходы</div>
       <div class="sub" id="kpi-exp-count">— записей</div>
     </div>
-    <div class="kpi">
+    <div class="kpi clickable" onclick="dashGo('profit')">
       <div class="icon">📈</div>
       <div class="val" id="kpi-profit">—</div>
       <div class="lbl">Прибыль</div>
       <div class="sub" id="kpi-margin">маржа —%</div>
     </div>
-    <div class="kpi">
+    <div class="kpi clickable" onclick="dashGo('equipment')">
       <div class="icon">🔧</div>
       <div class="val" id="kpi-equip">—</div>
       <div class="lbl">Единиц техники</div>
@@ -1194,7 +1261,7 @@ tr:hover td { background: var(--mist); color: var(--ink); }
   </div>
 
   <div class="dash-bottom">
-    <div class="card">
+    <div class="card clickable" onclick="dashGo('revenue')">
       <div class="card-head">
         <h3 id="bar-chart-title">Выручка по месяцам</h3>
       </div>
@@ -1202,7 +1269,7 @@ tr:hover td { background: var(--mist); color: var(--ink); }
         <div class="bar-chart" id="bar-chart"></div>
       </div>
     </div>
-    <div class="card">
+    <div class="card clickable" onclick="dashGo('expenses')">
       <div class="card-head"><h3>Расходы по категориям</h3></div>
       <div class="card-body">
         <div class="expense-list" id="exp-cat-list"></div>
@@ -1729,10 +1796,16 @@ function resetServicesToDefault() {
 
 /* ── НАВИГАЦИЯ ── */
 function showPage(id, btn) {
+  const ids = ['dash','kanban','expenses','equipment','stock','services','contacts'];
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
-  btn.classList.add('active');
+  if (btn) btn.classList.add('active');
+  else {
+    const idx = ids.indexOf(id);
+    const desktopButtons = document.querySelectorAll('nav button');
+    if (idx >= 0 && desktopButtons[idx]) desktopButtons[idx].classList.add('active');
+  }
   syncMobileNav(id);
 }
 
@@ -1741,6 +1814,52 @@ function syncMobileNav(id) {
   const pageIndex = ['dash','kanban','expenses','equipment','stock','services','contacts'].indexOf(id);
   const mobileButtons = document.querySelectorAll('#mobile-nav button');
   if (pageIndex >= 0 && mobileButtons[pageIndex]) mobileButtons[pageIndex].classList.add('active');
+}
+
+function dashGo(kind) {
+  if (kind === 'expenses') {
+    showPage('expenses');
+    expFilter.year = dashYear || '';
+    const sel = document.getElementById('exp-year-filter');
+    if (sel) sel.value = expFilter.year || '';
+    renderExpenses();
+    return;
+  }
+  if (kind === 'equipment') {
+    showPage('equipment');
+    return;
+  }
+  // revenue/profit -> канбан
+  showPage('kanban');
+  kanbanFilter.year = dashYear || '';
+  buildKanbanYearFilter();
+  buildKanban();
+}
+
+async function refreshAll() {
+  await loadAll();
+}
+
+function applyTheme(theme) {
+  const t = (theme === 'dark') ? 'dark' : 'light';
+  if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  else document.documentElement.removeAttribute('data-theme');
+  localStorage.setItem('crm_theme', t);
+  const btn = document.getElementById('theme-toggle');
+  if (btn) {
+    btn.textContent = (t === 'dark') ? '☀' : '🌙';
+    btn.title = (t === 'dark') ? 'Светлая тема' : 'Тёмная тема';
+  }
+}
+
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  applyTheme(cur === 'dark' ? 'light' : 'dark');
+}
+
+function initTheme() {
+  const saved = localStorage.getItem('crm_theme');
+  applyTheme(saved === 'dark' ? 'dark' : 'light');
 }
 
 
@@ -2123,7 +2242,13 @@ function deleteCurrentService() {
 function loadContactsFromStorage() {
   try { contacts = JSON.parse(localStorage.getItem('crm_contacts')||'[]'); if(!Array.isArray(contacts)) contacts=[]; } catch { contacts=[]; }
   const namesFromDeals = [...new Set(deals.map(d=>(d.client||'').trim()).filter(Boolean))];
-  namesFromDeals.forEach(name => { if(!contacts.some(c=>c.name===name)) contacts.push({id:Date.now()+Math.random(),name,phone:'',email:''}); });
+  namesFromDeals.forEach(name => {
+    const nn = (name||'').trim();
+    if (!nn) return;
+    if (!contacts.some(c => (c.name||'').toLowerCase().trim() === nn.toLowerCase().trim())) {
+      contacts.push({id:Date.now()+Math.random(),name:nn,phone:'',email:''});
+    }
+  });
   persistContacts(); renderContactsSelect(); renderContactsPage();
 }
 function persistContacts() { localStorage.setItem('crm_contacts', JSON.stringify(contacts)); }
@@ -2144,23 +2269,41 @@ function resetContactForm() {
   ['f-client','f-contact-phone','f-contact-email'].forEach(id=>document.getElementById(id).value='');
 }
 function saveContactFromForm() {
+  const selectedId = document.getElementById('f-contact-select').value;
   const name = document.getElementById('f-client').value.trim();
   if (!name) { showToast('⚠️ Укажите имя'); return; }
   const phone = document.getElementById('f-contact-phone').value.trim();
   const email = document.getElementById('f-contact-email').value.trim();
-  let c = contacts.find(x=>x.name.toLowerCase()===name.toLowerCase());
-  if (c) { c.phone=phone; c.email=email; } else { c={id:Date.now(),name,phone,email}; contacts.push(c); }
+  let c = selectedId ? contacts.find(x=>String(x.id)===String(selectedId)) : null;
+  if (!c) c = contacts.find(x=>(x.name||'').toLowerCase().trim()===name.toLowerCase().trim());
+  if (c) {
+    c.name = name;
+    c.phone = phone;
+    c.email = email;
+  } else {
+    c = {id:Date.now(),name,phone,email};
+    contacts.push(c);
+  }
   persistContacts(); renderContactsSelect(); renderContactsPage();
   document.getElementById('f-contact-select').value = String(c.id);
   showToast('✅ Контакт сохранён');
 }
 function saveContactSilentlyFromDealForm() {
+  const selectedId = document.getElementById('f-contact-select').value;
   const name = document.getElementById('f-client').value.trim();
   if (!name) return;
   const phone = document.getElementById('f-contact-phone').value.trim();
   const email = document.getElementById('f-contact-email').value.trim();
-  let c = contacts.find(x=>x.name.toLowerCase()===name.toLowerCase());
-  if (!c) { c={id:Date.now(),name,phone,email}; contacts.push(c); } else { c.phone=phone; c.email=email; }
+  let c = selectedId ? contacts.find(x=>String(x.id)===String(selectedId)) : null;
+  if (!c) c = contacts.find(x=>(x.name||'').toLowerCase().trim()===name.toLowerCase().trim());
+  if (!c) {
+    c = {id:Date.now(),name,phone,email};
+    contacts.push(c);
+  } else {
+    c.name = name;
+    c.phone = phone;
+    c.email = email;
+  }
   persistContacts(); renderContactsSelect(); renderContactsPage();
 }
 function renderContactsPage() {
@@ -2194,16 +2337,18 @@ function openContactEditModal(contactId) {
   document.getElementById('modal-contact-edit').classList.add('open');
 }
 
-function saveContactEdit() {
+async function saveContactEdit() {
   const name = document.getElementById('fce-name').value.trim();
   if (!name) { showToast('⚠️ Укажите имя'); return; }
   const phone = document.getElementById('fce-phone').value.trim();
   const email = document.getElementById('fce-email').value.trim();
   const c = contacts.find(x=>String(x.id)===String(currentEditingContactId));
   if (!c) return;
+  const oldName = c.name || '';
   c.name = name; c.phone = phone; c.email = email;
   persistContacts(); renderContactsSelect(); renderContactsPage();
   closeModal('modal-contact-edit');
+  await propagateContactRename(oldName, name);
   showToast('✅ Контакт обновлён');
 }
 
@@ -2223,6 +2368,62 @@ function createDealForContact(contactId) {
   if (!c) return;
   document.getElementById('f-contact-select').value = String(c.id);
   onContactSelect(String(c.id));
+}
+
+function serviceItemsFromServicesString(raw='') {
+  const items = [];
+  if (!raw) return items;
+  raw.split(',').map(i=>i.trim()).filter(Boolean).forEach(pair=>{
+    const [rn,rq]=pair.split(':');
+    const name=(rn||'').trim();
+    if(!name) return;
+    const qty=Math.max(0, parseFloat(rq)||0);
+    if(qty<=0) return;
+    const src=SERVICES.find(s=>s.name===name);
+    items.push({ name, quantity: qty, price: src?.price||0, unit: src?.unit||'шт', category: src?.cat||'' });
+  });
+  return items;
+}
+
+function getDealServiceItemsForPayload(deal) {
+  if (Array.isArray(deal?.service_items) && deal.service_items.length) {
+    return deal.service_items.map(i => ({
+      name: i.name,
+      quantity: parseFloat(i.qty ?? i.quantity) || 0,
+      price: parseFloat(i.price) || 0,
+      unit: i.unit || 'ед',
+      category: i.category || ''
+    })).filter(i => i.quantity > 0);
+  }
+  return serviceItemsFromServicesString(deal?.services || '');
+}
+
+async function propagateContactRename(oldName, newName) {
+  const from = (oldName||'').toLowerCase().trim();
+  const to = (newName||'').toLowerCase().trim();
+  if (!from || !to || from === to) return;
+
+  const affected = deals.filter(d => (d.client||'').toLowerCase().trim() === from);
+  if (!affected.length) return;
+
+  showToast('⏳ Обновляем сделки...');
+  for (const d of affected) {
+    d.client = newName;
+    const payload = {
+      title: d.title || '',
+      client: newName,
+      manager: d.manager || '',
+      address: d.address || '',
+      notes: d.notes || '',
+      vat_rate: d.vat_rate || 'no_vat',
+      services: d.services || '',
+      service_items: getDealServiceItemsForPayload(d),
+      total: parseFloat(d.sum) || 0,
+    };
+    const res = await apiFetch(`/deals/${d.id}`, { method:'PUT', body: JSON.stringify(payload) });
+    if (!res) break;
+  }
+  await loadAll();
 }
 
 /* ── CONTACT DRAWER ── */
@@ -2427,13 +2628,14 @@ function openDealDetails(dealId) {
   const deal = deals.find(d=>d.id===dealId);
   if (!deal) return;
   document.getElementById('f-client').value = deal.client||'';
-  const c = contacts.find(x=>x.name===(deal.client||''));
+  const c = contacts.find(x => (x.name||'').toLowerCase().trim() === (deal.client||'').toLowerCase().trim());
   document.getElementById('f-contact-phone').value = c?.phone||'';
   document.getElementById('f-contact-email').value = c?.email||'';
   document.getElementById('f-contact-select').value = c ? String(c.id) : '';
   document.getElementById('f-title').value = deal.title||'';
   document.getElementById('f-address').value = deal.address||'';
-  fillSelectedServicesFromString(deal.services||'');
+  if (Array.isArray(deal.service_items) && deal.service_items.length) fillSelectedServicesFromItems(deal.service_items);
+  else fillSelectedServicesFromString(deal.services||'');
   document.getElementById('f-sum').value = deal.sum||'';
   document.getElementById('f-vat').value = deal.vat_rate || 'no_vat';
   document.getElementById('f-notes').value = deal.notes||'';
@@ -2577,7 +2779,17 @@ async function saveDeal() {
   saveContactSilentlyFromDealForm();
   if (!client||!title) { alert('Заполните клиента и название'); return; }
   const dateVal = document.getElementById('f-date')?.value || new Date().toISOString().split('T')[0];
-  const payload = { title, client, notes: document.getElementById('f-notes').value, address: document.getElementById('f-address').value, vat_rate: document.getElementById('f-vat').value, services: getSelectedServices(), total: parseFloat(document.getElementById('f-sum').value)||0, manager: document.getElementById('f-manager-select')?.value||'' };
+  const payload = {
+    title,
+    client,
+    notes: document.getElementById('f-notes').value,
+    address: document.getElementById('f-address').value,
+    vat_rate: document.getElementById('f-vat').value,
+    services: getSelectedServices(),
+    service_items: getSelectedServiceItems(),
+    total: parseFloat(document.getElementById('f-sum').value)||0,
+    manager: document.getElementById('f-manager-select')?.value||''
+  };
   if (isAdmin()) payload.date = dateVal;
   const res = await apiFetch('/deals', { method:'POST', body:JSON.stringify(payload) });
   if (!res) return;
@@ -2589,7 +2801,17 @@ async function updateDeal(dealId) {
   saveContactSilentlyFromDealForm();
   if (!client||!title) { alert('Заполните клиента и название'); return; }
   const dateVal = document.getElementById('f-date')?.value || new Date().toISOString().split('T')[0];
-  const payload = { title, client, notes: document.getElementById('f-notes').value, address: document.getElementById('f-address').value, vat_rate: document.getElementById('f-vat').value, services: getSelectedServices(), total: parseFloat(document.getElementById('f-sum').value)||0, manager: document.getElementById('f-manager-select')?.value||'' };
+  const payload = {
+    title,
+    client,
+    notes: document.getElementById('f-notes').value,
+    address: document.getElementById('f-address').value,
+    vat_rate: document.getElementById('f-vat').value,
+    services: getSelectedServices(),
+    service_items: getSelectedServiceItems(),
+    total: parseFloat(document.getElementById('f-sum').value)||0,
+    manager: document.getElementById('f-manager-select')?.value||''
+  };
   if (isAdmin()) payload.date = dateVal;
   const res = await apiFetch(`/deals/${dealId}`, { method:'PUT', body:JSON.stringify(payload) });
   if (!res) return;
@@ -2666,6 +2888,7 @@ async function loadAll() {
   deals = dealsData.deals.map(d => ({
       id:d.id, client:d.client, title:d.title, address:d.address||'',
       services:Array.isArray(d.services)?d.services.map(s=>`${s.name}:${s.qty}`).join(','):(d.services||''),
+      service_items:Array.isArray(d.services)?d.services.map(s=>({ name:s.name, qty:s.qty, price:s.price, unit:s.unit||'' })) : [],
       notes:d.notes||'', vat_rate:d.vat_rate||'no_vat', stage_id:STAGES.find(s=>s.name===d.stage)?.id||1,
       sum:d.total||0, date:d.created_at?.split('T')[0]||d.created_at?.split(' ')[0]||new Date().toISOString().split('T')[0],
       manager:d.manager||''
@@ -2796,6 +3019,17 @@ function renderSelectedServices() {
 }
 function calculateTotalFromServices() { const s=document.getElementById('f-sum'); if(!s)return; s.value=Math.round(selectedDealServices.reduce((acc,i)=>acc+i.qty*i.price,0)); }
 function getSelectedServices() { return selectedDealServices.filter(i=>i.qty>0).map(i=>`${i.name}:${i.qty}`).join(','); }
+function getSelectedServiceItems() {
+  return selectedDealServices
+    .filter(i => (parseFloat(i.qty) || 0) > 0)
+    .map(i => ({
+      name: i.name,
+      quantity: parseFloat(i.qty) || 0,
+      price: parseFloat(i.price) || 0,
+      unit: i.unit || 'ед',
+      category: (SERVICES.find(s => s.name === i.name)?.cat) || ''
+    }));
+}
 function fillSelectedServicesFromString(raw='') {
   selectedDealServices=[];
   if (raw) raw.split(',').map(i=>i.trim()).filter(Boolean).forEach(pair=>{
@@ -2806,8 +3040,26 @@ function fillSelectedServicesFromString(raw='') {
   renderSelectedServices();
 }
 
+function fillSelectedServicesFromItems(items=[]) {
+  selectedDealServices = [];
+  if (Array.isArray(items)) {
+    items.forEach(it => {
+      if (!it || !it.name) return;
+      const name = String(it.name).trim();
+      if (!name) return;
+      const qty = Math.max(0, parseFloat(it.qty ?? it.quantity) || 0);
+      const price = parseFloat(it.price) || (SERVICES.find(s=>s.name===name)?.price || 0);
+      const unit = it.unit || (SERVICES.find(s=>s.name===name)?.unit || 'шт');
+      if (qty > 0) selectedDealServices.push({ name, price, unit, qty });
+    });
+  }
+  renderSelectedServices();
+  calculateTotalFromServices();
+}
+
 /* ── ИНИЦИАЛИЗАЦИЯ ── */
 document.addEventListener('DOMContentLoaded', function() {
+  initTheme();
   loadServicesFromStorage();
   buildServiceCategoryFilter();
   renderServices();

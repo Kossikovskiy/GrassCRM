@@ -298,6 +298,13 @@ class DealServiceIn(BaseModel):
     service_id: int
     quantity: float
 
+class DealServiceItem(BaseModel):
+    name: str
+    quantity: float
+    price: float = 0
+    unit: str = "ед"
+    category: str = ""
+
 class DealCreate(BaseModel):
     title: str
     client: str
@@ -305,6 +312,7 @@ class DealCreate(BaseModel):
     address: str = ""
     notes: str = ""
     services: str = ""        # строка вида "Покос травы:5,Уборка листьев:3"
+    service_items: List[DealServiceItem] = []  # структурированные услуги с фронтенда
     total: float = 0          # итоговая сумма с фронтенда
     vat_rate: str = "no_vat"  # НДС
 
@@ -351,6 +359,66 @@ def get_stages(db: DBSession = Depends(get_db), _=Depends(get_current_user)):
 
 
 # ── DEALS ─────────────────────────────────────
+
+def _parse_services_string(raw: str) -> List[DealServiceItem]:
+    items: List[DealServiceItem] = []
+    if not raw:
+        return items
+    for part in raw.split(","):
+        part = (part or "").strip()
+        if not part:
+            continue
+        name, qty = (part.split(":", 1) + [""])[:2]
+        name = (name or "").strip()
+        if not name:
+            continue
+        try:
+            q = float(qty)
+        except Exception:
+            q = 0.0
+        if q <= 0:
+            continue
+        items.append(DealServiceItem(name=name, quantity=q, price=0, unit="ед"))
+    return items
+
+
+def _apply_deal_services(db: DBSession, deal: Deal, body: DealCreate) -> None:
+    # Приоритет: service_items (структура). Фолбэк: services (строка).
+    items = body.service_items or []
+    if not items and body.services:
+        items = _parse_services_string(body.services)
+
+    # Полная замена набора услуг в сделке.
+    deal.deal_services.clear()
+
+    for item in items:
+        if not item or not item.name:
+            continue
+        qty = float(item.quantity or 0)
+        if qty <= 0:
+            continue
+
+        name = item.name.strip()
+        service = db.query(Service).filter(Service.name == name).first()
+        if not service:
+            service = Service(
+                name=name,
+                unit=(item.unit or "ед"),
+                price=float(item.price or 0),
+                min_volume=1.0,
+            )
+            db.add(service)
+            db.flush()
+
+        price_at_moment = float(item.price or 0) if float(item.price or 0) > 0 else float(service.price or 0)
+        ds = DealService(
+            deal_id=deal.id,
+            service_id=service.id,
+            quantity=qty,
+            price_at_moment=price_at_moment,
+        )
+        deal.deal_services.append(ds)
+
 
 @app.get("/api/deals")
 def get_deals(
@@ -419,6 +487,10 @@ def create_deal(body: DealCreate, db: DBSession = Depends(get_db), _=Depends(get
 
     db.add(deal)
     db.commit()
+    db.refresh(deal)
+
+    _apply_deal_services(db, deal, body)
+    db.commit()
     return {"id": deal.id, "title": deal.title, "client": deal.client}
 
 
@@ -439,6 +511,8 @@ def update_deal(deal_id: int, body: DealCreate, db: DBSession = Depends(get_db),
         deal.vat_rate = body.vat_rate
     if hasattr(deal, 'total'):
         deal.total = body.total
+
+    _apply_deal_services(db, deal, body)
 
     db.commit()
     return {"id": deal.id, "title": deal.title, "client": deal.client}

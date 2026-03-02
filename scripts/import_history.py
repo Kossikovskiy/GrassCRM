@@ -48,7 +48,7 @@ def import_deals_from_list(deals_data: list[dict]):
             if d.get("stage"):
                 stage = session.query(Stage).filter_by(name=d["stage"]).first()
             if not stage:
-                stage = session.query(Stage).filter_by(name="Начальная").first()
+                stage = session.query(Stage).filter_by(name="Согласовать").first()
 
             # Парсить дату
             created_at = datetime.utcnow()

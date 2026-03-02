@@ -37,20 +37,20 @@ from api.auth_module import hash_password
 
 USERS_TO_CREATE = [
     {
-        "username":  "1",
-        "password":  "1",      # ← смените на свой пароль!
+        "username":  "kossikovskiy",
+        "password":  "950fg2206b54kos27",      # ← смените на свой пароль!
         "full_name": "Администратор",
         "role":      "admin",
     },
     {
         "username":  "manager",
-        "password":  "grass123",       # ← смените на свой пароль!
+        "password":  "Fgfgfgbi7",       # ← смените на свой пароль!
         "full_name": "Менеджер",
         "role":      "manager",
     },
     {
-        "username":  "worker",
-        "password":  "work456",        # ← смените на свой пароль!
+        "username":  "User",
+        "password":  "Q85x3DF6565Rd",        # ← смените на свой пароль!
         "full_name": "Сотрудник",
         "role":      "user",
     },

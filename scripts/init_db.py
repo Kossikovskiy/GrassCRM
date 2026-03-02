@@ -9,10 +9,32 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from models.database import (
     init_db, get_engine, get_session_factory,
-    Stage, ServiceCategory, Service, ExpenseCategory, Equipment, Expense
+    Stage, ServiceCategory, Service, ExpenseCategory, Equipment, Expense, Deal
 )
 from datetime import datetime
 from data.seed_data import STAGES, EXPENSE_CATEGORIES, SERVICE_CATEGORIES, SERVICES, EQUIPMENT, EXPENSES
+
+
+
+
+def reconcile_stages(session):
+    """Приводим этапы к актуальному списку: убираем 'Начальная', первый этап — 'Согласовать'."""
+    stages_by_name = {s.name: s for s in session.query(Stage).all()}
+    agree_stage = stages_by_name.get("Согласовать")
+
+    initial = stages_by_name.get("Начальная")
+    if initial:
+        if agree_stage:
+            session.query(Deal).filter(Deal.stage_id == initial.id).update({Deal.stage_id: agree_stage.id})
+        session.delete(initial)
+
+    for cfg in STAGES:
+        st = stages_by_name.get(cfg["name"]) or session.query(Stage).filter_by(name=cfg["name"]).first()
+        if st:
+            st.order = cfg["order"]
+            st.type = cfg["type"]
+            st.is_final = cfg["is_final"]
+            st.color = cfg["color"]
 
 
 def seed_database(session):
@@ -21,6 +43,8 @@ def seed_database(session):
         for s in STAGES:
             session.add(Stage(**s))
         print(f"✅ Добавлено {len(STAGES)} этапов")
+
+    reconcile_stages(session)
 
     # Категории расходов
     if session.query(ExpenseCategory).count() == 0:

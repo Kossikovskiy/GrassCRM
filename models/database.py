@@ -4,7 +4,7 @@ CRM для бизнеса по покосу травы — модели базы
 
 from sqlalchemy import (
     Column, Integer, String, Float, Date, DateTime, Boolean,
-    ForeignKey, Text, create_engine
+    ForeignKey, Text, create_engine, inspect, text
 )
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 from datetime import datetime
@@ -67,6 +67,7 @@ class Deal(Base):
     manager = Column(String(100), default="")
     address = Column(String(300), default="")
     notes = Column(Text, default="")
+    vat_rate = Column(String(10), default="no_vat")  # no_vat | vat_4 | vat_6
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     closed_at = Column(DateTime, nullable=True)
@@ -100,6 +101,7 @@ class Equipment(Base):
     serial = Column(String(100), default="")
     purchase_date = Column(Date, nullable=True)
     purchase_cost = Column(Float, default=0.0)
+    engine_hours = Column(Float, default=0.0)
     status = Column(String(50), default="active")   # active | repair | retired
     last_maintenance = Column(Date, nullable=True)
     next_maintenance = Column(Date, nullable=True)
@@ -122,6 +124,37 @@ class Maintenance(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     equipment = relationship("Equipment", back_populates="maintenances")
+    consumables = relationship("MaintenanceConsumable", back_populates="maintenance", cascade="all, delete-orphan")
+
+
+class Consumable(Base):
+    """Складской учёт расходников/масел"""
+    __tablename__ = "consumables"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(200), nullable=False)
+    base_unit = Column(String(20), nullable=False, default="ml")  # ml | g | pcs
+    stock_quantity = Column(Float, default=0.0)
+    price_per_unit = Column(Float, default=0.0)
+    notes = Column(Text, default="")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    maintenance_items = relationship("MaintenanceConsumable", back_populates="consumable")
+
+
+class MaintenanceConsumable(Base):
+    """Списания расходников в рамках ТО"""
+    __tablename__ = "maintenance_consumables"
+
+    id = Column(Integer, primary_key=True)
+    maintenance_id = Column(Integer, ForeignKey("maintenances.id"), nullable=False)
+    consumable_id = Column(Integer, ForeignKey("consumables.id"), nullable=False)
+    quantity = Column(Float, nullable=False)  # в base_unit расходника
+    unit_cost = Column(Float, nullable=False)
+    subtotal = Column(Float, nullable=False)
+
+    maintenance = relationship("Maintenance", back_populates="consumables")
+    consumable = relationship("Consumable", back_populates="maintenance_items")
 
 
 class ExpenseCategory(Base):
@@ -162,3 +195,17 @@ def get_session_factory(engine):
 
 def init_db(engine):
     Base.metadata.create_all(engine)
+
+    # Лёгкая миграция для существующих БД: добавляем колонку моточасов при отсутствии.
+    inspector = inspect(engine)
+    if "equipment" in inspector.get_table_names():
+        columns = {c["name"] for c in inspector.get_columns("equipment")}
+        if "engine_hours" not in columns:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE equipment ADD COLUMN engine_hours FLOAT DEFAULT 0"))
+
+    if "deals" in inspector.get_table_names():
+        deal_columns = {c["name"] for c in inspector.get_columns("deals")}
+        if "vat_rate" not in deal_columns:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE deals ADD COLUMN vat_rate VARCHAR(10) DEFAULT 'no_vat'"))

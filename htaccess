@@ -1,0 +1,11 @@
+# Убираем жёсткий CSP заголовок Apache
+Header unset Content-Security-Policy
+Header always unset Content-Security-Policy
+
+# Разрешаем всё (нужно для работы fetch из crm.html)
+Header always set Content-Security-Policy "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;"
+
+# CORS
+Header always set Access-Control-Allow-Origin "*"
+Header always set Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+Header always set Access-Control-Allow-Headers "Content-Type, Authorization"

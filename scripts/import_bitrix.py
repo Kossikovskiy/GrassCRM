@@ -54,7 +54,7 @@ class TableParser(HTMLParser):
 STAGE_MAP = {
     'Сделка успешна':  'Успешно',
     'Сделка провалена':'Провалена',
-    'Новая':           'Начальная',
+    'Новая':           'Согласовать',
     'В работе':        'В работе',
     'Подготовка':      'Запланировано',
     'Согласование':    'Согласовать',
@@ -207,8 +207,8 @@ def import_bitrix(filepath: str, skip_existing: bool = True):
                     continue
 
             # Маппим этап
-            our_stage_name = STAGE_MAP.get(d['stage'], 'Начальная')
-            stage = stage_objs.get(our_stage_name) or stage_objs.get('Начальная')
+            our_stage_name = STAGE_MAP.get(d['stage'], 'Согласовать')
+            stage = stage_objs.get(our_stage_name) or stage_objs.get('Согласовать')
 
             # Дата
             # В выгрузке Битрикса "Дата создания" может отражать массовую миграцию (например 2025),

@@ -163,6 +163,7 @@ async def list_tools() -> list[types.Tool]:
                     "serial":        {"type": "string", "default": ""},
                     "purchase_date": {"type": "string", "description": "YYYY-MM-DD"},
                     "purchase_cost": {"type": "number", "default": 0},
+                    "engine_hours":  {"type": "number", "default": 0, "description": "Наработка в моточасах"},
                     "status":        {"type": "string", "enum": ["active", "repair", "retired"], "default": "active"},
                     "notes":         {"type": "string", "default": ""}
                 },
@@ -335,7 +336,7 @@ async def _dispatch(name: str, args: dict, session) -> list[types.TextContent]:
 
     # ── DEALS ──────────────────────────────────
     if name == "create_deal":
-        stage = session.query(Stage).filter_by(name="Начальная").first()
+        stage = session.query(Stage).filter_by(name="Согласовать").first()
         deal = Deal(
             title=args["title"],
             client=args["client"],
@@ -477,12 +478,13 @@ async def _dispatch(name: str, args: dict, session) -> list[types.TextContent]:
             serial=args.get("serial", ""),
             purchase_date=_parse_date(args.get("purchase_date")),
             purchase_cost=args.get("purchase_cost", 0),
+            engine_hours=args.get("engine_hours", 0),
             status=args.get("status", "active"),
             notes=args.get("notes", "")
         )
         session.add(eq)
         session.commit()
-        return _ok({"id": eq.id, "name": eq.name, "status": eq.status})
+        return _ok({"id": eq.id, "name": eq.name, "status": eq.status, "engine_hours": eq.engine_hours})
 
     if name == "get_equipment":
         q = session.query(Equipment)
@@ -491,7 +493,7 @@ async def _dispatch(name: str, args: dict, session) -> list[types.TextContent]:
         eqs = q.order_by(Equipment.name).all()
         return _ok([{
             "id": e.id, "name": e.name, "model": e.model,
-            "status": e.status, "purchase_cost": e.purchase_cost,
+            "status": e.status, "purchase_cost": e.purchase_cost, "engine_hours": e.engine_hours,
             "last_maintenance": str(e.last_maintenance) if e.last_maintenance else None,
             "next_maintenance": str(e.next_maintenance) if e.next_maintenance else None,
             "notes": e.notes

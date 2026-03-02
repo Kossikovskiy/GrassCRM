@@ -255,9 +255,9 @@ def get_me(current_user: dict = Depends(get_current_user)):
     return current_user
 
 
-@app.get("/api/users", dependencies=[Depends(require_admin)])
-def list_users(db: DBSession = Depends(get_db)):
-    users = db.query(UserModel).all()
+@app.get("/api/users")
+def list_users(db: DBSession = Depends(get_db), _=Depends(get_current_user)):
+    users = db.query(UserModel).filter(UserModel.is_active == True).all()
     return [{"id": u.id, "username": u.username, "full_name": u.full_name,
              "role": u.role, "is_active": u.is_active,
              "last_login": u.last_login.isoformat() if u.last_login else None}

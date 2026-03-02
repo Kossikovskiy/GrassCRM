@@ -525,20 +525,24 @@ tr:hover td { background: var(--mist); color: var(--ink); }
 .deal-card.dragging { opacity: .4; }
 
 .deal-client {
-  font-size: 10px;
-  color: #bbb;
-  margin-bottom: 8px;
-  letter-spacing: .3px;
-  text-transform: uppercase;
+  font-size: 12px;
+  color: var(--moss);
+  margin-bottom: 4px;
   font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .deal-title {
   font-family: 'Cormorant Garamond', serif;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--forest);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .deal-address {
   font-size: 11px;
@@ -558,17 +562,36 @@ tr:hover td { background: var(--mist); color: var(--ink); }
 .deal-divider {
   height: 1px;
   background: var(--dew);
-  margin: 10px 0;
+  margin: 8px 0;
 }
-.deal-footer { display: flex; justify-content: space-between; align-items: flex-end; }
+.deal-footer { display: flex; justify-content: space-between; align-items: center; }
 .deal-sum {
   font-family: 'Cormorant Garamond', serif;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--forest);
   line-height: 1;
 }
 .deal-date { font-size: 10px; color: #ccc; }
+.deal-responsible {
+  font-size: 11px;
+  color: #888;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+}
+.deal-responsible-avatar {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--dew);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--moss);
+  flex-shrink: 0;
+}
+
 
 /* ════ EQUIPMENT ════ */
 .equip-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
@@ -847,6 +870,56 @@ tr:hover td { background: var(--mist); color: var(--ink); }
   .page { padding: 20px 16px; }
   header { padding: 0 16px; }
   .header-stat { display: none; }
+}
+
+/* ════ MOBILE BOTTOM NAV ════ */
+#mobile-nav {
+  display: none;
+}
+@media (max-width: 600px) {
+  header nav { display: none; }
+  body { padding-bottom: 64px; }
+  #mobile-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 64px;
+    background: var(--forest);
+    border-top: 1px solid rgba(255,255,255,.1);
+    z-index: 200;
+    justify-content: space-around;
+    align-items: stretch;
+    overflow-x: auto;
+  }
+  #mobile-nav button {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,.45);
+    font-family: 'Geologica', sans-serif;
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 0 10px;
+    cursor: pointer;
+    flex: 1;
+    min-width: 44px;
+    transition: color .2s;
+  }
+  #mobile-nav button svg {
+    width: 20px; height: 20px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  #mobile-nav button.active { color: var(--sage); }
 }
 </style>
 </head>
@@ -1277,6 +1350,7 @@ tr:hover td { background: var(--mist); color: var(--ink); }
     <div class="form-group"><label>НДС (включён в стоимость)</label><select id="f-vat"><option value="no_vat">Без НДС</option><option value="vat_4">НДС 4%</option><option value="vat_6">НДС 6%</option></select></div>
     <div class="form-group" id="f-date-group" style="display:none"><label>Дата сделки</label><input id="f-date" type="date"></div>
     <div class="form-group"><label>Примечание</label><input id="f-notes" placeholder="..."></div>
+    <div class="form-group"><label>Ответственный сотрудник</label><select id="f-manager-select"><option value="">— Без ответственного —</option></select></div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal('modal-deal')">Отмена</button>
       <button class="btn-danger" id="deal-delete-btn" onclick="deleteDeal()" style="display:none">Удалить</button>
@@ -1286,6 +1360,37 @@ tr:hover td { background: var(--mist); color: var(--ink); }
 </div>
 
 <!-- Тост -->
+<!-- МОБИЛЬНАЯ НАВИГАЦИЯ -->
+<div id="mobile-nav">
+  <button class="active" onclick="showPage('dash',this);syncMobileNav('dash')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Дашборд
+  </button>
+  <button onclick="showPage('kanban',this);syncMobileNav('kanban')">
+    <svg viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
+    Сделки
+  </button>
+  <button onclick="showPage('expenses',this);syncMobileNav('expenses')">
+    <svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+    Расходы
+  </button>
+  <button onclick="showPage('equipment',this);syncMobileNav('equipment')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M12 2v2M12 20v2"/></svg>
+    Техника
+  </button>
+  <button onclick="showPage('stock',this);syncMobileNav('stock')">
+    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Склад
+  </button>
+  <button onclick="showPage('services',this);syncMobileNav('services')">
+    <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    Прайс
+  </button>
+  <button onclick="showPage('contacts',this);syncMobileNav('contacts')">
+    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+    Контакты
+  </button>
+</div>
 <div class="toast" id="toast">✅ Сохранено!</div>
 
 <script>
@@ -1320,7 +1425,7 @@ async function apiFetch(path, opts={}) {
   }
 }
 
-let STAGES = [], deals = [], expenses = [], equipment = [], maintenances = [], contacts = [], consumables = [];
+let STAGES = [], deals = [], expenses = [], equipment = [], maintenances = [], contacts = [], consumables = [], users = [];
 let draggedDealId = null, dashYear = String(new Date().getFullYear()), contactsFilter = '';
 let currentEditingDealId = null, currentEditingEquipmentId = null, currentEditingMaintenanceId = null;
 let kanbanFilter = { search:'', year:String(new Date().getFullYear()) };
@@ -1412,7 +1517,16 @@ function showPage(id, btn) {
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
   btn.classList.add('active');
+  syncMobileNav(id);
 }
+
+function syncMobileNav(id) {
+  document.querySelectorAll('#mobile-nav button').forEach(b => b.classList.remove('active'));
+  const pageIndex = ['dash','kanban','expenses','equipment','stock','services','contacts'].indexOf(id);
+  const mobileButtons = document.querySelectorAll('#mobile-nav button');
+  if (pageIndex >= 0 && mobileButtons[pageIndex]) mobileButtons[pageIndex].classList.add('active');
+}
+
 
 /* ── ДАШБОРД ── */
 function getAvailableYears() {
@@ -1528,13 +1642,12 @@ function buildKanban() {
             return `
             <div class="deal-card" style="--stage-color:${stageColor};border-left:3px solid ${stageColor}"
               draggable="true" ondragstart="onDealDragStart(event,${d.id})" ondragend="onDealDragEnd(event)" onclick="openDealDetails(${d.id})">
-              <div class="deal-client">${d.client}</div>
+              <div class="deal-sum" style="color:${stageColor}">${d.sum.toLocaleString('ru')} ₽</div>
               <div class="deal-title">${d.title}</div>
-              ${addrHtml}
-              ${notesHtml}
+              <div class="deal-client">${d.client}</div>
               <div class="deal-divider"></div>
               <div class="deal-footer">
-                <div class="deal-sum" style="color:${stageColor}">${d.sum.toLocaleString('ru')} ₽</div>
+                ${d.manager ? `<div class="deal-responsible"><div class="deal-responsible-avatar">${(d.manager||'?').charAt(0).toUpperCase()}</div>${d.manager}</div>` : `<div class="deal-responsible" style="color:#ddd">+ Ответственный</div>`}
                 <div class="deal-date">${formatDate(d.date)}</div>
               </div>
             </div>`;
@@ -1902,6 +2015,7 @@ function resetDealModalState() {
   document.getElementById('deal-save-btn').textContent = 'Создать';
   document.getElementById('deal-save-btn').setAttribute('onclick','saveDeal()');
   ['f-client','f-contact-phone','f-contact-email','f-title','f-address','f-sum','f-notes','f-service-search'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  const msel = document.getElementById('f-manager-select'); if(msel) msel.value='';
   const vatSel=document.getElementById('f-vat'); if(vatSel) vatSel.value='no_vat';
   fillSelectedServicesFromString('');
   document.getElementById('service-suggest')?.classList.remove('open');
@@ -2009,6 +2123,8 @@ function openDealDetails(dealId) {
   document.getElementById('f-sum').value = deal.sum||'';
   document.getElementById('f-vat').value = deal.vat_rate || 'no_vat';
   document.getElementById('f-notes').value = deal.notes||'';
+  const managerSel = document.getElementById('f-manager-select');
+  if (managerSel) managerSel.value = deal.manager||'';
   document.getElementById('deal-modal-title').innerHTML = 'Редактирование <em>сделки</em>';
   document.getElementById('deal-save-btn').textContent = 'Сохранить';
   document.getElementById('deal-save-btn').setAttribute('onclick', `updateDeal(${dealId})`);
@@ -2147,7 +2263,7 @@ async function saveDeal() {
   saveContactSilentlyFromDealForm();
   if (!client||!title) { alert('Заполните клиента и название'); return; }
   const dateVal = document.getElementById('f-date')?.value || new Date().toISOString().split('T')[0];
-  const payload = { title, client, notes: document.getElementById('f-notes').value, address: document.getElementById('f-address').value, vat_rate: document.getElementById('f-vat').value, services: getSelectedServices(), total: parseFloat(document.getElementById('f-sum').value)||0 };
+  const payload = { title, client, notes: document.getElementById('f-notes').value, address: document.getElementById('f-address').value, vat_rate: document.getElementById('f-vat').value, services: getSelectedServices(), total: parseFloat(document.getElementById('f-sum').value)||0, manager: document.getElementById('f-manager-select')?.value||'' };
   if (isAdmin()) payload.date = dateVal;
   const res = await apiFetch('/deals', { method:'POST', body:JSON.stringify(payload) });
   if (!res) return;
@@ -2159,7 +2275,7 @@ async function updateDeal(dealId) {
   saveContactSilentlyFromDealForm();
   if (!client||!title) { alert('Заполните клиента и название'); return; }
   const dateVal = document.getElementById('f-date')?.value || new Date().toISOString().split('T')[0];
-  const payload = { title, client, notes: document.getElementById('f-notes').value, address: document.getElementById('f-address').value, vat_rate: document.getElementById('f-vat').value, services: getSelectedServices(), total: parseFloat(document.getElementById('f-sum').value)||0 };
+  const payload = { title, client, notes: document.getElementById('f-notes').value, address: document.getElementById('f-address').value, vat_rate: document.getElementById('f-vat').value, services: getSelectedServices(), total: parseFloat(document.getElementById('f-sum').value)||0, manager: document.getElementById('f-manager-select')?.value||'' };
   if (isAdmin()) payload.date = dateVal;
   const res = await apiFetch(`/deals/${dealId}`, { method:'PUT', body:JSON.stringify(payload) });
   if (!res) return;
@@ -2233,11 +2349,12 @@ async function loadAll() {
   if (stagesData) STAGES = stagesData.map(s=>({...s, color: s.color||'#94a3b8'}));
   const dealsData = await apiFetch('/deals');
   if (dealsData?.deals) {
-    deals = dealsData.deals.map(d => ({
+  deals = dealsData.deals.map(d => ({
       id:d.id, client:d.client, title:d.title, address:d.address||'',
       services:Array.isArray(d.services)?d.services.map(s=>`${s.name}:${s.qty}`).join(','):(d.services||''),
       notes:d.notes||'', vat_rate:d.vat_rate||'no_vat', stage_id:STAGES.find(s=>s.name===d.stage)?.id||1,
-      sum:d.total||0, date:d.created_at?.split('T')[0]||d.created_at?.split(' ')[0]||new Date().toISOString().split('T')[0]
+      sum:d.total||0, date:d.created_at?.split('T')[0]||d.created_at?.split(' ')[0]||new Date().toISOString().split('T')[0],
+      manager:d.manager||''
     }));
   }
   const expData = await apiFetch('/expenses');
@@ -2249,6 +2366,16 @@ async function loadAll() {
   const consData = await apiFetch('/consumables');
   consumables = Array.isArray(consData) ? consData : [];
   loadContactsFromStorage();
+  const usersData = await apiFetch('/users');
+  if (Array.isArray(usersData)) {
+    users = usersData.filter(u => u.is_active !== false);
+    const sel = document.getElementById('f-manager-select');
+    if (sel) {
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">— Без ответственного —</option>' + users.map(u => `<option value="${u.full_name||u.username}">${u.full_name||u.username}</option>`).join('');
+      if (cur) sel.value = cur;
+    }
+  }
   buildDashYearFilter();
   buildKanbanYearFilter();
   buildDash(); buildKanban();

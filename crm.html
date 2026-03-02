@@ -241,7 +241,7 @@ nav button.active::after { transform: scaleX(1); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ════ SECTION LABEL (like website) ════ */
+/* ════ SECTION LABEL ════ */
 .section-label {
   display: flex;
   align-items: center;
@@ -268,12 +268,6 @@ nav button.active::after { transform: scaleX(1); }
 .page-title em { font-style: italic; color: var(--fern); }
 
 /* ════ DASHBOARD ════ */
-.dash-toolbar {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 24px;
-}
-
 .dash-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -530,9 +524,6 @@ tr:hover td { background: var(--mist); color: var(--ink); }
 .deal-card:hover { border-color: var(--stage-color, var(--fern)); transform: translateY(-2px); box-shadow: 0 6px 20px var(--shadow); }
 .deal-card.dragging { opacity: .4; }
 
-/* Цвет акцента зависит от колонки — задаётся через JS на .kanban-col */
-.kanban-col[data-color] .deal-card { --stage-color: attr(data-color); }
-
 .deal-client {
   font-size: 10px;
   color: #bbb;
@@ -595,6 +586,8 @@ tr:hover td { background: var(--mist); color: var(--ink); }
 }
 .tiny-btn:hover { border-color: var(--fern); color: var(--fern); }
 
+.tiny-btn.danger:hover { border-color: var(--rust); color: var(--rust); }
+
 .status-dot {
   width: 7px; height: 7px;
   border-radius: 50%;
@@ -630,6 +623,7 @@ tr:hover td { background: var(--mist); color: var(--ink); }
   animation: modalIn .25s ease;
   position: relative;
 }
+.modal.wide { width: 680px; }
 .modal::before {
   content: '';
   position: absolute;
@@ -679,6 +673,9 @@ tr:hover td { background: var(--mist); color: var(--ink); }
 }
 .form-group input:focus, .form-group select:focus { border-color: var(--fern); }
 .form-group textarea { resize: vertical; min-height: 80px; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
 
 .contacts-editor {
   border: 1px solid var(--border);
@@ -895,7 +892,6 @@ tr:hover td { background: var(--mist); color: var(--ink); }
 
 <!-- ════ ДАШБОРД ════ -->
 <div class="page active" id="page-dash">
-
   <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:28px;">
     <div>
       <div class="section-label"><div class="label-line"></div><span class="label-text">Обзор</span></div>
@@ -947,7 +943,6 @@ tr:hover td { background: var(--mist); color: var(--ink); }
       </div>
     </div>
   </div>
-
 </div>
 
 <!-- ════ КАНБАН ════ -->
@@ -1034,7 +1029,6 @@ tr:hover td { background: var(--mist); color: var(--ink); }
   </div>
 </div>
 
-
 <!-- ════ СКЛАД РАСХОДНИКОВ ════ -->
 <div class="page" id="page-stock">
   <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px;">
@@ -1059,21 +1053,26 @@ tr:hover td { background: var(--mist); color: var(--ink); }
       <div class="section-label"><div class="label-line"></div><span class="label-text">Услуги</span></div>
       <div class="page-title">Прайс-<em>лист</em></div>
     </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn secondary" onclick="resetServicesToDefault()" title="Восстановить стандартный прайс-лист">↺ Сбросить</button>
+      <button class="btn" onclick="openServiceModal()">+ Услуга</button>
+    </div>
   </div>
   <div class="table-toolbar">
     <input class="search-input" placeholder="Поиск услуги..." oninput="filterServices(this.value)">
-    <select class="filter-sel" onchange="filterServicesCat(this.value)">
+    <select class="filter-sel" id="svc-cat-filter" onchange="filterServicesCat(this.value)">
       <option value="">Все категории</option>
     </select>
   </div>
   <div class="card">
     <table>
       <thead>
-        <tr><th>Услуга</th><th>Категория</th><th>Единица</th><th>Мин. объём</th><th>Цена</th></tr>
+        <tr><th>Услуга</th><th>Категория</th><th>Ед. изм.</th><th>Мин. объём</th><th>Цена</th><th>Примечание</th><th></th></tr>
       </thead>
       <tbody id="svc-tbody"></tbody>
     </table>
   </div>
+  <div style="margin-top:12px;font-size:10px;color:#bbb;letter-spacing:.5px;" id="svc-count-label"></div>
 </div>
 
 <!-- ════ КОНТАКТЫ ════ -->
@@ -1143,7 +1142,6 @@ tr:hover td { background: var(--mist); color: var(--ink); }
   </div>
 </div>
 
-
 <!-- Расходник на склад -->
 <div class="modal-overlay" id="modal-consumable">
   <div class="modal">
@@ -1183,6 +1181,49 @@ tr:hover td { background: var(--mist); color: var(--ink); }
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal('modal-maintenance')">Отмена</button>
       <button class="btn-save" id="maintenance-save-btn" onclick="saveMaintenance()">Добавить ТО</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ МОДАЛЬНОЕ ОКНО УСЛУГИ ════ -->
+<div class="modal-overlay" id="modal-service">
+  <div class="modal">
+    <h2 id="service-modal-title">Новая <em>услуга</em></h2>
+    <div class="form-group"><label>Название услуги</label><input id="fsvc-name" placeholder="Покос травы"></div>
+    <div class="form-group">
+      <label>Категория</label>
+      <div style="display:flex;gap:8px;">
+        <select id="fsvc-cat-sel" onchange="onSvcCatSelChange(this.value)" style="flex:1"></select>
+        <input id="fsvc-cat-new" placeholder="Новая категория..." style="flex:1;display:none;">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="margin:0">
+        <label>Единица измерения</label>
+        <select id="fsvc-unit">
+          <option>соток</option>
+          <option>п.м.</option>
+          <option>соток/мес</option>
+          <option>м²</option>
+          <option>м²/мес</option>
+          <option>шт</option>
+          <option>м.п.</option>
+          <option>м³</option>
+          <option>час</option>
+          <option>ед</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label>Мин. объём</label>
+        <input id="fsvc-min" type="number" min="0" step="0.1" placeholder="1">
+      </div>
+    </div>
+    <div class="form-group"><label>Цена (₽)</label><input id="fsvc-price" type="number" min="0" placeholder="1000"></div>
+    <div class="form-group"><label>Примечание</label><input id="fsvc-note" placeholder="Дополнительная информация..."></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-service')">Отмена</button>
+      <button class="btn-danger" id="svc-delete-btn" onclick="deleteCurrentService()" style="display:none">Удалить</button>
+      <button class="btn-save" id="svc-save-btn" onclick="saveService()">Добавить</button>
     </div>
   </div>
 </div>
@@ -1264,50 +1305,87 @@ let STAGES = [], deals = [], expenses = [], equipment = [], maintenances = [], c
 let draggedDealId = null, dashYear = String(new Date().getFullYear()), contactsFilter = '';
 let currentEditingDealId = null, currentEditingEquipmentId = null, currentEditingMaintenanceId = null;
 let kanbanFilter = { search:'', year:String(new Date().getFullYear()) };
+let currentEditingServiceIdx = null;
 
 function isAdmin() {
   try { return (JSON.parse(sessionStorage.getItem('crm_user') || '{}').role || '') === 'admin'; } catch { return false; }
 }
 
-const SERVICES = [
-  { name:'Покос травы (до 20 см)',         cat:'Покос травы',         unit:'сотка', min:3,  price:350  },
-  { name:'Покос травы (20-40 см)',          cat:'Покос травы',         unit:'сотка', min:3,  price:450  },
-  { name:'Покос травы (40-70 см)',          cat:'Покос травы',         unit:'сотка', min:3,  price:600  },
-  { name:'Покос травы (более 70 см)',       cat:'Покос травы',         unit:'сотка', min:3,  price:800  },
-  { name:'Покос на откосах/склонах',       cat:'Покос травы',         unit:'сотка', min:2,  price:700  },
-  { name:'Обкос препятствий (триммер)',    cat:'Покос травы',         unit:'час',   min:1,  price:800  },
-  { name:'Покос камышей/тростника',        cat:'Покос травы',         unit:'сотка', min:2,  price:900  },
-  { name:'Сгребание и сборка травы',       cat:'Уборка и вывоз',      unit:'сотка', min:3,  price:200  },
-  { name:'Вывоз растительных остатков',    cat:'Уборка и вывоз',      unit:'м³',    min:1,  price:800  },
-  { name:'Уборка листьев',                cat:'Уборка и вывоз',      unit:'сотка', min:3,  price:300  },
-  { name:'Вывоз листьев',                 cat:'Уборка и вывоз',      unit:'м³',    min:1,  price:700  },
-  { name:'Уборка и вывоз мусора',         cat:'Уборка и вывоз',      unit:'м³',    min:1,  price:900  },
-  { name:'Уборка веток',                  cat:'Уборка и вывоз',      unit:'м³',    min:1,  price:600  },
-  { name:'Вертикуляция (скарификация)',   cat:'Газон и почва',       unit:'сотка', min:3,  price:600  },
-  { name:'Аэрация газона',               cat:'Газон и почва',       unit:'сотка', min:3,  price:500  },
-  { name:'Пескование газона',            cat:'Газон и почва',       unit:'сотка', min:3,  price:400  },
-  { name:'Подсев газона',               cat:'Газон и почва',       unit:'сотка', min:3,  price:500  },
-  { name:'Посев нового газона',          cat:'Газон и почва',       unit:'сотка', min:3,  price:1200 },
-  { name:'Планировка и выравнивание',   cat:'Газон и почва',       unit:'сотка', min:2,  price:1500 },
-  { name:'Завоз грунта',               cat:'Газон и почва',       unit:'м³',    min:1,  price:2500 },
-  { name:'Обработка от сорняков',       cat:'Обработки',           unit:'сотка', min:3,  price:250  },
-  { name:'Обработка от вредителей',     cat:'Обработки',           unit:'сотка', min:3,  price:300  },
-  { name:'Обработка от клещей',         cat:'Обработки',           unit:'сотка', min:3,  price:350  },
-  { name:'Обработка от борщевика',      cat:'Обработки',           unit:'сотка', min:2,  price:800  },
-  { name:'Стрижка (живая изгородь)',    cat:'Деревья и кустарники',unit:'м.п.',  min:5,  price:300  },
-  { name:'Стрижка кустарников (фигур.)', cat:'Деревья и кустарники', unit:'ед', min:1,  price:800  },
-  { name:'Обрезка деревьев',           cat:'Деревья и кустарники', unit:'ед',    min:1,  price:1500 },
-  { name:'Кронирование деревьев',      cat:'Деревья и кустарники', unit:'ед',    min:1,  price:3000 },
-  { name:'Спил деревьев (до 5м)',      cat:'Деревья и кустарники', unit:'ед',    min:1,  price:3000 },
-  { name:'Спил деревьев (5-10м)',      cat:'Деревья и кустарники', unit:'ед',    min:1,  price:6000 },
-  { name:'Корчевание пней',            cat:'Деревья и кустарники', unit:'ед',    min:1,  price:2000 },
-  { name:'Посадка деревьев',           cat:'Посадка растений',     unit:'ед',    min:1,  price:1500 },
-  { name:'Посадка кустарников',        cat:'Посадка растений',     unit:'ед',    min:1,  price:500  },
-  { name:'Посадка многолетников',      cat:'Посадка растений',     unit:'ед',    min:3,  price:200  },
-  { name:'Минеральное удобрение',      cat:'Удобрение газона',     unit:'сотка', min:3,  price:300  },
-  { name:'Органическое удобрение',     cat:'Удобрение газона',     unit:'сотка', min:3,  price:400  },
-  { name:'Известкование почвы',        cat:'Удобрение газона',     unit:'сотка', min:3,  price:350  },
+// ════ ПРАЙС-ЛИСТ (по данным таблицы Покос_Управление_Бизнесом.xlsx) ════
+const DEFAULT_SERVICES = [
+  // 🌾 ПОКОС ТРАВЫ
+  { name:'Стандартный покос',                         cat:'Покос травы',                  unit:'соток',    min:1,  price:790,  note:'Трава до 30 см. Цена за 1 сотку' },
+  { name:'Запущенный покос (30–60 см)',               cat:'Покос травы',                  unit:'соток',    min:1,  price:950,  note:'Высокая трава, доп. усилие' },
+  { name:'Сильно запущенный (>60 см)',                cat:'Покос травы',                  unit:'соток',    min:1,  price:1200, note:'Очень высокая или плотная трава' },
+  { name:'Покос борщевика',                           cat:'Покос травы',                  unit:'соток',    min:3,  price:1300, note:'Спец. защита, доп. средства' },
+  { name:'Покос вдоль забора / обочина',              cat:'Покос травы',                  unit:'п.м.',     min:20, price:50,   note:'Погонный метр обочины/периметра' },
+  { name:'Еженедельное обслуживание (абонемент)',     cat:'Покос травы',                  unit:'соток/мес',min:5,  price:2800, note:'Скидка ~15% от разового тарифа' },
+  // 🍃 УБОРКА И ВЫВОЗ
+  { name:'Сбор скошенной травы',                      cat:'Уборка и вывоз',               unit:'соток',    min:1,  price:790,  note:'Ручной сбор в мешки после покоса' },
+  { name:'Вывоз травы / мусора',                      cat:'Уборка и вывоз',               unit:'соток',    min:3,  price:350,  note:'Погрузка + вывоз. Объём до 1 прицепа на 10 соток' },
+  { name:'Сбор листьев (осень)',                      cat:'Уборка и вывоз',               unit:'соток',    min:2,  price:480,  note:'Сбор в мешки, вывоз опционально' },
+  { name:'Уборка участка (генеральная)',               cat:'Уборка и вывоз',               unit:'соток',    min:2,  price:1500, note:'Комплекс: трава+ветки+деревья' },
+  // 🌿 ГАЗОН И ПОЧВА
+  { name:'Скарификация газона',                       cat:'Газон и почва',                unit:'соток',    min:1,  price:1000, note:'Прочёсывание дёрна, улучшение аэрации' },
+  { name:'Аэрация газона',                            cat:'Газон и почва',                unit:'соток',    min:1,  price:1400, note:'Прокалывание почвы' },
+  { name:'Прополка сорняков (ручная)',                cat:'Газон и почва',                unit:'соток',    min:1,  price:1850, note:'Тщательная ручная прополка' },
+  { name:'Культивация / рыхление',                    cat:'Газон и почва',                unit:'соток',    min:2,  price:1200, note:'Механическое рыхление почвы' },
+  { name:'Посев газона',                              cat:'Газон и почва',                unit:'соток',    min:1,  price:2200, note:'Посев + полив (семена не включены)' },
+  { name:'Засеивание (без семян)',                    cat:'Газон и почва',                unit:'соток',    min:1,  price:1500, note:'Только работа, семена заказчика' },
+  { name:'Разравнивание участка',                     cat:'Газон и почва',                unit:'соток',    min:2,  price:1300, note:'Грубое выравнивание рельефа' },
+  // 🧪 ОБРАБОТКИ
+  { name:'Обработка гербицидом (сорняки)',            cat:'Обработки',                    unit:'соток',    min:5,  price:550,  note:'Химическая обработка от сорняков' },
+  { name:'Обработка от клещей',                       cat:'Обработки',                    unit:'соток',    min:10, price:350,  note:'Акарицид, сезонная защита' },
+  { name:'Обработка парковки / твёрдых покрытий',    cat:'Обработки',                    unit:'м²',       min:20, price:120,  note:'Гербицид/мойка твёрдых поверхностей' },
+  // 🌳 ДЕРЕВЬЯ И КУСТАРНИКИ
+  { name:'Спил дерева (до 5 м)',                      cat:'Деревья и кустарники',         unit:'шт',       min:1,  price:2500, note:'Ствол до 30 см. Ветки укладываем на месте' },
+  { name:'Спил дерева (5–10 м)',                      cat:'Деревья и кустарники',         unit:'шт',       min:1,  price:4500, note:'Средние деревья, сложная разборка' },
+  { name:'Выкорчёвывание пня / туй',                 cat:'Деревья и кустарники',         unit:'шт',       min:1,  price:3500, note:'Включая засыпку ямы' },
+  { name:'Обрезка кустарников',                      cat:'Деревья и кустарники',         unit:'шт',       min:5,  price:400,  note:'Формирующая обрезка' },
+  // 🌸 ПОСАДКА РАСТЕНИЙ И УХОД ЗА КЛУМБАМИ
+  { name:'Посадка однолетних цветов (клумба)',        cat:'Посадка растений и клумбы',    unit:'шт',       min:10, price:250,  note:'Петунии, бегонии, бархатцы и др. Без стоимости растений' },
+  { name:'Посадка многолетних цветов',               cat:'Посадка растений и клумбы',    unit:'шт',       min:5,  price:380,  note:'Розы, хосты, пионы и др. Без стоимости растений' },
+  { name:'Посадка кустарника (малый, до 0.5 м)',     cat:'Посадка растений и клумбы',    unit:'шт',       min:1,  price:900,  note:'Посадка с подготовкой ямы и удобрением' },
+  { name:'Посадка кустарника (средний, 0.5–1.5 м)',  cat:'Посадка растений и клумбы',    unit:'шт',       min:1,  price:1800, note:'Включая яму, дренаж, полив после посадки' },
+  { name:'Посадка крупного кустарника / живая изгородь', cat:'Посадка растений и клумбы', unit:'шт',     min:3,  price:3200, note:'Туи, сирень, боярышник. Включая разметку ряда' },
+  { name:'Прополка клумбы (ручная)',                  cat:'Посадка растений и клумбы',    unit:'м²',       min:2,  price:450,  note:'Тщательная прополка, рыхление между растениями' },
+  { name:'Прополка клумбы + мульчирование',          cat:'Посадка растений и клумбы',    unit:'м²',       min:2,  price:750,  note:'Прополка + укладка мульчи 5–7 см (мульча включена)' },
+  { name:'Подготовка клумбы под посадку',             cat:'Посадка растений и клумбы',    unit:'м²',       min:2,  price:600,  note:'Перекопка, удаление сорняков, внесение удобрений' },
+  { name:'Комплексный уход за клумбой (сезон)',       cat:'Посадка растений и клумбы',    unit:'м²/мес',   min:3,  price:1200, note:'Полив, прополка, подкормка — ежемесячно' },
+  // 🌱 УДОБРЕНИЕ И ПИТАНИЕ ГАЗОНА
+  { name:'Удобрение газона (весна/осень, комплекс)',  cat:'Удобрение газона',             unit:'соток',    min:1,  price:1800, note:'NPK + микроэлементы. ~1100 ₽ удобрение + 700 ₽ работа' },
+  { name:'Летняя азотная подкормка',                  cat:'Удобрение газона',             unit:'соток',    min:1,  price:1400, note:'Стимуляция роста и цвета. ~700 ₽ удобрение + 700 ₽ работа' },
+  { name:'Аэрация + удобрение (комплекс)',            cat:'Удобрение газона',             unit:'соток',    min:1,  price:2800, note:'Сначала аэрация, затем внесение — максимальное усвоение' },
+  { name:'Известкование (раскисление почвы)',         cat:'Удобрение газона',             unit:'соток',    min:1,  price:1600, note:'~900 ₽ доломитовая мука + 700 ₽ работа. Раз в 3 года' },
 ];
+
+// Работаем с копией в памяти — данные хранятся в localStorage
+let SERVICES = [];
+
+function loadServicesFromStorage() {
+  try {
+    const raw = localStorage.getItem('crm_services');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) { SERVICES = parsed; return; }
+    }
+  } catch {}
+  SERVICES = DEFAULT_SERVICES.map((s, i) => ({ ...s, id: i + 1 }));
+  persistServices();
+}
+
+function persistServices() {
+  localStorage.setItem('crm_services', JSON.stringify(SERVICES));
+}
+
+function resetServicesToDefault() {
+  if (!confirm('Восстановить стандартный прайс-лист? Все изменения будут потеряны.')) return;
+  SERVICES = DEFAULT_SERVICES.map((s, i) => ({ ...s, id: i + 1 }));
+  persistServices();
+  buildServiceCategoryFilter();
+  renderServices();
+  showToast('✅ Прайс-лист сброшен к стандартному');
+}
 
 /* ── НАВИГАЦИЯ ── */
 function showPage(id, btn) {
@@ -1397,33 +1475,17 @@ function buildDash() {
 function buildKanbanYearFilter() {
   const select = document.getElementById('kanban-year-filter');
   if (!select) return;
-
-  const years = [...new Set(deals.map(d => (d.date||'').slice(0,4)).filter(Boolean))]
-    .sort((a,b)=>Number(b)-Number(a));
+  const years = [...new Set(deals.map(d => (d.date||'').slice(0,4)).filter(Boolean))].sort((a,b)=>Number(b)-Number(a));
   const currentYear = String(new Date().getFullYear());
-
   select.innerHTML = '<option value="">Все годы</option>' + years.map(y => `<option value="${y}">${y}</option>`).join('');
   if (!kanbanFilter.year) kanbanFilter.year = currentYear;
-  if (kanbanFilter.year && !years.includes(kanbanFilter.year) && kanbanFilter.year !== currentYear) {
-    kanbanFilter.year = currentYear;
-  }
-  if (kanbanFilter.year) {
-    const hasOpt = [...select.options].some(o => o.value === kanbanFilter.year);
-    if (!hasOpt) {
-      const opt = document.createElement('option');
-      opt.value = kanbanFilter.year;
-      opt.textContent = kanbanFilter.year;
-      select.appendChild(opt);
-    }
-  }
   select.value = kanbanFilter.year || '';
 }
 
 function buildKanban() {
   const board = document.getElementById('kanban-board');
-  const visibleStages = STAGES;
   const search = (kanbanFilter.search || '').toLowerCase();
-  board.innerHTML = visibleStages.map(stage => {
+  board.innerHTML = STAGES.map(stage => {
     const stageDeal = deals.filter(d =>
       d.stage_id === stage.id &&
       (!search || (d.client||'').toLowerCase().includes(search)) &&
@@ -1559,41 +1621,155 @@ function buildEquipment() {
   document.getElementById('maint-tbody').innerHTML = maintenances.slice(0,15).map(m => `
     <tr>
       <td>${m.equipment||'—'}</td>
-      <td style=\"font-size:11px;max-width:140px;white-space:normal\">${m.description||'—'}</td>
-      <td class=\"money\" style=\"font-size:13px\">${(m.cost||0).toLocaleString('ru')} ₽</td>
+      <td style="font-size:11px;max-width:140px;white-space:normal">${m.description||'—'}</td>
+      <td class="money" style="font-size:13px">${(m.cost||0).toLocaleString('ru')} ₽</td>
       <td>${formatDate(m.date)}</td>
-      <td>${isAdmin() ? `<button class=\"tiny-btn\" onclick=\"openMaintenanceEdit(${m.id})\">Изменить</button>` : ''}</td>
+      <td>${isAdmin() ? `<button class="tiny-btn" onclick="openMaintenanceEdit(${m.id})">Изменить</button>` : ''}</td>
     </tr>
   `).join('') || '<tr><td colspan="5" style="text-align:center;color:#ccc;padding:24px;font-size:12px">ТО пока нет</td></tr>';
 }
 
-/* ── ПРАЙС ── */
+/* ════ ПРАЙС-ЛИСТ — CRUD ════ */
 let svcFilter = { search:'', cat:'' };
+
+function getServiceCategories() {
+  return [...new Set(SERVICES.map(s=>s.cat))];
+}
+
+function buildServiceCategoryFilter() {
+  const sel = document.getElementById('svc-cat-filter');
+  if (!sel) return;
+  const cats = getServiceCategories();
+  sel.innerHTML = '<option value="">Все категории</option>' + cats.map(c=>`<option value="${encodeURIComponent(c)}">${c}</option>`).join('');
+}
 
 function renderServices() {
   const filtered = SERVICES.filter(s => {
-    const ms = !svcFilter.search || s.name.toLowerCase().includes(svcFilter.search.toLowerCase());
-    const mc = !svcFilter.cat || s.cat === svcFilter.cat;
+    const ms = !svcFilter.search || s.name.toLowerCase().includes(svcFilter.search.toLowerCase()) || (s.cat||'').toLowerCase().includes(svcFilter.search.toLowerCase());
+    const mc = !svcFilter.cat || s.cat === decodeURIComponent(svcFilter.cat);
     return ms && mc;
   });
-  document.getElementById('svc-tbody').innerHTML = filtered.map(s => `
-    <tr>
+  document.getElementById('svc-tbody').innerHTML = filtered.map((s, idx) => {
+    const realIdx = SERVICES.indexOf(s);
+    return `<tr>
       <td style="color:var(--ink);font-weight:400">${s.name}</td>
       <td><span class="badge" style="background:var(--mist);color:var(--fern)">${s.cat}</span></td>
-      <td>${s.unit}</td>
-      <td>${s.min} ${s.unit}</td>
+      <td style="color:#888">${s.unit}</td>
+      <td style="color:#888">от ${s.min}</td>
       <td class="money">${s.price.toLocaleString('ru')} ₽</td>
-    </tr>
-  `).join('');
+      <td style="font-size:11px;color:#aaa;max-width:200px">${s.note||'—'}</td>
+      <td style="white-space:nowrap">
+        <button class="tiny-btn" onclick="openServiceModal(${realIdx})" style="margin-right:4px">Изменить</button>
+        <button class="tiny-btn danger" onclick="deleteService(${realIdx})">✕</button>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" style="text-align:center;color:#ccc;padding:40px;font-size:13px;">Услуги не найдены</td></tr>';
+
+  const label = document.getElementById('svc-count-label');
+  if (label) label.textContent = `Показано ${filtered.length} из ${SERVICES.length} услуг`;
 }
 
-function buildServiceFilter() {
-  const cats = [...new Set(SERVICES.map(s=>s.cat))];
-  const sel = document.querySelector('#page-services .filter-sel');
-  if (sel) cats.forEach(c => { const o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
-}
 function filterServices(val) { svcFilter.search = val; renderServices(); }
 function filterServicesCat(val) { svcFilter.cat = val; renderServices(); }
+
+function openServiceModal(idx=null) {
+  currentEditingServiceIdx = idx;
+  const title = document.getElementById('service-modal-title');
+  const saveBtn = document.getElementById('svc-save-btn');
+  const deleteBtn = document.getElementById('svc-delete-btn');
+
+  // Заполняем выпадающий список категорий
+  const cats = getServiceCategories();
+  const catSel = document.getElementById('fsvc-cat-sel');
+  catSel.innerHTML = cats.map(c=>`<option value="${c}">${c}</option>`).join('') + '<option value="__new__">+ Новая категория...</option>';
+
+  const catNewInput = document.getElementById('fsvc-cat-new');
+  catNewInput.style.display = 'none';
+  catNewInput.value = '';
+
+  if (idx !== null && SERVICES[idx]) {
+    const s = SERVICES[idx];
+    document.getElementById('fsvc-name').value = s.name || '';
+    catSel.value = cats.includes(s.cat) ? s.cat : cats[0];
+    document.getElementById('fsvc-unit').value = s.unit || 'соток';
+    document.getElementById('fsvc-min').value = s.min || 1;
+    document.getElementById('fsvc-price').value = s.price || 0;
+    document.getElementById('fsvc-note').value = s.note || '';
+    title.innerHTML = 'Редактирование <em>услуги</em>';
+    saveBtn.textContent = 'Сохранить';
+    deleteBtn.style.display = 'block';
+  } else {
+    document.getElementById('fsvc-name').value = '';
+    catSel.value = cats[0] || '';
+    document.getElementById('fsvc-unit').value = 'соток';
+    document.getElementById('fsvc-min').value = 1;
+    document.getElementById('fsvc-price').value = '';
+    document.getElementById('fsvc-note').value = '';
+    title.innerHTML = 'Новая <em>услуга</em>';
+    saveBtn.textContent = 'Добавить';
+    deleteBtn.style.display = 'none';
+  }
+
+  document.getElementById('modal-service').classList.add('open');
+}
+
+function onSvcCatSelChange(val) {
+  const inp = document.getElementById('fsvc-cat-new');
+  if (val === '__new__') {
+    inp.style.display = '';
+    inp.focus();
+  } else {
+    inp.style.display = 'none';
+  }
+}
+
+function saveService() {
+  const name = document.getElementById('fsvc-name').value.trim();
+  const catSel = document.getElementById('fsvc-cat-sel').value;
+  const catNew = document.getElementById('fsvc-cat-new').value.trim();
+  const cat = catSel === '__new__' ? catNew : catSel;
+  const unit = document.getElementById('fsvc-unit').value;
+  const min = parseFloat(document.getElementById('fsvc-min').value) || 1;
+  const price = parseFloat(document.getElementById('fsvc-price').value) || 0;
+  const note = document.getElementById('fsvc-note').value.trim();
+
+  if (!name) { alert('Введите название услуги'); return; }
+  if (!cat) { alert('Укажите категорию'); return; }
+  if (!price) { alert('Укажите цену'); return; }
+
+  const serviceObj = { name, cat, unit, min, price, note };
+
+  if (currentEditingServiceIdx !== null) {
+    serviceObj.id = SERVICES[currentEditingServiceIdx].id;
+    SERVICES[currentEditingServiceIdx] = serviceObj;
+    showToast('✅ Услуга обновлена');
+  } else {
+    const maxId = SERVICES.reduce((m, s) => Math.max(m, s.id||0), 0);
+    serviceObj.id = maxId + 1;
+    SERVICES.push(serviceObj);
+    showToast('✅ Услуга добавлена');
+  }
+
+  persistServices();
+  buildServiceCategoryFilter();
+  renderServices();
+  closeModal('modal-service');
+}
+
+function deleteService(idx) {
+  if (!confirm(`Удалить услугу «${SERVICES[idx]?.name}»?`)) return;
+  SERVICES.splice(idx, 1);
+  persistServices();
+  buildServiceCategoryFilter();
+  renderServices();
+  closeModal('modal-service');
+  showToast('✅ Услуга удалена');
+}
+
+function deleteCurrentService() {
+  if (currentEditingServiceIdx === null) return;
+  deleteService(currentEditingServiceIdx);
+}
 
 /* ── КОНТАКТЫ ── */
 function loadContactsFromStorage() {
@@ -1707,7 +1883,7 @@ function openEquipModal(equipmentId=null) {
 function openMaintenanceModal() {
   currentEditingMaintenanceId = null;
   const sel = document.getElementById('fm-equip');
-  if (sel) sel.innerHTML = equipment.map(e=>`<option value=\"${e.id}\">${e.name}</option>`).join('');
+  if (sel) sel.innerHTML = equipment.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
   document.getElementById('fm-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('fm-desc').value='';
   document.getElementById('fm-by').value='';
@@ -1718,7 +1894,6 @@ function openMaintenanceModal() {
   const inp=document.getElementById('fm-cons-search'); if(inp) inp.value='';
   document.getElementById('modal-maintenance').classList.add('open');
 }
-
 
 function openMaintenanceEdit(maintenanceId) {
   const m = maintenances.find(x=>x.id===maintenanceId);
@@ -1745,6 +1920,7 @@ function closeModal(id) {
   if (id === 'modal-deal') resetDealModalState();
   if (id === 'modal-equip') currentEditingEquipmentId = null;
   if (id === 'modal-maintenance') currentEditingMaintenanceId = null;
+  if (id === 'modal-service') currentEditingServiceIdx = null;
 }
 
 document.querySelectorAll('.modal-overlay').forEach(m => {
@@ -1752,6 +1928,7 @@ document.querySelectorAll('.modal-overlay').forEach(m => {
     if (e.target !== m) return;
     m.classList.remove('open');
     if (m.id === 'modal-deal') resetDealModalState();
+    if (m.id === 'modal-service') currentEditingServiceIdx = null;
   });
 });
 
@@ -1776,7 +1953,6 @@ function openDealDetails(dealId) {
   currentEditingDealId = dealId;
   document.getElementById('modal-deal').classList.add('open');
 }
-
 
 function renderConsumables() {
   const tbody = document.getElementById('consumables-tbody');
@@ -2115,9 +2291,10 @@ function fillSelectedServicesFromString(raw='') {
 
 /* ── ИНИЦИАЛИЗАЦИЯ ── */
 document.addEventListener('DOMContentLoaded', function() {
-  checkAuth();
-  buildServiceFilter();
+  loadServicesFromStorage();
+  buildServiceCategoryFilter();
   renderServices();
+  checkAuth();
   initDealServicePicker();
   initMaintenanceConsumablePicker();
 });

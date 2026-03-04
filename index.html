@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GreenCRM · Система управления</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f2eb;--surface:#fdfcf8;--surface2:#f0ece3;
+  --border:#e2ddd4;--border2:#ede9e0;
+  --forest:#1a3318;--moss:#2d5426;--fern:#4a7c3f;--sage:#7ab566;--sage2:#a8cf98;--leaf:#d4eacc;
+  --ink:#1c211a;--ink2:#4a5247;--ink3:#8a9287;--ink4:#b8bdb6;
+  --gold:#b07d2c;--red:#8b3a2a;--blue:#2a5280;
+  --sh-s:0 1px 4px rgba(26,51,24,.07);--sh-m:0 4px 20px rgba(26,51,24,.10);--sh-l:0 12px 48px rgba(26,51,24,.14);
+  --r:10px;--hh:58px;
+}
+html[data-theme="dark"]{
+  --bg:#0d120c;--surface:#111810;--surface2:#182016;
+  --border:#243020;--border2:#1c2819;
+  --forest:#0a1009;--moss:#1a2e18;--fern:#5a9448;--sage:#7ab566;--sage2:#4a7c3f;--leaf:#1e3419;
+  --ink:#e4ede0;--ink2:#a8b8a4;--ink3:#607060;--ink4:#384838;
+  --gold:#c8952a;--red:#c85040;--blue:#4a80c0;
+  --sh-s:0 1px 4px rgba(0,0,0,.3);--sh-m:0 4px 20px rgba(0,0,0,.4);--sh-l:0 12px 48px rgba(0,0,0,.5);
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;font-weight:400;background:var(--bg);color:var(--ink);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--sage2)}
+
+/* LOGIN */
+#login-screen{
+  position:fixed;inset:0;z-index:999;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--forest);
+  background-image:radial-gradient(ellipse 120% 80% at 10% 110%,rgba(74,124,63,.3) 0%,transparent 55%),radial-gradient(ellipse 70% 50% at 90% -10%,rgba(122,181,102,.12) 0%,transparent 50%);
+}
+.login-box{position:relative;text-align:center;padding:64px 56px;z-index:1}
+.login-box::before,.login-box::after{content:'';position:absolute;border:1px solid rgba(122,181,102,.18);border-radius:4px;pointer-events:none}
+.login-box::before{inset:0}
+.login-box::after{inset:8px;border-color:rgba(122,181,102,.08)}
+.login-eyebrow{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:rgba(122,181,102,.6);font-weight:500;margin-bottom:20px}
+.login-logo{font-family:'Playfair Display',serif;font-size:56px;font-weight:400;color:#fff;letter-spacing:-1px;line-height:1;margin-bottom:6px}
+.login-logo em{font-style:italic;color:var(--sage)}
+.login-rule{width:40px;height:1px;background:linear-gradient(90deg,transparent,rgba(122,181,102,.5),transparent);margin:20px auto}
+.login-sub{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.28);margin-bottom:40px;font-weight:300}
+.login-btn{
+  display:inline-flex;align-items:center;gap:12px;
+  border:1px solid rgba(122,181,102,.35);color:rgba(255,255,255,.75);
+  font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;
+  padding:13px 36px;border-radius:3px;text-decoration:none;
+  transition:all .3s ease;background:rgba(122,181,102,.05)
+}
+.login-btn:hover{border-color:rgba(122,181,102,.7);background:rgba(122,181,102,.12);color:#fff;gap:18px}
+.login-btn span{transition:transform .3s}
+.login-btn:hover span:last-child{transform:translateX(4px)}
+
+/* HEADER */
+#app{display:none}
+header{
+  height:var(--hh);background:var(--forest);
+  display:flex;align-items:center;padding:0 24px 0 28px;
+  position:sticky;top:0;z-index:200;
+  border-bottom:1px solid rgba(74,124,63,.2);
+  box-shadow:0 2px 24px rgba(0,0,0,.18)
+}
+.logo{font-family:'Playfair Display',serif;font-size:19px;font-weight:500;color:#fff;text-decoration:none;letter-spacing:-.2px;margin-right:28px;flex-shrink:0;white-space:nowrap}
+.logo em{font-style:italic;color:var(--sage)}
+.logo sup{font-family:'DM Sans',sans-serif;font-size:7px;font-weight:500;letter-spacing:1px;color:rgba(122,181,102,.5);vertical-align:super;margin-left:3px}
+nav{display:flex;align-items:center;gap:0;flex:1;overflow-x:auto}
+nav::-webkit-scrollbar{display:none}
+nav button{
+  background:none;border:none;color:rgba(255,255,255,.35);
+  font-family:'DM Sans',sans-serif;font-size:10px;font-weight:500;letter-spacing:1px;text-transform:uppercase;
+  padding:8px 13px;cursor:pointer;transition:color .2s;white-space:nowrap;border-radius:4px;flex-shrink:0;position:relative
+}
+nav button::after{content:'';position:absolute;bottom:2px;left:50%;right:50%;height:1px;background:var(--sage);transition:left .25s ease,right .25s ease}
+nav button:hover{color:rgba(255,255,255,.65)}
+nav button.active{color:var(--sage)}
+nav button.active::after{left:13px;right:13px}
+.header-end{display:flex;align-items:center;gap:6px;margin-left:16px;flex-shrink:0}
+#year-selector-container{display:flex;align-items:center;gap:5px}
+#year-selector{
+  background:rgba(255,255,255,.07);color:rgba(255,255,255,.7);
+  border:1px solid rgba(122,181,102,.22);border-radius:5px;
+  padding:5px 9px;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;
+  cursor:pointer;outline:none;transition:border-color .2s
+}
+#year-selector:focus{border-color:rgba(122,181,102,.6)}
+#year-selector option{background:#1a3318}
+.hbtn{
+  width:30px;height:30px;border-radius:6px;
+  border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);
+  color:rgba(255,255,255,.4);cursor:pointer;font-size:13px;
+  display:inline-flex;align-items:center;justify-content:center;transition:all .2s
+}
+.hbtn:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.85);border-color:rgba(255,255,255,.18)}
+
+/* PAGES */
+.page{display:none;padding:40px 44px;min-height:calc(100vh - var(--hh));animation:pageIn .32s ease both}
+.page.active{display:block}
+@keyframes pageIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* PAGE HEAD */
+.ph{margin-bottom:36px}
+.ph-eyebrow{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.ph-line{width:20px;height:1px;background:var(--fern)}
+.ph-label{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--fern);font-weight:500}
+.ph-title{font-family:'Playfair Display',serif;font-size:44px;font-weight:400;color:var(--ink);line-height:1.05;letter-spacing:-.5px}
+.ph-title em{font-style:italic;color:var(--fern)}
+.ph-year{
+  display:inline-block;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:400;
+  color:var(--ink3);border:1px solid var(--border);border-radius:20px;
+  padding:2px 12px;margin-left:14px;vertical-align:middle;letter-spacing:0
+}
+
+/* KPI */
+.kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:32px}
+.kpi-card{
+  background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);
+  padding:26px 24px 22px;position:relative;overflow:hidden;
+  box-shadow:var(--sh-s);transition:box-shadow .2s,transform .2s
+}
+.kpi-card:hover{box-shadow:var(--sh-m);transform:translateY(-1px)}
+.kpi-card::before{
+  content:'';position:absolute;left:0;top:16px;bottom:16px;
+  width:3px;border-radius:0 2px 2px 0;background:var(--kpi-accent,var(--sage))
+}
+.kpi-icon{font-size:17px;margin-bottom:14px;display:block;opacity:.55}
+.kpi-val{font-family:'Playfair Display',serif;font-size:34px;font-weight:500;color:var(--ink);line-height:1;margin-bottom:7px;letter-spacing:-.5px}
+.kpi-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--fern);font-weight:500;margin-bottom:6px}
+.kpi-sub{font-size:11px;color:var(--ink3);font-weight:300}
+
+/* TABLE CARD */
+.tcard{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh-s)}
+.tcard-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px;border-bottom:1px solid var(--border2);background:var(--surface2)
+}
+.tcard-title{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--fern);font-weight:500}
+.tcard-meta{font-size:11px;color:var(--ink4)}
+table{width:100%;border-collapse:collapse}
+thead tr{background:var(--surface2)}
+th{text-align:left;padding:12px 20px;font-size:9px;font-weight:500;letter-spacing:1.8px;text-transform:uppercase;color:var(--ink3);border-bottom:1px solid var(--border2);white-space:nowrap}
+td{padding:12px 20px;border-bottom:1px solid var(--border2);font-size:12px;color:var(--ink2);font-weight:300;transition:background .15s}
+td:first-child{color:var(--ink4);font-size:11px;width:44px}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--surface2)}
+
+/* BADGE */
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:500;letter-spacing:.3px}
+.b-green{background:#dcfce7;color:#16a34a}
+.b-amber{background:#fef3c7;color:#b45309}
+.b-slate{background:#f1f5f9;color:#64748b}
+.b-blue{background:#dbeafe;color:#1d4ed8}
+html[data-theme="dark"] .b-green{background:#14532d;color:#4ade80}
+html[data-theme="dark"] .b-amber{background:#451a03;color:#fb923c}
+html[data-theme="dark"] .b-slate{background:#1e293b;color:#94a3b8}
+html[data-theme="dark"] .b-blue{background:#1e3a5f;color:#60a5fa}
+
+.money{font-family:'Playfair Display',serif;font-size:14px;font-weight:500;color:var(--ink)}
+.m-neg{color:var(--red)}
+.m-pos{color:#16a34a}
+.cat-tag{font-size:10px;color:var(--fern);background:var(--leaf);padding:2px 8px;border-radius:20px;display:inline-block}
+html[data-theme="dark"] .cat-tag{background:var(--surface2);color:var(--sage)}
+
+/* KANBAN */
+.kanban{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:11px;padding-bottom:12px}
+.k-col{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);display:flex;flex-direction:column;max-height:calc(100vh - 200px);box-shadow:var(--sh-s);transition:background .15s,border-color .15s}
+.k-col.drag-over{background:var(--leaf);border-color:var(--sage)}
+html[data-theme="dark"] .k-col.drag-over{background:var(--surface2);border-color:var(--fern)}
+.k-head{padding:13px 15px 11px;border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:8px}
+.k-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.k-name{font-size:9px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;flex:1}
+.k-count{font-size:10px;color:var(--ink4);background:var(--surface2);border:1px solid var(--border2);padding:1px 7px;border-radius:20px;min-width:22px;text-align:center}
+.k-total{font-family:'Playfair Display',serif;font-size:12px;color:var(--ink3);padding:6px 15px 0;text-align:right}
+.k-cards{padding:8px;overflow-y:auto;display:flex;flex-direction:column;gap:7px;flex:1}
+.k-cards::-webkit-scrollbar{width:3px}
+.k-card{background:var(--bg);border:1px solid var(--border2);border-left:3px solid var(--c,var(--sage));border-radius:8px;padding:14px 13px 11px;cursor:grab;transition:box-shadow .2s,transform .2s,opacity .2s;box-shadow:0 1px 3px rgba(0,0,0,.04);user-select:none}
+.k-card:hover{box-shadow:var(--sh-m);transform:translateY(-2px);background:var(--surface)}
+.k-card.dragging{opacity:.35;cursor:grabbing;transform:scale(1.03) rotate(1deg);box-shadow:var(--sh-l)}
+.k-placeholder{border:2px dashed var(--sage);border-radius:8px;background:var(--leaf);min-height:72px;transition:min-height .15s}
+html[data-theme="dark"] .k-placeholder{background:var(--surface2)}
+.k-sum{font-family:'Playfair Display',serif;font-size:20px;font-weight:500;color:var(--c,var(--sage));line-height:1;margin-bottom:5px}
+.k-title{font-family:'Playfair Display',serif;font-size:13px;font-weight:500;color:var(--ink);margin-bottom:3px;line-height:1.3}
+.k-client{font-size:11px;color:var(--fern);font-weight:300}
+.k-hr{height:1px;background:var(--border2);margin:8px 0}
+.k-date{font-size:10px;color:var(--ink4);font-weight:300}
+
+/* EMPTY */
+.empty{padding:56px 32px;text-align:center}
+.empty-ico{font-size:28px;opacity:.25;margin-bottom:10px}
+.empty-txt{font-size:12px;color:var(--ink4);font-weight:300}
+
+
+/* ADD BUTTON */
+.add-btn{display:inline-flex;align-items:center;gap:7px;background:var(--fern);color:#fff;border:none;border-radius:7px;padding:9px 18px;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;letter-spacing:.5px;cursor:pointer;transition:all .2s;box-shadow:var(--sh-s)}
+.add-btn:hover{background:var(--moss);transform:translateY(-1px);box-shadow:var(--sh-m)}
+/* MODAL */
+.overlay{position:fixed;inset:0;z-index:500;background:rgba(14,26,12,.5);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:32px;width:100%;max-width:400px;box-shadow:var(--sh-l);transform:translateY(18px) scale(.97);transition:transform .25s}
+.overlay.open .modal{transform:none}
+.modal-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:400;color:var(--ink);margin-bottom:24px}
+.modal-title em{font-style:italic;color:var(--fern)}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--fern);font-weight:500;margin-bottom:7px}
+.field input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:10px 13px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink);outline:none;transition:border-color .2s}
+.field input:focus{border-color:var(--fern)}
+.field input.err{border-color:var(--red)}
+.modal-row{display:flex;gap:10px;justify-content:flex-end;margin-top:24px}
+.btn-sec{background:none;border:1px solid var(--border);border-radius:7px;padding:9px 18px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--ink3);cursor:pointer;transition:all .2s}
+.btn-sec:hover{border-color:var(--ink3);color:var(--ink)}
+.btn-pri{background:var(--fern);color:#fff;border:none;border-radius:7px;padding:9px 20px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:background .2s}
+.btn-pri:hover{background:var(--moss)}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:22px;right:22px;z-index:400;
+  background:var(--forest);color:rgba(255,255,255,.82);
+  border:1px solid rgba(122,181,102,.2);border-radius:8px;
+  padding:11px 18px;font-size:12px;font-weight:400;
+  box-shadow:var(--sh-l);
+  transform:translateY(60px);opacity:0;
+  transition:all .35s cubic-bezier(.34,1.46,.64,1);max-width:300px
+}
+.toast.show{transform:translateY(0);opacity:1}
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-eyebrow">Система управления бизнесом</div>
+    <div class="login-logo">Green<em>CRM</em></div>
+    <div class="login-rule"></div>
+    <div class="login-sub">Покос и благоустройство</div>
+    <a class="login-btn" href="/api/auth/login">
+      <span>Войти в систему</span>
+      <span>→</span>
+    </a>
+  </div>
+</div>
+
+<div id="app">
+<header>
+  <a class="logo" href="#">Green<em>CRM</em><sup>PRO</sup></a>
+  <nav id="main-nav">
+    <button class="active" onclick="showPage('dash',this)">Дашборд</button>
+    <button onclick="showPage('kanban',this)">Сделки</button>
+    <button onclick="showPage('tasks',this)">Задачи</button>
+    <button onclick="showPage('expenses',this)">Расходы</button>
+    <button onclick="showPage('equipment',this)">Техника</button>
+    <button onclick="showPage('services',this)">Прайс-лист</button>
+    <button onclick="showPage('stock',this)">Склад</button>
+    <button onclick="showPage('contacts',this)">Контакты</button>
+  </nav>
+  <div class="header-end">
+    <div id="year-selector-container">
+      <select id="year-selector"></select>
+      <button class="hbtn" id="year-refresh" title="Обновить">↺</button>
+    </div>
+    <button class="hbtn" id="theme-toggle" onclick="toggleTheme()" title="Тема">◑</button>
+    <button class="hbtn" onclick="window.location='/api/auth/logout'" title="Выйти">⏻</button>
+  </div>
+</header>
+
+<div class="page active" id="page-dash">
+  <div class="ph">
+    <div class="ph-eyebrow"><div class="ph-line"></div><span class="ph-label">Обзор</span></div>
+    <div class="ph-title">Ключевые <em>показатели</em><span class="ph-year year-display"></span></div>
+  </div>
+  <div class="kpi-strip">
+    <div class="kpi-card" style="--kpi-accent:#16a34a">
+      <span class="kpi-icon">💰</span>
+      <div class="kpi-val" id="kpi-revenue">—</div>
+      <div class="kpi-label">Выручка</div>
+      <div class="kpi-sub" id="kpi-deals-count">— успешных сделок</div>
+    </div>
+    <div class="kpi-card" style="--kpi-accent:#dc2626">
+      <span class="kpi-icon">📉</span>
+      <div class="kpi-val" id="kpi-expenses">—</div>
+      <div class="kpi-label">Расходы</div>
+      <div class="kpi-sub" id="kpi-exp-count">— записей</div>
+    </div>
+    <div class="kpi-card" style="--kpi-accent:#7c3aed">
+      <span class="kpi-icon">📈</span>
+      <div class="kpi-val" id="kpi-profit">—</div>
+      <div class="kpi-label">Прибыль</div>
+      <div class="kpi-sub" id="kpi-margin">маржа —%</div>
+    </div>
+    <div class="kpi-card" style="--kpi-accent:#d97706">
+      <span class="kpi-icon">🔧</span>
+      <div class="kpi-val" id="kpi-equip">—</div>
+      <div class="kpi-label">Единиц техники</div>
+      <div class="kpi-sub" id="kpi-repair">— в ремонте</div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-kanban">
+  <div class="ph">
+    <div class="ph-eyebrow"><div class="ph-line"></div><span class="ph-label">Воронка продаж</span></div>
+    <div class="ph-title">Сделки <em>по этапам</em><span class="ph-year year-display"></span></div>
+  </div>
+  <div class="kanban" id="kanban-board"></div>
+</div>
+
+<div class="page" id="page-tasks">
+  <div class="ph" style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:28px">
+    <div>
+      <div class="ph-eyebrow"><div class="ph-line"></div><span class="ph-label">Управление</span></div>
+      <div class="ph-title">Задачи<span class="ph-year year-display"></span></div>
+    </div>
+    <button class="add-btn" onclick="openTaskModal()">＋&nbsp;Новая задача</button>
+  </div>
+  <div class="tcard">
+    <div class="tcard-head"><span class="tcard-title">Список задач</span><span class="tcard-meta" id="tasks-count"></span></div>
+    <table><thead><tr><th>#</th><th>Задача</th><th>Срок</th><th>Статус</th></tr></thead><tbody id="tasks-tbody"></tbody></table>
+  </div>
+</div>
+
+<div class="page" id="page-expenses">
+  <div class="ph">
+    <div class="ph-eyebrow"><div class="ph-line"></div><span class="ph-label">Финансы</span></div>
+    <div class="ph-title">Расходы<span class="ph-year year-display"></span></div>
+  </div>
+  <div class="tcard">
+    <div class="tcard-head"><span class="tcard-title">Все расходы</span><span class="tcard-meta" id="expenses-count"></span></div>
+    <table><thead><tr><th>#</th><th>Наименование</th><th>Категория</th><th>Сумма</th><th>Дата</th></tr></thead><tbody id="expenses-tbody"></tbody></table>
+  </div>
+</div>
+
+<div class="page" id="page-equipment">
+  <div class="ph">
+    <div class="ph-eyebrow"><div class="ph-line"></div><span class="ph-label">Парк техники</span></div>
+    <div class="ph-title">Техника <em>и инвентарь</em></div>
+  </div>
+  <div class="tcard">
+    <div class="tcard-head"><span class="tcard-title">Инвентарный список</span><span class="tcard-meta" id="equipment-count"></span></div>
+    <table><thead><tr><th>#</th><th>Название</th><th>Модель</th><th>Статус</th></tr></thead><tbody id="equipment-tbody"></tbody></table>
+  </div>
+</div>
+
+<div class="page" id="page-services">
+  <div class="ph">
+    <div class="ph-eyebrow"><div class="ph-line"></div><span class="ph-label">Услуги</span></div>
+    <div class="ph-title">Прайс-<em>лист</em></div>
+  </div>
+  <div class="tcard">
+    <div class="tcard-head"><span class="tcard-title">Все услуги</span><span class="tcard-meta" id="services-count"></span></div>
+    <table><thead><tr><th>#</th><th>Наименование</th><th>Категория</th><th>Цена</th><th>Ед. изм.</th></tr></thead><tbody id="services-tbody"></tbody></table>
+  </div>
+</div>
+
+<div class="page" id="page-stock">
+  <div class="ph">
+    <div class="ph-eyebrow"><div class="ph-line"></div><span class="ph-label">Материалы</span></div>
+    <div class="ph-title">Склад <em>и расходники</em></div>
+  </div>
+  <div class="tcard">
+    <div class="tcard-head"><span class="tcard-title">Остатки</span><span class="tcard-meta" id="consumables-count"></span></div>
+    <table><thead><tr><th>#</th><th>Название</th><th>Остаток</th></tr></thead><tbody id="consumables-tbody"></tbody></table>
+  </div>
+</div>
+
+<div class="page" id="page-contacts">
+  <div class="ph">
+    <div class="ph-eyebrow"><div class="ph-line"></div><span class="ph-label">База клиентов</span></div>
+    <div class="ph-title">Контакты</div>
+  </div>
+  <div class="tcard">
+    <div class="tcard-head"><span class="tcard-title">Все клиенты</span><span class="tcard-meta" id="contacts-count"></span></div>
+    <table><thead><tr><th>#</th><th>Имя</th><th>Телефон</th></tr></thead><tbody id="contacts-tbody"></tbody></table>
+  </div>
+</div>
+
+<!-- MODAL: новая задача -->
+<div class="overlay" id="task-overlay" onclick="if(event.target===this)closeTaskModal()">
+  <div class="modal">
+    <div class="modal-title">Новая <em>задача</em></div>
+    <div class="field">
+      <label>Название</label>
+      <input type="text" id="t-title" placeholder="Что нужно сделать?" />
+    </div>
+    <div class="field">
+      <label>Срок</label>
+      <input type="date" id="t-date" />
+    </div>
+    <div class="modal-row">
+      <button class="btn-sec" onclick="closeTaskModal()">Отмена</button>
+      <button class="btn-pri" onclick="saveTask()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const API_BASE='/api';
+let STAGES=[],SELECTED_YEAR=new Date().getFullYear();
+
+function fmt(n){return Math.round(n).toLocaleString('ru')+'\u00a0₽'}
+function fmtDate(s){return s?new Date(s).toLocaleDateString('ru',{day:'2-digit',month:'2-digit',year:'numeric'}):'—'}
+function empty(cols,msg){return`<tr><td colspan="${cols}"><div class="empty"><div class="empty-ico">🌿</div><div class="empty-txt">${msg||'Нет данных'}</div></div></td></tr>`}
+
+async function api(ep,opts={}){
+  try{
+    const r=await fetch(`${API_BASE}${ep}`,{...opts,credentials:'include',headers:{'Content-Type':'application/json',...(opts.headers||{})}});
+    if(r.status===401){window.location.href='/api/auth/login';throw new Error('401')}
+    if(!r.ok){const e=await r.json().catch(()=>({detail:r.statusText}));throw new Error(e.detail||'err')}
+    return r.status===204?null:r.json()
+  }catch(e){showToast('❌ '+e.message);throw e}
+}
+
+// ── KANBAN STATE ──
+let _deals=[], _dragEl=null, _dragSrcStage=null;
+
+function renderKanban(deals=[]){
+  _deals=[...deals];
+  const board=document.getElementById('kanban-board');
+  if(!STAGES.length){board.innerHTML='<p style="color:var(--ink4);padding:24px">Нет этапов</p>';return}
+  board.innerHTML=STAGES.map(st=>{
+    const c=st.color||'#7ab566';
+    const cards=deals.filter(d=>d.stage===st.name);
+    const total=cards.reduce((s,d)=>s+d.total,0);
+    const cardsHtml=cards.length
+      ?cards.map(d=>`<div class="k-card" draggable="true" data-id="${d.id}" data-stage="${escH(st.name)}" style="--c:${c}">
+          <div class="k-sum">${fmt(d.total)}</div>
+          <div class="k-title">${d.title}</div>
+          <div class="k-client">${d.client}</div>
+          <div class="k-hr"></div>
+          <div class="k-date">${fmtDate(d.created_at)}</div>
+        </div>`).join('')
+      :`<div class="empty"><div class="empty-ico" style="font-size:20px">🌿</div><div class="empty-txt">Пусто</div></div>`;
+    return`<div class="k-col" data-stage="${escH(st.name)}">
+      <div class="k-head"><div class="k-dot" style="background:${c}"></div><span class="k-name" style="color:${c}">${st.name}</span><span class="k-count">${cards.length}</span></div>
+      <div class="k-total" style="${cards.length?'':'visibility:hidden'}">${fmt(total)}</div>
+      <div class="k-cards">${cardsHtml}</div>
+    </div>`;
+  }).join('');
+  initDrag();
+}
+
+function escH(s){return s.replace(/"/g,'&quot;')}
+
+function initDrag(){
+  const board=document.getElementById('kanban-board');
+  board.querySelectorAll('.k-card[draggable]').forEach(el=>{
+    el.addEventListener('dragstart',e=>{
+      _dragEl=el; _dragSrcStage=el.dataset.stage;
+      requestAnimationFrame(()=>el.classList.add('dragging'));
+      e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('text/plain',el.dataset.id);
+    });
+    el.addEventListener('dragend',()=>{
+      if(_dragEl)_dragEl.classList.remove('dragging');
+      board.querySelectorAll('.k-placeholder').forEach(p=>p.remove());
+      board.querySelectorAll('.k-col').forEach(c=>c.classList.remove('drag-over'));
+      _dragEl=null;
+    });
+  });
+  board.querySelectorAll('.k-col').forEach(col=>{
+    col.addEventListener('dragover',e=>{
+      e.preventDefault(); e.dataTransfer.dropEffect='move';
+      col.classList.add('drag-over');
+      const cards=col.querySelector('.k-cards');
+      const ph=col.querySelector('.k-placeholder');
+      if(!ph){const p=document.createElement('div');p.className='k-placeholder';cards.appendChild(p);}
+    });
+    col.addEventListener('dragleave',e=>{
+      if(!col.contains(e.relatedTarget)){
+        col.classList.remove('drag-over');
+        col.querySelectorAll('.k-placeholder').forEach(p=>p.remove());
+      }
+    });
+    col.addEventListener('drop',e=>{
+      e.preventDefault();
+      col.classList.remove('drag-over');
+      col.querySelectorAll('.k-placeholder').forEach(p=>p.remove());
+      const id=e.dataTransfer.getData('text/plain');
+      const newStage=col.dataset.stage;
+      if(!id||_dragSrcStage===newStage)return;
+      const deal=_deals.find(d=>String(d.id)===String(id));
+      if(!deal)return;
+      const oldStage=deal.stage;
+      deal.stage=newStage;
+      renderKanban(_deals);
+      api(`/deals/${id}/stage`,{method:'PATCH',body:JSON.stringify({stage_name:newStage})})
+        .then(()=>showToast('✅ → '+newStage))
+        .catch(()=>{deal.stage=oldStage;renderKanban(_deals);showToast('❌ Не удалось изменить этап')});
+    });
+  });
+}
+
+// ── TASK MODAL ──
+function openTaskModal(){
+  document.getElementById('t-title').value='';
+  document.getElementById('t-date').value='';
+  document.getElementById('t-title').classList.remove('err');
+  document.getElementById('task-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('t-title').focus(),100);
+}
+function closeTaskModal(){document.getElementById('task-overlay').classList.remove('open')}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeTaskModal()});
+
+async function saveTask(){
+  const title=document.getElementById('t-title').value.trim();
+  const date=document.getElementById('t-date').value;
+  if(!title){document.getElementById('t-title').classList.add('err');return}
+  try{
+    await api('/tasks',{method:'POST',body:JSON.stringify({title,due_date:date||null})});
+    closeTaskModal();
+    showToast('✅ Задача добавлена');
+    // invalidate cache then reload
+    await api('/cache/invalidate',{method:'POST'}).catch(()=>{});
+    const data=await api('/tasks?year='+SELECTED_YEAR);
+    renderTasks(data?.tasks||[]);
+  }catch{}
+}
+
+function renderTasks(tasks=[]){
+  const tb=document.getElementById('tasks-tbody'),cnt=document.getElementById('tasks-count');
+  if(cnt)cnt.textContent=tasks.length?tasks.length+' задач':'';
+  tb.innerHTML=tasks.length?tasks.map(t=>`<tr><td>${t.id}</td><td style="color:var(--ink);font-weight:400">${t.title}</td><td>${fmtDate(t.due_date)}</td><td><span class="badge ${t.status==='Выполнено'?'b-green':'b-blue'}">${t.status}</span></td></tr>`).join(''):empty(4,'Задач не найдено')
+}
+
+function renderExpenses(expenses=[]){
+  const tb=document.getElementById('expenses-tbody'),cnt=document.getElementById('expenses-count');
+  const total=expenses.reduce((s,e)=>s+e.amount,0);
+  if(cnt)cnt.textContent=expenses.length?`${expenses.length} записей · ${fmt(total)}`:'';
+  tb.innerHTML=expenses.length?expenses.map(e=>`<tr><td>${e.id}</td><td style="color:var(--ink);font-weight:400">${e.name}</td><td><span class="cat-tag">${e.category}</span></td><td><span class="money">${fmt(e.amount)}</span></td><td>${fmtDate(e.date)}</td></tr>`).join(''):empty(5,'Расходов не найдено')
+}
+
+function renderEquipment(eq=[]){
+  const tb=document.getElementById('equipment-tbody'),cnt=document.getElementById('equipment-count');
+  if(cnt)cnt.textContent=eq.length?eq.length+' единиц':'';
+  const SM={active:['b-green','Активна'],repair:['b-amber','В ремонте'],retired:['b-slate','Списана']};
+  tb.innerHTML=eq.length?eq.map(e=>{const[cls,lbl]=SM[e.status]||['b-slate',e.status];return`<tr><td>${e.id}</td><td style="color:var(--ink);font-weight:400">${e.name}</td><td style="color:var(--ink3);font-size:11px">${e.model||'—'}</td><td><span class="badge ${cls}">${lbl}</span></td></tr>`}).join(''):empty(4,'Техники не найдено')
+}
+
+function renderServices(services=[]){
+  const tb=document.getElementById('services-tbody'),cnt=document.getElementById('services-count');
+  if(cnt)cnt.textContent=services.length?services.length+' услуг':'';
+  tb.innerHTML=services.length?services.map(s=>`<tr><td>${s.id}</td><td style="color:var(--ink);font-weight:400">${s.name}</td><td><span class="cat-tag">${s.category||'—'}</span></td><td><span class="money">${fmt(s.price)}</span></td><td style="color:var(--ink4);font-size:11px">${s.unit}</td></tr>`).join(''):empty(5,'Услуг не найдено')
+}
+
+function renderConsumables(items=[]){
+  const tb=document.getElementById('consumables-tbody'),cnt=document.getElementById('consumables-count');
+  if(cnt)cnt.textContent=items.length?items.length+' позиций':'';
+  tb.innerHTML=items.length?items.map(c=>`<tr><td>${c.id}</td><td style="color:var(--ink);font-weight:400">${c.name}</td><td><span class="money">${c.stock_quantity||0}</span> <span style="font-size:11px;color:var(--ink4)">${c.unit||''}</span></td></tr>`).join(''):empty(3,'Позиций не найдено')
+}
+
+function renderContacts(contacts=[]){
+  const tb=document.getElementById('contacts-tbody'),cnt=document.getElementById('contacts-count');
+  if(cnt)cnt.textContent=contacts.length?contacts.length+' контактов':'';
+  tb.innerHTML=contacts.length?contacts.map(c=>`<tr><td>${c.id}</td><td style="color:var(--ink);font-weight:400">${c.name}</td><td style="color:var(--fern);font-size:11px">${c.phone||'—'}</td></tr>`).join(''):empty(3,'Контактов не найдено')
+}
+
+function buildDash(deals,expenses,equipment){
+  const ws=STAGES.find(s=>s.type==='success');
+  const won=ws?deals.filter(d=>d.stage===ws.name):deals;
+  const rev=won.reduce((s,d)=>s+d.total,0);
+  const exp=expenses.reduce((s,e)=>s+e.amount,0);
+  const prof=rev-exp,marg=rev?Math.round(prof/rev*100):0;
+  document.getElementById('kpi-revenue').textContent=fmt(rev);
+  document.getElementById('kpi-deals-count').textContent=won.length+' успешных сделок';
+  document.getElementById('kpi-expenses').textContent=fmt(exp);
+  document.getElementById('kpi-exp-count').textContent=expenses.length+' записей';
+  const pel=document.getElementById('kpi-profit');
+  pel.textContent=fmt(prof);pel.className='kpi-val '+(prof>=0?'m-pos':'m-neg');
+  document.getElementById('kpi-margin').textContent='маржа '+marg+'%';
+  document.getElementById('kpi-equip').textContent=equipment.length;
+  document.getElementById('kpi-repair').textContent=equipment.filter(e=>e.status==='repair').length+' в ремонте';
+}
+
+async function loadData(year){
+  if(!year)return;
+  showToast('⏳ Загрузка за '+year+'…');
+  document.querySelectorAll('.year-display').forEach(el=>el.textContent=year);
+  const yp='?year='+year;
+  const ep={stages:'/stages',deals:'/deals'+yp,tasks:'/tasks'+yp,expenses:'/expenses'+yp,equipment:'/equipment',services:'/services',consumables:'/consumables',contacts:'/contacts'};
+  const keys=Object.keys(ep);
+  const res=await Promise.allSettled(keys.map(k=>api(ep[k])));
+  const data={};let err=false;
+  res.forEach((r,i)=>{if(r.status==='fulfilled')data[keys[i]]=r.value;else err=true});
+  STAGES=data.stages||[];
+  const deals=data.deals?.deals||[],expenses=data.expenses?.expenses||[],equipment=data.equipment||[];
+  renderKanban(deals);renderTasks(data.tasks?.tasks||[]);renderExpenses(expenses);
+  renderEquipment(equipment);renderServices(data.services||[]);renderConsumables(data.consumables||[]);renderContacts(data.contacts||[]);
+  buildDash(deals,expenses,equipment);
+  showToast(err?'⚠️ Часть данных не загрузилась':'✅ Данные загружены');
+}
+
+async function populateYearSelector(){
+  const sel=document.getElementById('year-selector');
+  try{
+    const years=await api('/years');
+    if(!years?.length){sel.innerHTML=`<option>${SELECTED_YEAR}</option>`;return}
+    SELECTED_YEAR=years[0];
+    sel.innerHTML=years.map(y=>`<option value="${y}"${y===SELECTED_YEAR?' selected':''}>${y}</option>`).join('')
+  }catch{sel.innerHTML=`<option>${SELECTED_YEAR}</option>`}
+}
+
+async function checkAuth(){
+  try{
+    await api('/me');
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app').style.display='block';
+    await populateYearSelector();await loadData(SELECTED_YEAR);
+    document.getElementById('year-selector').addEventListener('change',()=>{
+      const y=parseInt(document.getElementById('year-selector').value,10);
+      if(y&&y!==SELECTED_YEAR){SELECTED_YEAR=y;loadData(y)}
+    });
+    document.getElementById('year-refresh').addEventListener('click',()=>loadData(SELECTED_YEAR));
+  }catch{document.getElementById('login-screen').style.display='flex'}
+}
+
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(btn)btn.classList.add('active');
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+function applyTheme(th){
+  document.documentElement.setAttribute('data-theme',th);localStorage.setItem('crm_theme',th);
+  const b=document.getElementById('theme-toggle');if(b)b.textContent=th==='dark'?'○':'◑';
+}
+function toggleTheme(){applyTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark')}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  applyTheme(localStorage.getItem('crm_theme')||'light');checkAuth();
+});
+</script>
+</body>
+</html>

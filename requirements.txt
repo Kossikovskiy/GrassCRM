@@ -1,21 +1,10 @@
-# MCP-сервер
-mcp>=1.0.0
-
-# База данных
-sqlalchemy>=2.0.0
-
-# REST API
-fastapi>=0.110.0
-uvicorn[standard]>=0.27.0
-pydantic>=2.0.0
-a2wsgi
-
-# Авторизация
-passlib[bcrypt]>=1.7.4
-python-jose[cryptography]>=3.3.0
-
-# Планировщик задач (Telegram уведомления)
-apscheduler>=3.10.0
-
-# Утилиты
-python-dotenv>=1.0.0
+fastapi==0.110.0
+uvicorn==0.28.0
+gunicorn==22.0.0
+sqlalchemy==2.0.29
+psycopg2-binary==2.9.9
+python-dotenv==1.0.1
+python-jose==3.3.0
+httpx==0.27.0
+itsdangerous==2.1.2
+starlette==0.36.3

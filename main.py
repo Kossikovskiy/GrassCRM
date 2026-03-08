@@ -230,7 +230,7 @@ class MaintenanceForListResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class ConsumableForMaintResponse(BaseModel):
-    id: int; name: str; unit: Optional[str]
+    id: int; name: str; unit: Optional[str]; stock_quantity: Optional[float] = 0.0
     model_config = ConfigDict(from_attributes=True)
 
 class MaintConsumableForDetailResponse(BaseModel):

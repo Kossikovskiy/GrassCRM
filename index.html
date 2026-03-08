@@ -357,15 +357,15 @@ html[data-theme="dark"] .k-placeholder{background:var(--surface2)}
 
 /* ── TOAST ─────────────────────────────────────────────────── */
 .toast{
-  position:fixed;bottom:calc(var(--bnav) + 12px);right:16px;z-index:400;
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.9);z-index:9999;
   background:var(--forest);color:rgba(255,255,255,.82);
   border:1px solid rgba(122,181,102,.2);border-radius:8px;
   padding:11px 18px;font-size:12px;font-weight:400;
   box-shadow:var(--sh-l);
-  transform:translateY(60px);opacity:0;
-  transition:all .35s cubic-bezier(.34,1.46,.64,1);max-width:300px
+  opacity:0;
+  transition:all .35s cubic-bezier(.34,1.46,.64,1);max-width:300px;text-align:center
 }
-.toast.show{transform:translateY(0);opacity:1}
+.toast.show{transform:translate(-50%,-50%) scale(1);opacity:1}
 
 /* ── CONTACT DEAL CARDS ─────────────────────────────────────── */
 /* ── CONTACT CARD ──────────────────────────────────────────── */
@@ -3076,13 +3076,20 @@ async function openMaintenanceModal(mId = null) {
         deleteBtn.style.display = 'block';
         deleteBtn.onclick = () => deleteMaintenance(_currentMaintenanceId);
 
-        _maintenanceItems = m.consumables_used.map(c => ({ 
-            id: c.consumable.id, 
-            name: c.consumable.name, 
-            price: c.price_at_moment, 
-            quantity: c.quantity,
-            unit: c.consumable.unit
-        }));
+        _maintenanceItems = m.consumables_used.map(c => {
+            const unit = c.consumable.unit || 'шт';
+            const inputUnit = unit === 'л' ? 'мл' : unit;
+            const convFactor = (unit === 'л' && inputUnit === 'мл') ? 1000 : 1;
+            return {
+                id: c.consumable.id,
+                name: c.consumable.name,
+                price: c.price_at_moment,
+                quantity: c.quantity * convFactor,  // показываем в мл если склад в л
+                unit,
+                inputUnit,
+                stock_quantity: c.consumable.stock_quantity ?? 0
+            };
+        });
 
     } else {
         title.innerHTML = 'Новая запись <em>о ТО</em>';
@@ -3106,7 +3113,9 @@ function addMaintenanceConsumable(consumable) {
     if (existingItem) {
         existingItem.quantity = parseFloat(existingItem.quantity) + 1;
     } else {
-        _maintenanceItems.push({ ...consumable, quantity: 1 });
+        // inputUnit — единица в которой пользователь вводит (мл если склад в л)
+        const inputUnit = consumable.unit === 'л' ? 'мл' : consumable.unit;
+        _maintenanceItems.push({ ...consumable, quantity: inputUnit === 'мл' ? 100 : 1, inputUnit });
     }
     renderMaintenanceConsumables();
 }
@@ -3130,17 +3139,31 @@ function renderMaintenanceConsumables() {
     if (_maintenanceItems.length === 0) {
         tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:20px;font-size:11px;color:var(--ink4)">Расходники не добавлены</td></tr>`;
     } else {
-        tbody.innerHTML = _maintenanceItems.map(item => `
+        tbody.innerHTML = _maintenanceItems.map(item => {
+            const inputUnit = item.inputUnit || item.unit || '';
+            const convFactor = (item.unit === 'л' && inputUnit === 'мл') ? 0.001 : 1;
+            const stockDisplay = item.unit === 'л'
+                ? `${Math.round(item.stock_quantity * 1000)} мл`
+                : `${item.stock_quantity} ${item.unit}`;
+            const itemTotal = item.price * item.quantity * convFactor;
+            return `
             <tr>
-                <td>${item.name}</td>
+                <td>${item.name}<br><span style="font-size:10px;color:var(--ink4)">склад: ${stockDisplay}</span></td>
                 <td>${fmt(item.price, '0 ₽')} / ${item.unit}</td>
-                <td><input type="number" value="${item.quantity}" onchange="updateMaintenanceConsumableQty(${item.id}, this.value)" style="width:70px; text-align:center; font-size: 12px; padding: 4px 6px;"></td>
-                <td>${fmt(item.price * item.quantity)}</td>
+                <td style="white-space:nowrap">
+                    <input type="number" value="${item.quantity}" onchange="updateMaintenanceConsumableQty(${item.id}, this.value)"
+                        style="width:65px;text-align:center;font-size:12px;padding:4px 6px;">
+                    <span style="font-size:11px;color:var(--ink3)">${inputUnit}</span>
+                </td>
+                <td>${fmt(itemTotal)}</td>
                 <td><button class="btn-del" onclick="removeMaintenanceConsumable(${item.id})" title="Удалить">⊗</button></td>
-            </tr>
-        `).join('');
+            </tr>`;
+        }).join('');
     }
-    const total = _maintenanceItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const total = _maintenanceItems.reduce((sum, item) => {
+        const convFactor = (item.unit === 'л' && (item.inputUnit || item.unit) === 'мл') ? 0.001 : 1;
+        return sum + (item.price * item.quantity * convFactor);
+    }, 0);
     document.getElementById('m-total-cost').value = fmt(total);
 }
 
@@ -3152,7 +3175,10 @@ async function saveMaintenance() {
         date: document.getElementById('m-date').value || toISODate(new Date()),
         work_description: work,
         notes: document.getElementById('m-notes').value.trim() || null,
-        consumables: _maintenanceItems.map(item => ({ consumable_id: item.id, quantity: item.quantity }))
+        consumables: _maintenanceItems.map(item => {
+            const convFactor = (item.unit === 'л' && (item.inputUnit || item.unit) === 'мл') ? 0.001 : 1;
+            return { consumable_id: item.id, quantity: item.quantity * convFactor };
+        })
     };
 
     const method = _currentMaintenanceId ? 'PATCH' : 'POST';

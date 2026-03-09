@@ -1,0 +1,14 @@
+[Unit]
+Description=GreenCRM Client AI Telegram Bot
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/var/www/crm/GCRM-2
+EnvironmentFile=/var/www/crm/GCRM-2/.env
+ExecStart=/var/www/crm/GCRM-2/venv/bin/python /var/www/crm/GCRM-2/client_bot.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

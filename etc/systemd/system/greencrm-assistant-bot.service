@@ -1,0 +1,13 @@
+[Unit]
+Description=GreenCRM Assistant Bot (личный AI-ассистент)
+After=network.target greencrm-web.service
+
+[Service]
+User=root
+WorkingDirectory=/var/www/crm/GCRM-2
+ExecStart=/var/www/crm/GCRM-2/venv/bin/python /var/www/crm/GCRM-2/assistant_bot.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

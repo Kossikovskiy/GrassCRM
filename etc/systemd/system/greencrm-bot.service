@@ -1,0 +1,13 @@
+[Unit]
+Description=GreenCRM Telegram Bot
+After=network.target greencrm-web.service
+
+[Service]
+User=root
+WorkingDirectory=/var/www/crm/GCRM-2
+ExecStart=/var/www/crm/GCRM-2/venv/bin/python bot.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

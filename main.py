@@ -1,3 +1,4 @@
+# GrassCRM Backend — main.py v1.2
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -22,6 +23,7 @@ from sqlalchemy import (
     create_engine, Column, Integer, String, Float, Date, DateTime, 
     Boolean, ForeignKey, Text, text, MetaData, extract, Double, func
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker, Session as DBSession, joinedload
 from pydantic import BaseModel, Field, ConfigDict
 import httpx
@@ -71,7 +73,7 @@ Base = declarative_base()
 engine = create_engine(DATABASE_URL, client_encoding='utf8')
 SessionFactory = sessionmaker(bind=engine, autoflush=False)
 
-class User(Base): __tablename__ = "users"; id,username,name,email = Column(String, primary_key=True),Column(String),Column(String),Column(String); role=Column(String, default="User"); telegram_id=Column(String(50), unique=True, index=True, nullable=True)
+class User(Base): __tablename__ = "users"; id,username,name,email = Column(String, primary_key=True),Column(String),Column(String),Column(String); role=Column(String, default="User"); telegram_id=Column(String(50), unique=True, index=True, nullable=True); last_login=Column(DateTime, nullable=True)
 class Service(Base): __tablename__ = "services"; id,name,price,unit = Column(Integer,primary_key=True),Column(String(200),nullable=False),Column(Float,default=0.0),Column(String(50),default="шт"); min_volume=Column(Float,default=1.0); notes=Column(Text)
 class DealService(Base): __tablename__ = "deal_services"; id,deal_id,service_id,quantity,price_at_moment = Column(Integer,primary_key=True),Column(Integer,ForeignKey("deals.id",ondelete="CASCADE")),Column(Integer,ForeignKey("services.id",ondelete="RESTRICT")),Column(Float,default=1.0),Column(Float,nullable=False); service = relationship("Service")
 class Stage(Base): __tablename__ = "stages"; id,name,order,type,is_final,color = Column(Integer,primary_key=True),Column(String(100),nullable=False,unique=True),Column(Integer,default=0),Column(String(50),default="regular"),Column(Boolean,default=False),Column(String(20),default="#6B7280"); deals = relationship("Deal", back_populates="stage")
@@ -84,6 +86,8 @@ class Contact(Base):
     telegram_id = Column(String(50), unique=True, index=True, nullable=True)
     telegram_username = Column(String(100), nullable=True)
     addresses = Column(Text, nullable=True)  # JSON-список адресов
+    settlement = Column(String(200), nullable=True)   # Название поселка/СНТ
+    plot_area = Column(Float, nullable=True)           # Количество соток
     deals = relationship("Deal", back_populates="contact")
 class Deal(Base): 
     __tablename__ = "deals"
@@ -172,6 +176,29 @@ class DailyPhrase(Base):
     category = Column(String(50), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+class AiMemory(Base):
+    """Долгосрочная память AI-ассистента."""
+    __tablename__ = "ai_memory"
+    id          = Column(Integer, primary_key=True)
+    chat_id     = Column(String(50), nullable=False, index=True)
+    role        = Column(String(20), nullable=False, default="user")   # user|assistant|fact
+    content     = Column(Text, nullable=False)
+    memory_type = Column(String(20), default="message")  # message|fact|preference
+    importance  = Column(Integer, default=1)              # 1=обычное 2=важное 3=критическое
+    metadata_   = Column("metadata", JSONB, default=dict)
+    created_at  = Column(DateTime, default=datetime.utcnow)
+    expires_at  = Column(DateTime, nullable=True)
+
+
+class AiUsageLog(Base):
+    __tablename__ = "ai_usage_log"
+    id = Column(Integer, primary_key=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    prompt_tokens = Column(Integer, default=0)
+    completion_tokens = Column(Integer, default=0)
+    total_tokens = Column(Integer, default=0)
+    source = Column(String(50), default="crm")
+
 class BotFaq(Base):
     __tablename__ = "bot_faq"
     id = Column(Integer, primary_key=True)
@@ -180,6 +207,19 @@ class BotFaq(Base):
     answer = Column(Text, nullable=False)
     priority = Column(Integer, default=10)
     active = Column(Boolean, default=True)
+
+class Note(Base):
+    __tablename__ = "notes"
+    id          = Column(String, primary_key=True)
+    user_id     = Column(String, nullable=False, index=True)
+    title       = Column(Text, default="")
+    body        = Column(Text, default="")
+    color       = Column(String(50), default="")
+    pinned      = Column(Boolean, default=False)
+    label       = Column(String(100), default="")
+    checklist   = Column(JSONB, default=list)
+    created_at  = Column(DateTime, default=datetime.utcnow)
+    updated_at  = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 def init_db_structure(): Base.metadata.create_all(engine)
 def seed_initial_data(s: DBSession):
@@ -233,8 +273,8 @@ class DealUpdate(BaseModel):
 
 class TaskCreate(BaseModel): title: str; description: Optional[str]=None; due_date: Optional[date]=None; priority: Optional[str]="Обычный"; status: Optional[str]="Открыта"; assignee: Optional[str]=None; contact_id: Optional[int]=None; deal_id: Optional[int]=None
 class TaskUpdate(BaseModel): title: Optional[str]=None; description: Optional[str]=None; due_date: Optional[date]=None; priority: Optional[str]=None; status: Optional[str]=None; assignee: Optional[str]=None; is_done: Optional[bool]=None; contact_id: Optional[int]=None; deal_id: Optional[int]=None
-class ContactCreate(BaseModel): name: str = Field(..., min_length=1); phone: Optional[str] = None; source: Optional[str] = None; telegram_id: Optional[str] = None; telegram_username: Optional[str] = None; addresses: Optional[List[str]] = None
-class ContactUpdate(BaseModel): name: Optional[str] = Field(None, min_length=1); phone: Optional[str] = None; source: Optional[str] = None; telegram_id: Optional[str] = None; telegram_username: Optional[str] = None; addresses: Optional[List[str]] = None
+class ContactCreate(BaseModel): name: str = Field(..., min_length=1); phone: Optional[str] = None; source: Optional[str] = None; telegram_id: Optional[str] = None; telegram_username: Optional[str] = None; addresses: Optional[List[str]] = None; settlement: Optional[str] = None; plot_area: Optional[float] = None
+class ContactUpdate(BaseModel): name: Optional[str] = Field(None, min_length=1); phone: Optional[str] = None; source: Optional[str] = None; telegram_id: Optional[str] = None; telegram_username: Optional[str] = None; addresses: Optional[List[str]] = None; settlement: Optional[str] = None; plot_area: Optional[float] = None
 class ServiceCreate(BaseModel): name: str = Field(...,min_length=1); price: float; unit: str; min_volume: Optional[float]=1.0; notes: Optional[str]=None
 class ServiceUpdate(BaseModel): name: Optional[str]=Field(None,min_length=1); price: Optional[float]=None; unit: Optional[str]=None; min_volume: Optional[float]=None; notes: Optional[str]=None
 class EquipmentCreate(BaseModel): name: str; model: Optional[str]=None; serial: Optional[str]=None; purchase_date: Optional[date]=None; purchase_cost: Optional[float]=None; status: Optional[str]='active'; notes: Optional[str]=None; engine_hours: Optional[float]=None; fuel_norm: Optional[float]=None; last_maintenance_date: Optional[date]=None; next_maintenance_date: Optional[date]=None
@@ -260,6 +300,16 @@ class ServiceAIAgentRequest(BaseModel):
     base_url: Optional[str] = None
     access_id: Optional[str] = None
     model: Optional[str] = None
+    # Контекст записи (для AI-кнопок внутри сделки/задачи/расхода)
+    context_type: Optional[str] = None   # 'deal' | 'task' | 'expense' | 'contact'
+    context_id: Optional[int] = None     # id записи
+
+
+class AIActionRequest(BaseModel):
+    """Запрос на выполнение AI-действия напрямую."""
+    action: str
+    data: dict = {}
+    source: Optional[str] = 'crm'
 
 
 # --- Response Models to prevent serialization cycles ---
@@ -290,6 +340,23 @@ class EquipmentResponse(BaseModel):
     id:int; name:str; model:Optional[str]; serial:Optional[str]; purchase_date:Optional[date]; purchase_cost:Optional[float]; status:Optional[str]; notes:Optional[str]; engine_hours:Optional[float]; fuel_norm:Optional[float]; last_maintenance_date:Optional[date]; next_maintenance_date:Optional[date]
     model_config = ConfigDict(from_attributes=True)
 
+class NoteCreate(BaseModel):
+    id: Optional[str] = None
+    title: str = ""
+    body: str = ""
+    color: str = ""
+    pinned: bool = False
+    label: str = ""
+    checklist: list = []
+
+class NoteUpdate(BaseModel):
+    title: Optional[str] = None
+    body: Optional[str] = None
+    color: Optional[str] = None
+    pinned: Optional[bool] = None
+    label: Optional[str] = None
+    checklist: Optional[list] = None
+
 class BudgetResponse(BaseModel):
     id: int
     year: int
@@ -312,6 +379,7 @@ async def lifespan(app: FastAPI):
     _ensure_contacts_telegram_columns()
     _ensure_deals_discount_type()
     _ensure_repeat_columns()
+    _ensure_user_last_login()
     threading.Thread(target=_repeat_deals_worker, daemon=True).start()
     yield
     print("App shutting down.",flush=True)
@@ -358,8 +426,10 @@ def callback(req:Request, code:str=None, state:str=None, error:str=None):
     user_id=profile.get("sub"); user_name=profile.get("name") or profile.get("nickname") or user_id
     with SessionFactory() as db:
         user=db.query(User).filter(User.id==user_id).first()
-        if not user: db.add(User(id=user_id,name=user_name,email=profile.get("email")))
-        else: user.name,user.email = user_name,profile.get("email")
+        if not user: db.add(User(id=user_id,name=user_name,email=profile.get("email"),last_login=datetime.utcnow()))
+        else:
+            user.name,user.email = user_name,profile.get("email")
+            user.last_login = datetime.utcnow()
         db.commit()
     # Роль берём из БД (задаётся вручную в Supabase: Admin / User)
     with SessionFactory() as _db:
@@ -374,7 +444,11 @@ def logout(req:Request): req.session.clear(); return RedirectResponse(f"https://
 @app.get("/api/me")
 def get_me(user:dict=Depends(get_current_user)): return user
 @app.get("/api/users")
-def get_users(db:DBSession=Depends(get_db),_=Depends(get_current_user)): return db.query(User).order_by(User.name).all()
+def get_users(db:DBSession=Depends(get_db),_=Depends(get_current_user)):
+    users = db.query(User).order_by(User.name).all()
+    return [{"id":u.id,"username":u.username,"name":u.name,"email":u.email,"role":u.role,
+             "telegram_id":u.telegram_id,
+             "last_login":u.last_login.isoformat() if u.last_login else None} for u in users]
 
 @app.get("/api/users/by-telegram/{telegram_id}")
 def get_user_by_telegram(telegram_id: str, db: DBSession = Depends(get_db), _=Depends(get_current_user)):
@@ -508,6 +582,7 @@ def create_deal(deal_data: DealCreate, db: DBSession = Depends(get_db), _=Depend
     db.commit()
     db.refresh(new_deal)
     _cache.invalidate("deals", "years")
+
     return {"status": "ok", "id": new_deal.id}
 
 @app.get("/api/deals/{deal_id}")
@@ -727,6 +802,8 @@ def get_contact_all_deals(contact_id: int, db: DBSession = Depends(get_db), _=De
             "stage_is_final": d.stage.is_final if d.stage else False,
             "deal_date": d.deal_date.isoformat() if d.deal_date else None,
             "created_at": (d.created_at or datetime.utcnow()).isoformat(),
+            "repeat_interval_days": d.repeat_interval_days,
+            "next_repeat_date": d.next_repeat_date.isoformat() if d.next_repeat_date else None,
         })
     total_revenue = sum(r["total"] for r in result if r["stage_is_won"])
     return {
@@ -1135,16 +1212,32 @@ def _ensure_users_telegram_column():
             pass
 
 
+def _ensure_user_last_login():
+    with SessionFactory() as db:
+        _add_column_if_missing(db, "users", "last_login", "TIMESTAMP")
+
+
+def _add_column_if_missing(db, table: str, column: str, col_type: str):
+    """Check information_schema before ALTER TABLE to avoid errors."""
+    try:
+        result = db.execute(text(
+            "SELECT column_name FROM information_schema.columns "
+            "WHERE table_name=:t AND column_name=:c"
+        ), {"t": table, "c": column}).fetchone()
+        if not result:
+            db.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {col_type}"))
+            db.commit()
+            print(f"Added column {table}.{column}", flush=True)
+    except Exception as e:
+        db.rollback()
+        print(f"_add_column_if_missing {table}.{column}: {e}", flush=True)
+
+
 def _ensure_repeat_columns():
     """Add repeat_interval_days and next_repeat_date to deals if missing."""
     with SessionFactory() as db:
-        try:
-            db.execute(text("ALTER TABLE deals ADD COLUMN IF NOT EXISTS repeat_interval_days INTEGER"))
-            db.execute(text("ALTER TABLE deals ADD COLUMN IF NOT EXISTS next_repeat_date DATE"))
-            db.commit()
-        except Exception as e:
-            db.rollback()
-            print(f"_ensure_repeat_columns: {e}", flush=True)
+        _add_column_if_missing(db, "deals", "repeat_interval_days", "INTEGER")
+        _add_column_if_missing(db, "deals", "next_repeat_date", "DATE")
 
 
 def _send_tg_sync(text_msg: str):
@@ -1157,7 +1250,7 @@ def _send_tg_sync(text_msg: str):
     try:
         _req.post(
             f"https://api.telegram.org/bot{token}/sendMessage",
-            json={"chat_id": chat, "text": text_msg},
+            json={"chat_id": chat, "text": text_msg, "parse_mode": "HTML"},
             timeout=8
         )
     except Exception as e:
@@ -1206,16 +1299,24 @@ def _process_repeat_deals():
 
             repeat_date = deal.next_repeat_date
 
-            # Проверяем нет ли уже созданной сделки на эту дату от этой (избегаем дублей)
+            # Проверяем нет ли уже созданной сделки на эту дату (избегаем дублей)
+            # Ищем по диапазону суток — deal_date может содержать любое время
+            day_start = datetime.combine(repeat_date, datetime.min.time())
+            day_end   = datetime.combine(repeat_date, datetime.max.time())
             existing = db.query(Deal).filter(
                 Deal.contact_id == deal.contact_id,
-                Deal.deal_date == datetime.combine(repeat_date, datetime.min.time()),
+                Deal.deal_date >= day_start,
+                Deal.deal_date <= day_end,
                 Deal.title == deal.title,
-                Deal.id != deal.id
+                Deal.id != deal.id,
+                Deal.is_repeat == True,
             ).first()
 
             if not existing:
-                # Копируем услуги
+                from datetime import timedelta as _td2
+                next_date = repeat_date + _td2(days=deal.repeat_interval_days)
+
+                # Новая сделка получает триггер повтора, оригинал его теряет
                 new_deal = Deal(
                     contact_id=deal.contact_id,
                     stage_id=first_stage.id if first_stage else deal.stage_id,
@@ -1229,6 +1330,8 @@ def _process_repeat_deals():
                     discount_type=deal.discount_type,
                     deal_date=datetime.combine(repeat_date, datetime.min.time()),
                     is_repeat=True,
+                    repeat_interval_days=deal.repeat_interval_days,
+                    next_repeat_date=next_date,
                 )
                 db.add(new_deal)
                 db.flush()
@@ -1255,26 +1358,41 @@ def _process_repeat_deals():
                 tax_amt = after_disc * ((deal.tax_rate or 0) / 100.0)
                 new_deal.total = round(after_disc + (0 if deal.tax_included else tax_amt), 2)
 
+                # Убираем триггер из оригинальной сделки — он теперь в новой
+                deal.repeat_interval_days = None
+                deal.next_repeat_date = None
+
                 db.commit()
 
                 # Telegram уведомление
                 contact = db.query(Contact).filter(Contact.id == deal.contact_id).first()
-                contact_name = contact.name if contact else "—"
-                msg = (
-                    f"🔁 Повторная сделка создана\n\n"
-                    f"👤 Клиент: {contact_name}\n"
-                    f"📋 Название: {deal.title}\n"
-                    f"📅 Дата выезда: {repeat_date.strftime('%d.%m.%Y')}\n"
-                    f"📍 Адрес: {deal.address or '—'}\n"
-                    f"💰 Сумма: {new_deal.total:,.0f} ₽\n"
-                    f"👷 Ответственный: {deal.manager or '—'}"
-                )
+                _contact_name = contact.name if contact else "—"
+                _phone = (contact.phone if contact else "") or ""
+                _svc_lines = []
+                for si in new_deal.services:
+                    _qty = si.quantity or 1
+                    _price = float(si.price_at_moment or 0)
+                    _line = _price * _qty
+                    _price_str = f" — {int(_line):,} \u00a0".replace(",", "\u00a0") if _price else ""
+                    _svc_lines.append(f"  · {si.service.name} × {_qty}{_price_str}")
+                _lines = [f"<b>Сделка №{new_deal.id} — {deal.title}</b> (повтор)"]
+                _lines.append(repeat_date.strftime("%d.%m.%Y"))
+                _lines.append(f"Клиент: {_contact_name}")
+                if _phone:
+                    _lines.append(f"Телефон: {_phone}")
+                if deal.address:
+                    _lines.append(f"Адрес: {deal.address}")
+                if _svc_lines:
+                    _lines.append("")
+                    _lines.append("Услуги:")
+                    _lines.extend(_svc_lines)
+                if new_deal.total:
+                    _lines.append("")
+                    _lines.append(f"Итого: {int(new_deal.total):,} ₽".replace(",", "\u00a0"))
+                _lines.append("")
+                _lines.append(f"Следующий повтор: {next_date.strftime('%d.%m.%Y')}")
+                msg = "\n".join(_lines)
                 threading.Thread(target=_send_tg_sync, args=(msg,), daemon=True).start()
-
-            # Сдвигаем next_repeat_date на следующий интервал от текущей даты повтора
-            from datetime import timedelta as _td2
-            deal.next_repeat_date = repeat_date + _td2(days=deal.repeat_interval_days)
-            db.commit()
 
 
 def _ensure_deals_discount_type():
@@ -2001,7 +2119,7 @@ ALLOWED_EXTENSIONS = {
     '.txt','.csv','.zip','.rar',
     '.mp4','.mov','.avi'
 }
-HAS_MULTIPART = importlib.util.find_spec("multipart") is not None
+HAS_MULTIPART = importlib.util.find_spec("multipart") is not None or importlib.util.find_spec("python_multipart") is not None
 
 def _fmt_size(b: int) -> str:
     if b is None:
@@ -2103,7 +2221,15 @@ def service_status(db: DBSession = Depends(get_db), user: dict = Depends(get_cur
     
     system_payload = {}
     try:
-        import psutil
+        try:
+            import psutil
+        except ImportError:
+            import sys as _sys
+            for _p in ['/usr/lib/python3/dist-packages', '/usr/local/lib/python3.12/dist-packages',
+                       '/usr/local/lib/python3.11/dist-packages', '/usr/local/lib/python3.10/dist-packages']:
+                if _p not in _sys.path:
+                    _sys.path.insert(0, _p)
+            import psutil
         mem = psutil.virtual_memory()
         disk = psutil.disk_usage("/")
         cpu = psutil.cpu_percent(interval=1.0)
@@ -2176,6 +2302,16 @@ async def set_bot_schedule(payload: dict, user: dict = Depends(get_current_user)
     _bot_schedule["enabled"] = bool(payload.get("enabled", False))
     _bot_schedule["time"] = t
     return {"ok": True, "enabled": _bot_schedule["enabled"], "time": _bot_schedule["time"]}
+
+@app.get("/api/service/run-repeats")
+def service_run_repeats(user: dict = Depends(get_current_user)):
+    if not is_admin(user): raise HTTPException(403, "Admin only")
+    try:
+        _process_repeat_deals()
+        return {"ok": True, "message": "Проверка повторных сделок выполнена"}
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
 
 @app.post("/api/service/bot/report")
 async def service_send_report(db: DBSession = Depends(get_db), user: dict = Depends(get_current_user)):
@@ -2350,6 +2486,116 @@ def service_get_logs(n: int = 60, user: dict = Depends(get_current_user)):
     except Exception as e:
         return {"ok": False, "logs": str(e)}
 
+def build_crm_context(db, req_year: int) -> dict:
+    """
+    Собирает полный контекст CRM для AI.
+    Возвращает dict с deals, tasks, expenses, contacts, stats.
+    """
+    from datetime import date as _date
+
+    today = _date.today()
+    month_prefix = today.strftime("%Y-%m")
+
+    # ── Стадии ────────────────────────────────────────────────────────────────
+    stages = {s.id: s for s in db.query(Stage).all()}
+    won_ids = {s.id for s in stages.values() if s.is_final and "успешно" in (s.name or "").lower()}
+
+    # ── Сделки за год ─────────────────────────────────────────────────────────
+    deals_q = db.query(Deal).filter(extract('year', Deal.created_at) == req_year)\
+                .order_by(Deal.created_at.desc()).all()
+    won_deals = [d for d in deals_q if d.stage_id in won_ids]
+    active_deals = [d for d in deals_q if d.stage_id not in won_ids]
+
+    total_rev = sum(d.total or 0 for d in won_deals)
+    win_rate = round(len(won_deals) / len(deals_q) * 100, 1) if deals_q else 0
+
+    # Последние 10 сделок для детального контекста
+    recent_deals = []
+    for d in deals_q[:10]:
+        stage_name = stages[d.stage_id].name if d.stage_id and d.stage_id in stages else "—"
+        contact_name = d.contact.name if d.contact else "—"
+        recent_deals.append({
+            "id": d.id,
+            "title": d.title,
+            "contact": contact_name,
+            "stage": stage_name,
+            "total": d.total or 0,
+            "address": d.address or "",
+            "created_at": d.created_at.strftime("%Y-%m-%d") if d.created_at else "",
+        })
+
+    # ── Расходы ───────────────────────────────────────────────────────────────
+    expenses_q = db.query(Expense).filter(extract('year', Expense.date) == req_year)\
+                   .order_by(Expense.date.desc()).all()
+    total_exp = sum(e.amount or 0 for e in expenses_q)
+    profit = total_rev - total_exp
+
+    month_exp = sum(e.amount or 0 for e in expenses_q
+                    if str(e.date)[:7] == month_prefix)
+
+    recent_expenses = []
+    for e in expenses_q[:10]:
+        cat_name = e.category.name if e.category else "—"
+        recent_expenses.append({
+            "name": e.name,
+            "amount": e.amount or 0,
+            "date": str(e.date) if e.date else "",
+            "category": cat_name,
+        })
+
+    # ── Задачи (все открытые) ─────────────────────────────────────────────────
+    tasks_q = db.query(Task).filter(
+        Task.status.notin_(["Завершена", "Выполнена"])
+    ).order_by(Task.due_date.asc().nullslast()).limit(10).all()
+
+    recent_tasks = []
+    for t in tasks_q:
+        recent_tasks.append({
+            "title": t.title,
+            "due_date": str(t.due_date) if t.due_date else "",
+            "priority": t.priority or "Обычный",
+            "status": t.status or "Открыта",
+        })
+
+    # Просроченные задачи
+    overdue_count = db.query(Task).filter(
+        Task.due_date < today,
+        Task.status.notin_(["Завершена", "Выполнена"])
+    ).count()
+
+    # ── Контакты (топ-10 по активности) ──────────────────────────────────────
+    contacts_q = db.query(Contact).order_by(Contact.id.desc()).limit(10).all()
+    recent_contacts = []
+    for c in contacts_q:
+        recent_contacts.append({
+            "name": c.name,
+            "phone": c.phone or "",
+            "settlement": c.settlement or "",
+            "plot_area": c.plot_area,
+        })
+
+    # ── Итоговый словарь ──────────────────────────────────────────────────────
+    return {
+        "stats": {
+            "year": req_year,
+            "total_deals": len(deals_q),
+            "won_deals": len(won_deals),
+            "active_deals": len(active_deals),
+            "win_rate_pct": win_rate,
+            "revenue": round(total_rev, 2),
+            "expenses_year": round(total_exp, 2),
+            "expenses_month": round(month_exp, 2),
+            "profit": round(profit, 2),
+            "open_tasks": len(recent_tasks),
+            "overdue_tasks": overdue_count,
+        },
+        "deals": recent_deals,
+        "expenses": recent_expenses,
+        "tasks": recent_tasks,
+        "contacts": recent_contacts,
+    }
+
+
 @app.post("/api/service/ai/ask")
 async def service_ai_ask(payload: ServiceAIAgentRequest, db: DBSession = Depends(get_db), user: dict = Depends(get_current_user)):
     if not is_admin(user):
@@ -2367,35 +2613,121 @@ async def service_ai_ask(payload: ServiceAIAgentRequest, db: DBSession = Depends
         base_url = f"https://{base_url}"
 
     req_year = payload.year or datetime.utcnow().year
-    deals_q = db.query(Deal).filter(extract('year', Deal.created_at) == req_year).all()
-    expenses_q = db.query(Expense).filter(extract('year', Expense.date) == req_year).all()
-    stages = {s.id: s for s in db.query(Stage).all()}
-    won_ids = {s.id for s in stages.values() if s.is_final and "успешно" in (s.name or "").lower()}
 
-    won_deals = [d for d in deals_q if d.stage_id in won_ids]
-    total_rev = sum(d.total or 0 for d in won_deals)
-    total_exp = sum(e.amount or 0 for e in expenses_q)
-    profit = total_rev - total_exp
-    win_rate = round(len(won_deals) / len(deals_q) * 100, 1) if deals_q else 0
+    # ── Полный CRM-контекст ───────────────────────────────────────────────────
+    crm = build_crm_context(db, req_year)
+    stats = crm["stats"]
 
-    context = (
-        f"Год: {req_year}. Всего сделок: {len(deals_q)}. "
-        f"Успешных: {len(won_deals)} ({win_rate}%). "
-        f"Выручка: {total_rev:.2f}. Расходы: {total_exp:.2f}. Прибыль: {profit:.2f}."
-    )
+    # Форматируем в читаемый текст для промпта
+    deals_text = "\n".join(
+        f"  • #{d['id']} {d['title']} | {d['contact']} | {d['stage']} | {d['total']:,.0f}₽ | {d['created_at']}"
+        for d in crm["deals"]
+    ) or "  нет данных"
+
+    tasks_text = "\n".join(
+        f"  • [{t['priority']}] {t['title']} | срок: {t['due_date'] or '—'} | {t['status']}"
+        for t in crm["tasks"]
+    ) or "  нет данных"
+
+    expenses_text = "\n".join(
+        f"  • {e['name']} | {e['amount']:,.0f}₽ | {e['category']} | {e['date']}"
+        for e in crm["expenses"]
+    ) or "  нет данных"
+
+    contacts_text = "\n".join(
+        f"  • {c['name']}{' | ' + c['phone'] if c['phone'] else ''}"
+        f"{' | ' + c['settlement'] if c['settlement'] else ''}"
+        f"{' | ' + str(c['plot_area']) + ' сот' if c['plot_area'] else ''}"
+        for c in crm["contacts"]
+    ) or "  нет данных"
+
+    context = f"""=== СТАТИСТИКА ({stats['year']}) ===
+Сделок всего: {stats['total_deals']} | Успешных: {stats['won_deals']} ({stats['win_rate_pct']}%) | Активных: {stats['active_deals']}
+Выручка: {stats['revenue']:,.0f}₽ | Расходы за год: {stats['expenses_year']:,.0f}₽ | Прибыль: {stats['profit']:,.0f}₽
+Расходы за месяц: {stats['expenses_month']:,.0f}₽
+Открытых задач: {stats['open_tasks']} | Просроченных: {stats['overdue_tasks']}
+
+=== ПОСЛЕДНИЕ СДЕЛКИ (10) ===
+{deals_text}
+
+=== ОТКРЫТЫЕ ЗАДАЧИ (10) ===
+{tasks_text}
+
+=== ПОСЛЕДНИЕ РАСХОДЫ (10) ===
+{expenses_text}
+
+=== ПОСЛЕДНИЕ КЛИЕНТЫ (10) ===
+{contacts_text}"""
 
     system_prompt = (
-        "Ты AI-ассистент CRM для сервиса покоса и ландшафтных работ. "
+        "Ты AI-ассистент CRM для сервиса покоса и ландшафтных работ GrassCRM. "
+        "Тебе передан полный контекст бизнеса: сделки, задачи, расходы, клиенты. "
+        "Используй эти данные для точных и конкретных ответов. "
         "Отвечай строго на русском, коротко и по делу. "
-        "Если даешь рекомендации, разделяй их на: 1) быстрые шаги на 7 дней, "
-        "2) системные шаги на месяц."
+        "Если даёшь рекомендации, разделяй их на: "
+        "1) быстрые шаги на 7 дней, 2) системные шаги на месяц."
     )
+
+    # ── Контекст конкретной записи (если открыта сделка/задача/расход) ─────────
+    record_context = ""
+    if payload.context_type and payload.context_id:
+        try:
+            ctype = payload.context_type.lower()
+            cid   = payload.context_id
+            if ctype == "deal":
+                rec = db.query(Deal).filter(Deal.id == cid).first()
+                if rec:
+                    stage_name = rec.stage.name if rec.stage else "—"
+                    contact_name = rec.contact.name if rec.contact else "—"
+                    record_context = (
+                        f"\n=== ТЕКУЩАЯ ЗАПИСЬ: СДЕЛКА #{cid} ===\n"
+                        f"Название: {rec.title}\n"
+                        f"Клиент: {contact_name}\n"
+                        f"Стадия: {stage_name}\n"
+                        f"Сумма: {rec.total or 0:,.0f}₽\n"
+                        f"Адрес: {rec.address or '—'}\n"
+                        f"Заметки: {(rec.notes or '')[:300]}\n"
+                    )
+            elif ctype == "task":
+                rec = db.query(Task).filter(Task.id == cid).first()
+                if rec:
+                    record_context = (
+                        f"\n=== ТЕКУЩАЯ ЗАПИСЬ: ЗАДАЧА #{cid} ===\n"
+                        f"Название: {rec.title}\n"
+                        f"Статус: {rec.status}\n"
+                        f"Приоритет: {rec.priority}\n"
+                        f"Срок: {rec.due_date or '—'}\n"
+                        f"Описание: {(rec.description or '')[:300]}\n"
+                    )
+            elif ctype == "expense":
+                rec = db.query(Expense).filter(Expense.id == cid).first()
+                if rec:
+                    cat_name = rec.category.name if rec.category else "—"
+                    record_context = (
+                        f"\n=== ТЕКУЩАЯ ЗАПИСЬ: РАСХОД #{cid} ===\n"
+                        f"Название: {rec.name}\n"
+                        f"Сумма: {rec.amount:,.0f}₽\n"
+                        f"Дата: {rec.date}\n"
+                        f"Категория: {cat_name}\n"
+                    )
+            elif ctype == "contact":
+                rec = db.query(Contact).filter(Contact.id == cid).first()
+                if rec:
+                    record_context = (
+                        f"\n=== ТЕКУЩАЯ ЗАПИСЬ: КЛИЕНТ #{cid} ===\n"
+                        f"Имя: {rec.name}\n"
+                        f"Телефон: {rec.phone or '—'}\n"
+                        f"Посёлок: {rec.settlement or '—'}\n"
+                        f"Площадь участка: {rec.plot_area or '—'} сот\n"
+                    )
+        except Exception as _e:
+            pass  # не критично, продолжаем без контекста записи
 
     payload_json = {
         "model": model,
         "messages": [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"Контекст CRM: {context}\n\nЗапрос: {payload.prompt}"},
+            {"role": "user", "content": f"Контекст CRM:\n{context}{record_context}\n\nЗапрос: {payload.prompt}"},
         ],
         "temperature": 0.4,
     }
@@ -2420,7 +2752,387 @@ async def service_ai_ask(payload: ServiceAIAgentRequest, db: DBSession = Depends
     if not text_out:
         raise HTTPException(502, "AI API вернул пустой ответ")
 
+    # Логируем использование токенов
+    usage = data.get("usage") or {}
+    if usage:
+        try:
+            log = AiUsageLog(
+                prompt_tokens=usage.get("prompt_tokens", 0),
+                completion_tokens=usage.get("completion_tokens", 0),
+                total_tokens=usage.get("total_tokens", 0),
+                source="crm"
+            )
+            db.add(log)
+            db.commit()
+        except Exception:
+            db.rollback()
+
     return {"ok": True, "answer": text_out, "model": model, "year": req_year}
+
+
+@app.post("/api/service/ai/action")
+async def service_ai_action(
+    payload: AIActionRequest,
+    db: DBSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+):
+    """
+    Универсальный executor AI-действий.
+    Принимает action + data, выполняет операцию в БД, возвращает результат.
+    Вызывается из CRM-интерфейса (AI-кнопки) и из bot.py.
+
+    Поддерживаемые action:
+      create_task    — создать задачу
+      create_deal    — создать сделку
+      create_expense — создать расход
+      change_status  — сменить стадию сделки (deal_id + stage_name или stage_id)
+      add_comment    — добавить комментарий к сделке (deal_id + text)
+    """
+    if not is_admin(user):
+        raise HTTPException(403, "Admin only")
+
+    action = (payload.action or "").strip()
+    data   = payload.data or {}
+
+    # ── create_task ───────────────────────────────────────────────────────────
+    if action == "create_task":
+        title = (data.get("title") or "").strip()
+        if not title:
+            raise HTTPException(400, "Поле title обязательно")
+
+        contact_id = data.get("contact_id")
+        if not contact_id and data.get("contact_name"):
+            c = db.query(Contact).filter(
+                Contact.name.ilike(f"%{data['contact_name']}%")
+            ).first()
+            contact_id = c.id if c else None
+
+        due = None
+        if data.get("due_date"):
+            try:
+                from datetime import date as _d
+                due = _d.fromisoformat(str(data["due_date"])[:10])
+            except Exception:
+                pass
+
+        task = Task(
+            title=title,
+            description=data.get("description"),
+            due_date=due,
+            priority=data.get("priority") or "Обычный",
+            status="Открыта",
+            contact_id=contact_id,
+            deal_id=data.get("deal_id"),
+        )
+        db.add(task)
+        db.commit()
+        db.refresh(task)
+        _cache.invalidate("tasks")
+        return {"ok": True, "action": action, "id": task.id, "title": task.title}
+
+    # ── create_expense ────────────────────────────────────────────────────────
+    if action == "create_expense":
+        name   = (data.get("name") or "").strip()
+        amount = data.get("amount")
+        if not name or amount is None:
+            raise HTTPException(400, "Поля name и amount обязательны")
+
+        from datetime import date as _d
+        exp_date = _d.today()
+        if data.get("date"):
+            try:
+                exp_date = _d.fromisoformat(str(data["date"])[:10])
+            except Exception:
+                pass
+
+        cat_name = (data.get("category") or "Прочее").strip()
+        cat = db.query(ExpenseCategory).filter(
+            ExpenseCategory.name.ilike(cat_name)
+        ).first()
+        if not cat:
+            cat = db.query(ExpenseCategory).first()
+
+        expense = Expense(
+            name=name,
+            amount=float(amount),
+            date=exp_date,
+            category_id=cat.id if cat else None,
+        )
+        db.add(expense)
+        db.commit()
+        db.refresh(expense)
+        _cache.invalidate("expenses")
+        return {"ok": True, "action": action, "id": expense.id, "name": expense.name}
+
+    # ── create_deal ───────────────────────────────────────────────────────────
+    if action == "create_deal":
+        title = (data.get("title") or "").strip()
+        if not title:
+            raise HTTPException(400, "Поле title обязательно")
+
+        # Найти или создать контакт
+        contact_id = data.get("contact_id")
+        if not contact_id:
+            contact_name = (data.get("contact_name") or "Неизвестный клиент").strip()
+            phone        = data.get("phone")
+            contact = None
+            if phone:
+                contact = db.query(Contact).filter(Contact.phone == phone).first()
+            if not contact:
+                contact = db.query(Contact).filter(
+                    Contact.name.ilike(f"%{contact_name}%")
+                ).first()
+            if not contact:
+                contact = Contact(name=contact_name, phone=phone)
+                db.add(contact)
+                db.flush()
+                db.refresh(contact)
+            contact_id = contact.id
+
+        # Первая стадия
+        first_stage = db.query(Stage).order_by(Stage.order.asc()).first()
+
+        deal = Deal(
+            title=title,
+            contact_id=contact_id,
+            stage_id=first_stage.id if first_stage else None,
+            notes=data.get("notes") or "",
+            address=data.get("address") or "",
+        )
+        db.add(deal)
+        db.commit()
+        db.refresh(deal)
+        _cache.invalidate("deals", "years")
+        return {"ok": True, "action": action, "id": deal.id, "title": deal.title}
+
+    # ── change_status ─────────────────────────────────────────────────────────
+    if action == "change_status":
+        deal_id = data.get("deal_id")
+        if not deal_id:
+            raise HTTPException(400, "Поле deal_id обязательно")
+
+        deal = db.query(Deal).filter(Deal.id == deal_id).first()
+        if not deal:
+            raise HTTPException(404, f"Сделка #{deal_id} не найдена")
+
+        # Ищем стадию по id или по имени
+        stage = None
+        if data.get("stage_id"):
+            stage = db.query(Stage).filter(Stage.id == data["stage_id"]).first()
+        elif data.get("stage_name"):
+            stage = db.query(Stage).filter(
+                Stage.name.ilike(f"%{data['stage_name']}%")
+            ).first()
+
+        if not stage:
+            available = [s.name for s in db.query(Stage).order_by(Stage.order).all()]
+            raise HTTPException(404, f"Стадия не найдена. Доступные: {available}")
+
+        old_stage = deal.stage.name if deal.stage else "—"
+        deal.stage_id = stage.id
+
+        # Если финальная успешная — закрываем
+        if stage.is_final and "успешно" in (stage.name or "").lower():
+            deal.closed_at = datetime.utcnow()
+
+        db.commit()
+        _cache.invalidate("deals", "years")
+        return {
+            "ok": True, "action": action,
+            "deal_id": deal_id,
+            "from": old_stage,
+            "to": stage.name,
+        }
+
+    # ── add_comment ───────────────────────────────────────────────────────────
+    if action == "add_comment":
+        deal_id = data.get("deal_id")
+        text    = (data.get("text") or "").strip()
+        if not deal_id or not text:
+            raise HTTPException(400, "Поля deal_id и text обязательны")
+
+        deal = db.query(Deal).filter(Deal.id == deal_id).first()
+        if not deal:
+            raise HTTPException(404, f"Сделка #{deal_id} не найдена")
+
+        comment = DealComment(
+            deal_id=deal_id,
+            text=text,
+            user_name=user.get("name") or "AI",
+            user_id=user.get("sub"),
+        )
+        db.add(comment)
+        db.commit()
+        db.refresh(comment)
+        return {
+            "ok": True, "action": action,
+            "deal_id": deal_id,
+            "comment_id": comment.id,
+        }
+
+    raise HTTPException(400, f"Неизвестный action: '{action}'. "
+                            f"Доступные: create_task, create_deal, create_expense, "
+                            f"change_status, add_comment")
+
+
+# ══════════════════════════════════════════════════════
+#  🧠  AI MEMORY ENDPOINTS
+# ══════════════════════════════════════════════════════
+
+class AiMemorySaveRequest(BaseModel):
+    chat_id:     str
+    role:        str = "user"        # user | assistant | fact
+    content:     str
+    memory_type: str = "message"     # message | fact | preference
+    importance:  int = 1
+    metadata:    dict = {}
+    ttl_days:    Optional[int] = None  # сколько дней хранить (None = вечно)
+
+
+@app.post("/api/service/ai/memory", status_code=201)
+def ai_memory_save(
+    payload: AiMemorySaveRequest,
+    db: DBSession = Depends(get_db),
+    _: dict = Depends(get_current_user),
+):
+    """Сохранить запись в память AI (вызывается из бота)."""
+    from datetime import timedelta as _td
+
+    expires = None
+    if payload.ttl_days:
+        expires = datetime.utcnow() + _td(days=payload.ttl_days)
+
+    # Для сообщений — не дублируем если уже есть точно такое же за последние 5 мин
+    if payload.memory_type == "message":
+        from datetime import timedelta as _td2
+        cutoff = datetime.utcnow() - _td2(minutes=5)
+        exists = db.query(AiMemory).filter(
+            AiMemory.chat_id == str(payload.chat_id),
+            AiMemory.content == payload.content,
+            AiMemory.created_at >= cutoff,
+        ).first()
+        if exists:
+            return {"ok": True, "id": exists.id, "duplicate": True}
+
+    mem = AiMemory(
+        chat_id     = str(payload.chat_id),
+        role        = payload.role,
+        content     = payload.content[:2000],
+        memory_type = payload.memory_type,
+        importance  = payload.importance,
+        metadata_   = payload.metadata,
+        expires_at  = expires,
+    )
+    db.add(mem)
+    db.commit()
+    db.refresh(mem)
+    return {"ok": True, "id": mem.id}
+
+
+@app.get("/api/service/ai/memory")
+def ai_memory_search(
+    chat_id: str,
+    q: Optional[str] = None,
+    memory_type: Optional[str] = None,
+    limit: int = 20,
+    db: DBSession = Depends(get_db),
+    _: dict = Depends(get_current_user),
+):
+    """
+    Получить релевантные воспоминания для chat_id.
+    Если передан q — ищет по вхождению текста (ILIKE).
+    Всегда возвращает: факты (facts) + последние сообщения.
+    """
+    from datetime import datetime as _dt
+
+    now = _dt.utcnow()
+    base_q = db.query(AiMemory).filter(
+        AiMemory.chat_id == str(chat_id),
+    ).filter(
+        (AiMemory.expires_at == None) | (AiMemory.expires_at > now)
+    )
+
+    if memory_type:
+        base_q = base_q.filter(AiMemory.memory_type == memory_type)
+
+    # Факты и предпочтения — всегда тянем (важные первыми)
+    facts = base_q.filter(
+        AiMemory.memory_type.in_(["fact", "preference"])
+    ).order_by(AiMemory.importance.desc(), AiMemory.created_at.desc()).limit(30).all()
+
+    # Последние сообщения диалога
+    recent_msgs = base_q.filter(
+        AiMemory.memory_type == "message"
+    ).order_by(AiMemory.created_at.desc()).limit(10).all()
+
+    # Текстовый поиск если задан запрос
+    search_results = []
+    if q and len(q.strip()) >= 3:
+        search_results = base_q.filter(
+            AiMemory.content.ilike(f"%{q.strip()}%")
+        ).order_by(AiMemory.importance.desc(), AiMemory.created_at.desc()).limit(10).all()
+
+    def _fmt(m: AiMemory) -> dict:
+        return {
+            "id":          m.id,
+            "role":        m.role,
+            "content":     m.content,
+            "memory_type": m.memory_type,
+            "importance":  m.importance,
+            "created_at":  m.created_at.isoformat() if m.created_at else None,
+            "metadata":    m.metadata_ or {},
+        }
+
+    # Дедупликация по id
+    seen = set()
+    merged = []
+    for m in list(facts) + list(search_results) + list(reversed(recent_msgs)):
+        if m.id not in seen:
+            seen.add(m.id)
+            merged.append(_fmt(m))
+
+    return {"ok": True, "count": len(merged), "memories": merged}
+
+
+@app.delete("/api/service/ai/memory")
+def ai_memory_clear(
+    chat_id: str,
+    memory_type: Optional[str] = None,
+    db: DBSession = Depends(get_db),
+    _: dict = Depends(get_current_user),
+):
+    """Очистить память для chat_id (опционально — только определённый тип)."""
+    q = db.query(AiMemory).filter(AiMemory.chat_id == str(chat_id))
+    if memory_type:
+        q = q.filter(AiMemory.memory_type == memory_type)
+    deleted = q.delete(synchronize_session=False)
+    db.commit()
+    return {"ok": True, "deleted": deleted}
+
+
+@app.get("/api/service/ai/usage")
+def service_ai_usage(db: DBSession = Depends(get_db), user: dict = Depends(get_current_user)):
+    """Статистика использования токенов AI агента."""
+    if not is_admin(user): raise HTTPException(403, "Admin only")
+    quota = int(os.getenv("AI_TOKEN_QUOTA", "500000"))
+    from sqlalchemy import func as _func
+    total = db.execute(text("SELECT COALESCE(SUM(total_tokens),0) FROM ai_usage_log")).scalar() or 0
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    today = db.execute(text("SELECT COALESCE(SUM(total_tokens),0) FROM ai_usage_log WHERE created_at >= :ts"), {"ts": today_start}).scalar() or 0
+    month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    month = db.execute(text("SELECT COALESCE(SUM(total_tokens),0) FROM ai_usage_log WHERE created_at >= :ts"), {"ts": month_start}).scalar() or 0
+    calls_total = db.execute(text("SELECT COUNT(*) FROM ai_usage_log")).scalar() or 0
+    calls_month = db.execute(text("SELECT COUNT(*) FROM ai_usage_log WHERE created_at >= :ts"), {"ts": month_start}).scalar() or 0
+    return {
+        "quota": quota,
+        "used_total": int(total),
+        "used_month": int(month),
+        "used_today": int(today),
+        "remaining": max(0, quota - int(total)),
+        "pct": round(int(total) / quota * 100, 1) if quota else 0,
+        "calls_total": int(calls_total),
+        "calls_month": int(calls_month),
+    }
 
 
 @app.post("/api/service/restart")
@@ -2432,6 +3144,73 @@ def service_restart(user: dict = Depends(get_current_user)):
         _sp.Popen(["systemctl", "restart", "crm"])
     _th.Thread(target=_do, daemon=True).start()
     return {"ok": True, "message": "Перезапуск через 2 секунды…"}
+
+# ── NOTES ─────────────────────────────────────────────────────────────────────
+import uuid as _uuid
+
+def _note_to_dict(n: Note) -> dict:
+    return {
+        "id": n.id,
+        "title": n.title or "",
+        "body": n.body or "",
+        "color": n.color or "",
+        "pinned": n.pinned or False,
+        "label": n.label or "",
+        "checklist": n.checklist or [],
+        "created": int(n.created_at.timestamp() * 1000) if n.created_at else 0,
+        "updated": int(n.updated_at.timestamp() * 1000) if n.updated_at else 0,
+    }
+
+@app.get("/api/notes")
+def get_notes(db: DBSession = Depends(get_db), user: dict = Depends(get_current_user)):
+    notes_list = (db.query(Note)
+                  .filter(Note.user_id == user["sub"])
+                  .order_by(Note.updated_at.desc())
+                  .all())
+    return [_note_to_dict(n) for n in notes_list]
+
+@app.post("/api/notes", status_code=201)
+def create_note(data: NoteCreate, db: DBSession = Depends(get_db), user: dict = Depends(get_current_user)):
+    note = Note(
+        id=data.id or str(_uuid.uuid4()),
+        user_id=user["sub"],
+        title=data.title,
+        body=data.body,
+        color=data.color,
+        pinned=data.pinned,
+        label=data.label,
+        checklist=data.checklist,
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow(),
+    )
+    db.add(note)
+    db.commit()
+    db.refresh(note)
+    return _note_to_dict(note)
+
+@app.patch("/api/notes/{note_id}")
+def update_note(note_id: str, data: NoteUpdate, db: DBSession = Depends(get_db), user: dict = Depends(get_current_user)):
+    note = db.query(Note).filter(Note.id == note_id, Note.user_id == user["sub"]).first()
+    if not note:
+        raise HTTPException(404, "Заметка не найдена")
+    if data.title is not None: note.title = data.title
+    if data.body is not None: note.body = data.body
+    if data.color is not None: note.color = data.color
+    if data.pinned is not None: note.pinned = data.pinned
+    if data.label is not None: note.label = data.label
+    if data.checklist is not None: note.checklist = data.checklist
+    note.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(note)
+    return _note_to_dict(note)
+
+@app.delete("/api/notes/{note_id}", status_code=204)
+def delete_note(note_id: str, db: DBSession = Depends(get_db), user: dict = Depends(get_current_user)):
+    note = db.query(Note).filter(Note.id == note_id, Note.user_id == user["sub"]).first()
+    if not note:
+        raise HTTPException(404, "Заметка не найдена")
+    db.delete(note)
+    db.commit()
 
 @app.get("/api/bot-faq")
 def get_bot_faq(db: DBSession = Depends(get_db), _=Depends(get_current_user)):

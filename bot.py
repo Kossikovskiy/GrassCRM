@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-GreenCRM Telegram Bot
+GrassCRM Telegram Bot — bot.py v1.3
 - Позволяет создавать сделки через интерактивный диалог с категориями услуг.
 - Автоматически отправляет ежедневные отчеты.
 - Корректно удаляет за собой сообщения, оставляя только итоговый результат.
@@ -54,6 +54,8 @@ logger = logging.getLogger(__name__)
 
 TG_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TG_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+OWNER_ID = 29635426  # ID владельца для личных уведомлений
+ASSISTANT_BOT_TOKEN = os.getenv("TELEGRAM_ASSISTANT_BOT_TOKEN")
 API_BASE_URL = "http://127.0.0.1:8000/api"
 INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -476,6 +478,32 @@ async def create_deal_in_api(update: Update, context: ContextTypes.DEFAULT_TYPE)
             text=final_text,
             parse_mode='HTML'
         )
+
+        # Уведомление в группу
+        if TG_CHAT_ID and created_id:
+            try:
+                _lines = [f"<b>Сделка №{created_id} — {html.escape(deal_data['title'])}</b>"]
+                _lines.append(f"Клиент: {html.escape(deal_data['client_name'])}")
+                if deal_data.get('services'):
+                    _lines.append("")
+                    _lines.append("Услуги:")
+                    for s in deal_data['services']:
+                        _qty = s.get('quantity', 1)
+                        _price = float(s.get('price') or 0)
+                        _line_total = _price * _qty
+                        _price_str = f" — {int(_line_total):,} ₽".replace(",", " ") if _price else ""
+                        _lines.append(f"  · {html.escape(s['name'])} × {_qty}{_price_str}")
+                if total_cost > 0:
+                    _lines.append("")
+                    _lines.append(f"Итого: {int(total_cost):,} ₽".replace(",", " "))
+                _group_msg = "\n".join(_lines)
+                await context.bot.send_message(
+                    chat_id=TG_CHAT_ID,
+                    text=_group_msg,
+                    parse_mode='HTML'
+                )
+            except Exception as _e:
+                logger.warning(f"Не удалось отправить уведомление в группу: {_e}")
 
     except httpx.RequestError as e:
         logger.error(f"Сетевая ошибка при создании сделки: {e}")
@@ -1137,12 +1165,111 @@ async def send_report_command(update: Update, context: ContextTypes.DEFAULT_TYPE
 #  🚀  ЗАПУСК БОТА
 # ════════════════════════════════════════
 
+
+# ════════════════════════════════════════
+#  🖥  STARTUP И СТАТУС СЕРВИСОВ
+# ════════════════════════════════════════
+
+async def _post_init(application) -> None:
+    """Отправляет уведомление владельцу при старте бота."""
+    try:
+        await application.bot.send_message(
+            chat_id=OWNER_ID,
+            text=(
+                "Сервер запущен\n\n"
+                "Службы:\n"
+                "  · Telegram бот — ✅\n"
+                "  · CRM API — проверяю..."
+            )
+        )
+        # Проверяем API
+        api_ok = False
+        try:
+            async with httpx.AsyncClient(timeout=5) as client:
+                r = await client.get(f"{API_BASE_URL}/stages", headers=API_HEADERS)
+                api_ok = r.status_code == 200
+        except Exception:
+            pass
+
+        status = "✅" if api_ok else "❌"
+        await application.bot.send_message(
+            chat_id=OWNER_ID,
+            text=(
+                "GrassCRM запущен\n\n"
+                f"  · Telegram бот — ✅\n"
+                f"  · CRM API — {status}"
+            )
+        )
+    except Exception as e:
+        logger.warning(f"Не удалось отправить startup-уведомление: {e}")
+
+
+async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Команда /status — только для владельца. Показывает состояние сервисов."""
+    if update.effective_user.id != OWNER_ID:
+        return
+
+    msg = await update.message.reply_text("Проверяю сервисы...")
+
+    lines = ["Статус сервисов\n"]
+
+    # CRM API
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            r = await client.get(f"{API_BASE_URL}/stages", headers=API_HEADERS)
+        lines.append(f"CRM API — {'✅' if r.status_code == 200 else '❌ ' + str(r.status_code)}")
+    except Exception as e:
+        lines.append(f"CRM API — ❌ {e}")
+
+    # Сайт crmpokos.ru
+    try:
+        async with httpx.AsyncClient(timeout=8) as client:
+            r = await client.get("https://crmpokos.ru", follow_redirects=True)
+        lines.append(f"crmpokos.ru — {'✅' if r.status_code < 400 else '❌ ' + str(r.status_code)}")
+    except Exception as e:
+        lines.append(f"crmpokos.ru — ❌ {e}")
+
+    # Сайт покос-ропша.рф
+    try:
+        async with httpx.AsyncClient(timeout=8) as client:
+            r = await client.get("https://xn----8sbgjpqjjbr1b.xn--p1ai", follow_redirects=True)
+        lines.append(f"покос-ропша.рф — {'✅' if r.status_code < 400 else '❌ ' + str(r.status_code)}")
+    except Exception as e:
+        lines.append(f"покос-ропша.рф — ❌ {e}")
+
+    # Основной бот (себя проверяем через getMe)
+    try:
+        me = await context.bot.get_me()
+        lines.append(f"Бот @{me.username} — ✅")
+    except Exception as e:
+        lines.append(f"Основной бот — ❌ {e}")
+
+    # Ассистент-бот (проверяем через getMe с его токеном)
+    if ASSISTANT_BOT_TOKEN:
+        try:
+            async with httpx.AsyncClient(timeout=5) as client:
+                r = await client.get(
+                    f"https://api.telegram.org/bot{ASSISTANT_BOT_TOKEN}/getMe"
+                )
+                data = r.json()
+            if data.get("ok"):
+                uname = data["result"].get("username", "assistant")
+                lines.append(f"Бот @{uname} — ✅")
+            else:
+                lines.append(f"Ассистент-бот — ❌ {data.get('description', 'ошибка')}")
+        except Exception as e:
+            lines.append(f"Ассистент-бот — ❌ {e}")
+
+    result = lines[0] + "\n\n" + "\n".join(f"  · {l}" for l in lines[1:])
+    await msg.edit_text(result)
+
+
 def main() -> None:
     if not TG_TOKEN:
         logger.critical("Переменная окружения TELEGRAM_BOT_TOKEN не установлена!")
         sys.exit(1)
 
-    application = Application.builder().token(TG_TOKEN).build()
+    application = Application.builder().token(TG_TOKEN).post_init(_post_init).build()
 
     if TG_CHAT_ID:
         job_queue = application.job_queue
@@ -1217,6 +1344,7 @@ def main() -> None:
     application.add_handler(CommandHandler("mydeals", my_deals_today_command))
     application.add_handler(CommandHandler("editlastdeal", edit_last_deal_command))
     application.add_handler(CommandHandler("voicenote", voicenote_command))
+    application.add_handler(CommandHandler("status", status_command))
     application.add_handler(CallbackQueryHandler(voicenote_callback, pattern="^vn_(save|edit|cancel)$"))
     application.add_handler(MessageHandler(filters.VOICE, voicenote_voice_handler))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, voicenote_text_edit_handler))

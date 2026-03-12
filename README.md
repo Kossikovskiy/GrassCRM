@@ -478,19 +478,3 @@ gunzip < backups/backup-2026-03-06.sql.gz | psql -d "$DATABASE_URL"
 > ⚠️ Восстановление **перезаписывает** текущую БД.
 
 ---
-
-## Публикация PR одной командой
-
-```bash
-cd /var/www/crm/GCRM-2
-./publish_pr.sh
-```
-
-## Если GitHub пишет "This branch has conflicts"
-
-```bash
-cd /var/www/crm/GCRM-2
-./sync_pr.sh
-```
-
-`sync_pr.sh` сливает `origin/main` в вашу ветку с `-X ours` — всегда оставляет ваши версии файлов.

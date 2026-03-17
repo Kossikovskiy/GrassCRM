@@ -1,4 +1,4 @@
-# GrassCRM Backend — main.py v1.2
+# GrassCRM Backend — main.py v1.4
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -76,6 +76,14 @@ SessionFactory = sessionmaker(bind=engine, autoflush=False)
 class User(Base): __tablename__ = "users"; id,username,name,email = Column(String, primary_key=True),Column(String),Column(String),Column(String); role=Column(String, default="User"); telegram_id=Column(String(50), unique=True, index=True, nullable=True); last_login=Column(DateTime, nullable=True)
 class Service(Base): __tablename__ = "services"; id,name,price,unit = Column(Integer,primary_key=True),Column(String(200),nullable=False),Column(Float,default=0.0),Column(String(50),default="шт"); min_volume=Column(Float,default=1.0); notes=Column(Text)
 class DealService(Base): __tablename__ = "deal_services"; id,deal_id,service_id,quantity,price_at_moment = Column(Integer,primary_key=True),Column(Integer,ForeignKey("deals.id",ondelete="CASCADE")),Column(Integer,ForeignKey("services.id",ondelete="RESTRICT")),Column(Float,default=1.0),Column(Float,nullable=False); service = relationship("Service")
+class DealMaterial(Base):
+    __tablename__ = "deal_materials"
+    id = Column(Integer, primary_key=True)
+    deal_id = Column(Integer, ForeignKey("deals.id", ondelete="CASCADE"), nullable=False)
+    name = Column(String(200), nullable=False)
+    quantity = Column(Float, default=1.0, nullable=False)
+    cost_price = Column(Float, default=0.0, nullable=False)   # стоимость закупки
+    sell_price = Column(Float, default=0.0, nullable=False)   # стоимость для клиента
 class Stage(Base): __tablename__ = "stages"; id,name,order,type,is_final,color = Column(Integer,primary_key=True),Column(String(100),nullable=False,unique=True),Column(Integer,default=0),Column(String(50),default="regular"),Column(Boolean,default=False),Column(String(20),default="#6B7280"); deals = relationship("Deal", back_populates="stage")
 class Contact(Base):
     __tablename__ = "contacts"
@@ -105,14 +113,19 @@ class Deal(Base):
     address=Column(Text)
     tax_rate = Column(Float, default=4.0, nullable=False)
     tax_included = Column(Boolean, default=True, nullable=False)
+    tax_on_materials = Column(Boolean, default=False, nullable=False)
+    revenue = Column(Float, default=0.0, nullable=False)  # выручка = total - закупка материалов
     discount = Column(Float, default=0.0, nullable=False)
     discount_type = Column(String(10), default="percent", nullable=False)
     repeat_interval_days = Column(Integer, nullable=True)   # NULL = не повторяется
     next_repeat_date = Column(Date, nullable=True)          # дата следующего выезда
+    is_archived = Column(Boolean, default=False, nullable=False)
+    archived_at = Column(DateTime, nullable=True)
 
     contact=relationship("Contact",back_populates="deals")
     stage=relationship("Stage",back_populates="deals")
     services=relationship("DealService",cascade="all, delete-orphan",passive_deletes=True)
+    materials=relationship("DealMaterial",cascade="all, delete-orphan",passive_deletes=True)
 
 class Task(Base): __tablename__="tasks"; id,title,description,is_done=Column(Integer,primary_key=True),Column(String,nullable=False),Column(Text),Column(Boolean,default=False); due_date,assignee,priority,status=Column(Date),Column(String),Column(String,default="Обычный"),Column(String,default="Открыта"); contact_id=Column(Integer,ForeignKey("contacts.id",ondelete="SET NULL"),nullable=True); deal_id=Column(Integer,ForeignKey("deals.id",ondelete="SET NULL"),nullable=True); contact=relationship("Contact"); deal=relationship("Deal")
 
@@ -237,6 +250,7 @@ def update_equipment_last_maintenance(db: DBSession, equipment_id: int):
 
 # ── 5. PYDANTIC MODELS ───────────────────────────────────────────────────────
 class DealServiceItem(BaseModel): service_id: int; quantity: float
+class DealMaterialItem(BaseModel): name: str; quantity: float; cost_price: float; sell_price: float
 class DealCreate(BaseModel): 
     title:str; 
     stage_id:int; 
@@ -244,9 +258,10 @@ class DealCreate(BaseModel):
     new_contact_name:Optional[str]=None; 
     manager:Optional[str]=None; 
     services:List[DealServiceItem]=[]
+    materials:List[DealMaterialItem]=[]
     tax_rate: Optional[float] = 4.0
     tax_included: Optional[bool] = True
-    discount: Optional[float] = 0.0
+    tax_on_materials: Optional[bool] = False
     discount_type: Optional[str] = "percent"
     work_date: Optional[str] = None
     work_time: Optional[str] = None
@@ -261,9 +276,10 @@ class DealUpdate(BaseModel):
     new_contact_name:Optional[str]=None; 
     manager:Optional[str]=None; 
     services:Optional[List[DealServiceItem]]=None
+    materials:Optional[List[DealMaterialItem]]=None
     tax_rate: Optional[float] = None
     tax_included: Optional[bool] = None
-    discount: Optional[float] = None
+    tax_on_materials: Optional[bool] = None
     discount_type: Optional[str] = None
     work_date: Optional[str] = None
     work_time: Optional[str] = None
@@ -380,17 +396,38 @@ async def lifespan(app: FastAPI):
     _ensure_deals_discount_type()
     _ensure_repeat_columns()
     _ensure_user_last_login()
+    _ensure_archive_columns()
     threading.Thread(target=_repeat_deals_worker, daemon=True).start()
+    threading.Thread(target=_archive_expired_worker, daemon=True).start()
     yield
     print("App shutting down.",flush=True)
 
 app = FastAPI(title="GrassCRM API", version="12.2.0", lifespan=lifespan)
 app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET, https_only=True, same_site="lax")
-app.add_middleware(CORSMiddleware, allow_origins=[APP_BASE_URL], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+_CORS_ORIGINS = list({
+    APP_BASE_URL,
+    "https://xn----8sb2apbbcfhi5f.xn--p1ai",
+    "https://xn----8sbgjpqjjbr1b.xn--p1ai",
+})
+app.add_middleware(CORSMiddleware, allow_origins=_CORS_ORIGINS, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 @lru_cache(maxsize=1)
 def get_jwks(): return httpx.get(f"https://{AUTH0_DOMAIN}/.well-known/jwks.json", timeout=10).raise_for_status().json()
-def get_db(): db = SessionFactory(); yield db; db.close()
+def get_db():
+    db = SessionFactory()
+    try:
+        yield db
+    finally:
+        db.close()
+
+def get_public_db():
+    """Сессия для публичных эндпоинтов — переключается в роль anon для RLS."""
+    db = SessionFactory()
+    try:
+        db.execute(text("SET LOCAL ROLE anon"))
+        yield db
+    finally:
+        db.close()
 
 def get_current_user(req: Request, x_internal_api_key: Optional[str] = Header(None, alias="X-Internal-API-Key")):
     # API Key authentication for internal services (like the Telegram bot)
@@ -480,6 +517,20 @@ def invalidate_cache(_=Depends(get_current_user)): _cache.invalidate("all"); ret
 # --- SERVICES ---
 @app.get("/api/services")
 def get_services(db:DBSession=Depends(get_db),_=Depends(get_current_user)): return db.query(Service).order_by(Service.id).all()
+
+@app.get("/api/public/services")
+def get_public_services(db:DBSession=Depends(get_public_db)):
+    """Публичный эндпоинт для страницы прайса — без авторизации.
+    RLS-готовность: когда включишь RLS в Supabase, создай политику:
+      CREATE POLICY public_read_services ON services FOR SELECT TO anon USING (true);
+    Запросы через Session Pooler идут от роли authenticator/anon, не postgres —
+    поэтому политика нужна явно для роли anon.
+    """
+    try:
+        rows = db.query(Service).order_by(Service.id).all()
+        return [{"id": s.id, "name": s.name, "price": s.price, "unit": s.unit, "min_volume": s.min_volume, "notes": s.notes} for s in rows]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Не удалось получить список услуг")
 @app.post("/api/services", status_code=201)
 def create_service(data: ServiceCreate, db: DBSession = Depends(get_db), _=Depends(require_admin)):
     new_item = Service(**data.model_dump()); db.add(new_item); db.commit(); db.refresh(new_item)
@@ -505,8 +556,49 @@ def get_deals(year:Optional[int]=None,db:DBSession=Depends(get_db),user:dict=Dep
     q=db.query(Deal).options(joinedload(Deal.contact),joinedload(Deal.stage)).order_by(Deal.created_at.desc())
     if year: q = q.filter(extract("year", Deal.deal_date) == year)
     if not is_admin(user): q = q.filter(Deal.manager == user["name"])  # менеджер видит только свои
+    q = q.filter(Deal.is_archived == False)
     deals_list=[{"id":d.id,"title":d.title or "","total":d.total or 0.0,"client":d.contact.name if d.contact else "","contact_id":d.contact_id,"stage":d.stage.name if d.stage else "","stage_id":d.stage_id,"created_at":(d.created_at or datetime.utcnow()).isoformat()} for d in q.all()]
     return {"deals": deals_list}
+
+@app.get("/api/deals/archived")
+def get_archived_deals(db: DBSession = Depends(get_db), user: dict = Depends(get_current_user)):
+    q = db.query(Deal).options(joinedload(Deal.contact), joinedload(Deal.stage)).filter(Deal.is_archived == True).order_by(Deal.archived_at.desc())
+    if not is_admin(user): q = q.filter(Deal.manager == user["name"])
+    result = []
+    for d in q.all():
+        days_left = None
+        if d.archived_at:
+            elapsed = (datetime.utcnow() - d.archived_at).days
+            days_left = max(0, 30 - elapsed)
+        result.append({
+            "id": d.id, "title": d.title or "", "total": d.total or 0.0,
+            "client": d.contact.name if d.contact else "", "contact_id": d.contact_id,
+            "stage": d.stage.name if d.stage else "", "stage_id": d.stage_id,
+            "created_at": (d.created_at or datetime.utcnow()).isoformat(),
+            "archived_at": d.archived_at.isoformat() if d.archived_at else None,
+            "days_left": days_left,
+        })
+    return {"deals": result}
+
+@app.post("/api/deals/{deal_id}/archive")
+def archive_deal(deal_id: int, db: DBSession = Depends(get_db), _=Depends(get_current_user)):
+    deal = db.query(Deal).filter(Deal.id == deal_id).first()
+    if not deal: raise HTTPException(404, "Сделка не найдена")
+    deal.is_archived = True
+    deal.archived_at = datetime.utcnow()
+    db.commit()
+    _cache.invalidate("deals")
+    return {"status": "ok"}
+
+@app.post("/api/deals/{deal_id}/unarchive")
+def unarchive_deal(deal_id: int, db: DBSession = Depends(get_db), _=Depends(get_current_user)):
+    deal = db.query(Deal).filter(Deal.id == deal_id).first()
+    if not deal: raise HTTPException(404, "Сделка не найдена")
+    deal.is_archived = False
+    deal.archived_at = None
+    db.commit()
+    _cache.invalidate("deals")
+    return {"status": "ok"}
 
 @app.post("/api/deals", status_code=201)
 def create_deal(deal_data: DealCreate, db: DBSession = Depends(get_db), _=Depends(get_current_user)):
@@ -529,23 +621,38 @@ def create_deal(deal_data: DealCreate, db: DBSession = Depends(get_db), _=Depend
         subtotal += price * item.quantity
         service_items_for_db.append(DealService(service_id=service.id, quantity=item.quantity, price_at_moment=price))
 
+    # Материалы: клиентская часть добавляется к итогу
+    material_items_for_db = []
+    mat_sell_total = 0.0
+    for mat in (deal_data.materials or []):
+        mat_sell_total += mat.sell_price * mat.quantity
+        material_items_for_db.append(DealMaterial(name=mat.name, quantity=mat.quantity, cost_price=mat.cost_price, sell_price=mat.sell_price))
+
+    tax_on_materials = deal_data.tax_on_materials or False
+    # Налогооблагаемая база: услуги + материалы (если галочка стоит)
+    taxable_subtotal = subtotal + (mat_sell_total if tax_on_materials else 0)
+    non_taxable = mat_sell_total if not tax_on_materials else 0
+
     discount_val = deal_data.discount or 0
     discount_type = deal_data.discount_type or "percent"
     tax_rate_percent = deal_data.tax_rate or 0
-    
+
     if discount_type == "fixed":
-        discount_amount = min(discount_val, subtotal)
+        discount_amount = min(discount_val, taxable_subtotal + non_taxable)
     else:
-        discount_amount = subtotal * (discount_val / 100.0)
-    subtotal_after_discount = subtotal - discount_amount
-    
-    # Налог включён: сумма = subtotal, налог отображается отдельно но не прибавляется
-    # Налог сверху: сумма = subtotal + налог
-    tax_amount = subtotal_after_discount * (tax_rate_percent / 100.0)
+        discount_amount = (taxable_subtotal + non_taxable) * (discount_val / 100.0)
+    taxable_after_discount = taxable_subtotal - discount_amount * (taxable_subtotal / (taxable_subtotal + non_taxable + 0.0001))
+    non_taxable_after_discount = non_taxable - discount_amount * (non_taxable / (taxable_subtotal + non_taxable + 0.0001))
+
+    tax_amount = taxable_after_discount * (tax_rate_percent / 100.0)
     if deal_data.tax_included:
-        final_total = subtotal_after_discount
+        final_total = taxable_after_discount + non_taxable_after_discount
     else:
-        final_total = subtotal_after_discount + tax_amount
+        final_total = taxable_after_discount + non_taxable_after_discount + tax_amount
+
+    # Выручка = итог для клиента − закупочная стоимость материалов
+    mat_cost_total = sum(m.cost_price * m.quantity for m in material_items_for_db)
+    final_revenue = round(final_total - mat_cost_total, 2)
 
     new_deal = Deal(
         title=deal_data.title,
@@ -554,11 +661,14 @@ def create_deal(deal_data: DealCreate, db: DBSession = Depends(get_db), _=Depend
         deal_date=datetime.utcnow(),
         manager=deal_data.manager,
         services=service_items_for_db,
+        materials=material_items_for_db,
         total=round(final_total, 2),
+        revenue=final_revenue,
         discount=discount_val,
         discount_type=discount_type,
         tax_rate=tax_rate_percent,
         tax_included=deal_data.tax_included,
+        tax_on_materials=tax_on_materials,
         address=deal_data.address or None
     )
     # Собираем дату+время выезда из отдельных строк
@@ -589,7 +699,8 @@ def create_deal(deal_data: DealCreate, db: DBSession = Depends(get_db), _=Depend
 def get_deal_details(deal_id: int, db: DBSession = Depends(get_db), _=Depends(get_current_user)):
     deal = db.query(Deal).options(
         joinedload(Deal.contact), 
-        joinedload(Deal.services).joinedload(DealService.service)
+        joinedload(Deal.services).joinedload(DealService.service),
+        joinedload(Deal.materials)
     ).filter(Deal.id == deal_id).first()
 
     if not deal:
@@ -612,10 +723,12 @@ def get_deal_details(deal_id: int, db: DBSession = Depends(get_db), _=Depends(ge
         "manager": deal.manager,
         "contact": {"id": deal.contact.id, "name": deal.contact.name} if deal.contact else None,
         "services": services_list,
+        "materials": [{"id": m.id, "name": m.name, "quantity": m.quantity, "cost_price": m.cost_price, "sell_price": m.sell_price} for m in (deal.materials or [])],
         "discount": deal.discount,
         "discount_type": deal.discount_type or "percent",
         "tax_rate": deal.tax_rate,
         "tax_included": deal.tax_included,
+        "tax_on_materials": deal.tax_on_materials if deal.tax_on_materials is not None else False,
         "deal_date": deal.deal_date.isoformat() if deal.deal_date else None,
         "address": deal.address or "",
         "repeat_interval_days": deal.repeat_interval_days,
@@ -638,7 +751,7 @@ def update_deal(deal_id: int, deal_data: DealUpdate, db: DBSession = Depends(get
     elif "contact_id" in update_data:
         deal.contact_id = update_data["contact_id"]
 
-    recalculate = "services" in update_data or "discount" in update_data or "discount_type" in update_data or "tax_rate" in update_data or "tax_included" in update_data
+    recalculate = "services" in update_data or "materials" in update_data or "discount" in update_data or "discount_type" in update_data or "tax_rate" in update_data or "tax_included" in update_data or "tax_on_materials" in update_data
 
     if "services" in update_data:
         db.query(DealService).filter(DealService.deal_id == deal_id).delete(synchronize_session=False)
@@ -648,30 +761,48 @@ def update_deal(deal_id: int, deal_data: DealUpdate, db: DBSession = Depends(get
             if service:
                 db.add(DealService(deal_id=deal_id, service_id=service.id, quantity=item.quantity, price_at_moment=(service.price or 0)))
         db.flush()
-    
+
+    if "materials" in update_data:
+        db.query(DealMaterial).filter(DealMaterial.deal_id == deal_id).delete(synchronize_session=False)
+        for mat_data in update_data["materials"]:
+            mat = DealMaterialItem(**mat_data)
+            db.add(DealMaterial(deal_id=deal_id, name=mat.name, quantity=mat.quantity, cost_price=mat.cost_price, sell_price=mat.sell_price))
+        db.flush()
+
     if "discount" in update_data: deal.discount = update_data["discount"]
     if "discount_type" in update_data: deal.discount_type = update_data["discount_type"]
     if "tax_rate" in update_data: deal.tax_rate = update_data["tax_rate"]
     if "tax_included" in update_data: deal.tax_included = update_data["tax_included"]
-    
+    if "tax_on_materials" in update_data: deal.tax_on_materials = update_data["tax_on_materials"]
+
     if recalculate:
-        subtotal = sum(ds.price_at_moment * ds.quantity for ds in deal.services)
+        svc_subtotal = sum(ds.price_at_moment * ds.quantity for ds in deal.services)
+        mat_sell_total = sum(m.sell_price * m.quantity for m in deal.materials)
+        tax_on_mat = deal.tax_on_materials or False
+        taxable_subtotal = svc_subtotal + (mat_sell_total if tax_on_mat else 0)
+        non_taxable = mat_sell_total if not tax_on_mat else 0
+        total_subtotal = taxable_subtotal + non_taxable
+
         discount_val = deal.discount or 0
         discount_type = deal.discount_type or "percent"
         tax_rate_percent = deal.tax_rate or 0
         if discount_type == "fixed":
-            discount_amount = min(discount_val, subtotal)
+            discount_amount = min(discount_val, total_subtotal)
         else:
-            discount_amount = subtotal * (discount_val / 100.0)
-        subtotal_after_discount = subtotal - discount_amount
-        
-        tax_amount = subtotal_after_discount * (tax_rate_percent / 100.0)
+            discount_amount = total_subtotal * (discount_val / 100.0)
+        ratio_tax = taxable_subtotal / (total_subtotal + 0.0001)
+        taxable_after_discount = taxable_subtotal - discount_amount * ratio_tax
+        non_taxable_after_discount = non_taxable - discount_amount * (1 - ratio_tax)
+
+        tax_amount = taxable_after_discount * (tax_rate_percent / 100.0)
         if deal.tax_included:
-            final_total = subtotal_after_discount
+            final_total = taxable_after_discount + non_taxable_after_discount
         else:
-            final_total = subtotal_after_discount + tax_amount
-        
+            final_total = taxable_after_discount + non_taxable_after_discount + tax_amount
+
         deal.total = round(final_total, 2)
+        mat_cost_total = sum((m.cost_price or 0) * (m.quantity or 0) for m in deal.materials)
+        deal.revenue = round(final_total - mat_cost_total, 2)
 
     if "title" in update_data: deal.title = update_data["title"]
     if "stage_id" in update_data: deal.stage_id = update_data["stage_id"]
@@ -1395,6 +1526,59 @@ def _process_repeat_deals():
                 threading.Thread(target=_send_tg_sync, args=(msg,), daemon=True).start()
 
 
+def _ensure_archive_columns():
+    insp = sa_inspect(engine)
+    if not insp.has_table("deals"):
+        return
+    cols = {c["name"] for c in insp.get_columns("deals")}
+    with engine.begin() as conn:
+        if "is_archived" not in cols:
+            conn.execute(text("ALTER TABLE deals ADD COLUMN is_archived BOOLEAN DEFAULT FALSE NOT NULL"))
+        if "archived_at" not in cols:
+            conn.execute(text("ALTER TABLE deals ADD COLUMN archived_at TIMESTAMP"))
+
+def _archive_expired_worker():
+    """Background thread: check archived deals older than 30 days → move to failed stage."""
+    import time as _time
+    while True:
+        try:
+            _process_expired_archives()
+        except Exception as e:
+            print(f"archive_expired_worker error: {e}", flush=True)
+        _time.sleep(3600)
+
+def _process_expired_archives():
+    from datetime import timedelta as _td
+    threshold = datetime.utcnow() - _td(days=30)
+    with SessionFactory() as db:
+        lost_stage = next(
+            (s for s in db.query(Stage).all()
+             if s.is_final and "успешно" not in (s.name or "").lower()),
+            None
+        )
+        if not lost_stage:
+            return
+        expired = db.query(Deal).filter(
+            Deal.is_archived == True,
+            Deal.archived_at <= threshold,
+        ).all()
+        for deal in expired:
+            deal.is_archived = False
+            deal.archived_at = None
+            deal.stage_id = lost_stage.id
+            deal.repeat_interval_days = None
+            deal.next_repeat_date = None
+            db.flush()
+            reason_comment = DealComment(
+                deal_id=deal.id,
+                author="Система",
+                text="Причина провала: Истёк срок архива (30 дней)"
+            )
+            db.add(reason_comment)
+        db.commit()
+        if expired:
+            print(f"archive_expired: {len(expired)} deals moved to failed stage", flush=True)
+
 def _ensure_deals_discount_type():
     insp = sa_inspect(engine)
     if not insp.has_table("deals"):
@@ -1431,6 +1615,39 @@ def _ensure_contacts_telegram_columns():
         except Exception:
             pass
 
+    # deal_materials table
+    with engine.connect() as conn:
+        try:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS deal_materials (
+                    id SERIAL PRIMARY KEY,
+                    deal_id INTEGER NOT NULL REFERENCES deals(id) ON DELETE CASCADE,
+                    name VARCHAR(200) NOT NULL,
+                    quantity FLOAT NOT NULL DEFAULT 1.0,
+                    cost_price FLOAT NOT NULL DEFAULT 0.0,
+                    sell_price FLOAT NOT NULL DEFAULT 0.0
+                )
+            """))
+            conn.commit()
+        except Exception:
+            pass
+
+    # tax_on_materials column
+    with engine.connect() as conn:
+        try:
+            conn.execute(text("ALTER TABLE deals ADD COLUMN tax_on_materials BOOLEAN NOT NULL DEFAULT FALSE"))
+            conn.commit()
+        except Exception:
+            pass
+
+    # revenue column
+    with engine.connect() as conn:
+        try:
+            conn.execute(text("ALTER TABLE deals ADD COLUMN revenue FLOAT NOT NULL DEFAULT 0.0"))
+            conn.commit()
+        except Exception:
+            pass
+
 
 # ── PYDANTIC для бюджета ──────────────────────────────────────────────────────
 class BudgetCreate(BaseModel):
@@ -1462,6 +1679,7 @@ def get_analytics(year: int, db: DBSession = Depends(get_db), _=Depends(require_
 
     deals = (db.query(Deal)
              .options(joinedload(Deal.services).joinedload(DealService.service),
+                      joinedload(Deal.materials),
                       joinedload(Deal.contact))
              .filter(extract("year", Deal.created_at) == year)
              .all())
@@ -1471,7 +1689,7 @@ def get_analytics(year: int, db: DBSession = Depends(get_db), _=Depends(require_
     won  = [d for d in deals if d.stage_id in won_stage_ids]
     lost = [d for d in deals if d.stage_id in lost_stage_ids]
 
-    total_revenue = sum(d.total or 0 for d in won)
+    total_revenue = sum((d.revenue if d.revenue else d.total) or 0 for d in won)
     avg_check     = round(total_revenue / len(won), 2) if won else 0
     win_rate      = round(len(won) / len(deals) * 100, 1) if deals else 0
 
@@ -1489,7 +1707,7 @@ def get_analytics(year: int, db: DBSession = Depends(get_db), _=Depends(require_
     rev_by_month = defaultdict(float)
     for d in won:
         m = (d.closed_at or d.created_at).month
-        rev_by_month[m] += d.total or 0
+        rev_by_month[m] += (d.revenue if d.revenue else d.total) or 0
 
     expenses_year = db.query(Expense).filter(extract("year", Expense.date) == year).all()
     exp_by_month  = defaultdict(float)
@@ -1534,8 +1752,8 @@ def get_analytics(year: int, db: DBSession = Depends(get_db), _=Depends(require_
     # 5. Повторные клиенты
     repeat_won = [d for d in won if d.is_repeat]
     new_won    = [d for d in won if not d.is_repeat]
-    repeat_rev = sum(d.total or 0 for d in repeat_won)
-    new_rev    = sum(d.total or 0 for d in new_won)
+    repeat_rev = sum((d.revenue if d.revenue else d.total) or 0 for d in repeat_won)
+    new_rev    = sum((d.revenue if d.revenue else d.total) or 0 for d in new_won)
 
     # 6. Причины провала и 7. Источники клиентов
     lost_reason_count = defaultdict(int)

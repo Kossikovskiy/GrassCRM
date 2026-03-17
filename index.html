@@ -219,6 +219,11 @@ nav button::after{display:none}
   /* general: smaller font and padding on mobile tables */
   .tcard-scroll td{font-size:11px;padding:10px 10px}
   .tcard-scroll th{font-size:8px;padding:10px 10px}
+  /* materials table on mobile */
+  #d-materials-table{min-width:0 !important}
+  #d-materials-table th:nth-child(3),#d-materials-table th:nth-child(4),
+  #d-materials-table td:nth-child(3),#d-materials-table td:nth-child(4){font-size:11px}
+  #d-materials-table input[type=number]{width:58px !important}
 }
 @media(min-width:768px){
   #mobile-menu-btn{display:none!important}
@@ -312,6 +317,27 @@ html[data-theme="dark"] .cat-tag{background:var(--surface2);color:var(--sage)}
 
 /* ── KANBAN ────────────────────────────────────────────────── */
 .kanban{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:11px;padding-bottom:12px}
+.btn-archive-toggle{display:inline-flex;align-items:center;gap:7px;background:transparent;color:var(--fern);border:1.5px solid var(--fern);border-radius:7px;padding:9px 18px;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;letter-spacing:.5px;cursor:pointer;transition:all .2s;box-shadow:var(--sh-s);white-space:nowrap}
+.btn-archive-toggle:hover{background:var(--fern);color:#fff;transform:translateY(-1px);box-shadow:var(--sh-m)}
+.k-archive-drop{display:flex;align-items:center;justify-content:center;gap:10px;border:2px dashed var(--sage);border-radius:12px;padding:14px 20px;margin-bottom:14px;color:var(--ink4);font-size:13px;font-weight:500;transition:all .2s;cursor:default;opacity:0;pointer-events:none;height:0;padding:0;margin:0;overflow:hidden}
+.k-archive-drop.drag-active{opacity:1;pointer-events:all;height:auto;padding:14px 20px;margin-bottom:14px}
+.k-archive-drop.drag-over{background:rgba(122,181,102,.12);border-color:var(--leaf);color:var(--leaf)}
+.k-archive-drop-ico{font-size:22px;line-height:1}
+.arch-card{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px}
+.arch-card-body{flex:1;min-width:0}
+.arch-card-title{font-weight:600;font-size:14px;color:var(--ink1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.arch-card-client{font-size:12px;color:var(--leaf);margin-top:2px}
+.arch-card-meta{font-size:11px;color:var(--ink4);margin-top:4px}
+.arch-card-timer{font-size:12px;font-weight:700;white-space:nowrap;text-align:right}
+.arch-card-timer.urgent{color:#ef4444}
+.arch-card-timer.warn{color:#f59e0b}
+.arch-card-timer.ok{color:var(--sage)}
+.arch-card-actions{display:flex;flex-direction:column;gap:6px}
+.arch-btn{border:none;border-radius:7px;padding:5px 11px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.arch-btn-restore{background:var(--leaf);color:#fff}
+.arch-btn-restore:hover{opacity:.85}
+.arch-btn-fail{background:#fee2e2;color:#dc2626}
+.arch-btn-fail:hover{background:#dc2626;color:#fff}
 .k-col{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);display:flex;flex-direction:column;max-height:calc(100vh - 200px);box-shadow:var(--sh-s);transition:background .15s,border-color .15s}
 .k-col.drag-over{background:var(--leaf);border-color:var(--sage)}
 html[data-theme="dark"] .k-col.drag-over{background:var(--surface2);border-color:var(--fern)}
@@ -893,7 +919,7 @@ html[data-theme="dark"] .k-placeholder{background:var(--surface2)}
 /* ── AI-панель внутри сделки ── */
 .deal-ai-panel{margin-top:24px;padding-top:20px;border-top:1px solid var(--border2)}
 .deal-ai-title{font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink4);margin-bottom:12px;display:flex;align-items:center;gap:6px}
-.deal-ai-title::before{content:"🤖"}
+.deal-ai-title::before{content:"<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="15" x2="8" y2="15" stroke-width="2"/><line x1="12" y1="15" x2="12" y2="15" stroke-width="2"/><line x1="16" y1="15" x2="16" y2="15" stroke-width="2"/></svg>"}
 .deal-ai-quick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
 .deal-ai-chip{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:11px;color:var(--ink3);cursor:pointer;transition:background .15s,border-color .15s,color .15s;white-space:nowrap;font-family:'DM Sans',sans-serif}
 .deal-ai-chip:hover{background:var(--leaf);border-color:var(--sage);color:var(--moss)}
@@ -1149,6 +1175,16 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
 }
 .nm-color-swatch{width:28px;height:28px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:transform .15s,border-color .15s;outline:none}
 .nm-color-swatch:hover{transform:scale(1.18);border-color:var(--ink3) !important}
+
+/* ── ICON SIZING ───────────────────────────────────────────── */
+.mnav-icon svg { width: 18px; height: 18px; vertical-align: -3px; }
+.kpi-icon svg { width: 22px; height: 22px; }
+.svc-btn-icon svg { width: 14px; height: 14px; vertical-align: -2px; }
+.svc-card-title svg { width: 16px; height: 16px; vertical-align: -3px; }
+.deal-ai-title::before { content: none; }
+.deal-ai-title .ai-icon svg { width: 16px; height: 16px; }
+.an-ai-header-icon svg { width: 20px; height: 20px; vertical-align: -4px; }
+.nm-tool-btn svg { width: 15px; height: 15px; vertical-align: -2px; }
 </style>
 </head>
 <body>
@@ -1177,9 +1213,9 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
         <button class="hbtn" id="year-refresh" title="Обновить">↺</button>
       </div>
       <button class="hbtn" id="theme-toggle" onclick="toggleTheme()" title="Тема">◑</button>
-      <button class="hbtn" id="service-btn" onclick="showPage('service',this)" title="Настройки">⚙</button>
+      <button class="hbtn" id="service-btn" onclick="showPage('service',this)" title="Настройки"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
       <!-- Hamburger — только на мобиле -->
-      <button id="mobile-menu-btn" onclick="mobileNavOpen()" title="Меню">☰</button>
+      <button id="mobile-menu-btn" onclick="mobileNavOpen()" title="Меню"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
     </div>
   </div>
   <!-- Строка 2: навигация (только десктоп) -->
@@ -1210,20 +1246,20 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
 <div id="mobile-nav">
   <div id="mobile-nav-handle"></div>
   <div id="mobile-nav-grid">
-    <button class="active" data-page="dash" onclick="showPage('dash',this);mobileNavClose()"><span class="mnav-icon">📊</span><span class="mnav-label">Дашборд</span></button>
-    <button data-page="kanban" onclick="showPage('kanban',this);mobileNavClose()"><span class="mnav-icon">🗂</span><span class="mnav-label">Сделки</span></button>
-    <button data-page="tasks" onclick="showPage('tasks',this);mobileNavClose()"><span class="mnav-icon">✅</span><span class="mnav-label">Задачи</span></button>
-    <button data-page="calendar" onclick="showPage('calendar',this);calInit();mobileNavClose()"><span class="mnav-icon">📅</span><span class="mnav-label">Календарь</span></button>
-    <button data-page="contacts" onclick="showPage('contacts',this);mobileNavClose()"><span class="mnav-icon">👥</span><span class="mnav-label">Контакты</span></button>
-    <button data-page="expenses" data-role="admin" onclick="showPage('expenses',this);mobileNavClose()"><span class="mnav-icon">💸</span><span class="mnav-label">Расходы</span></button>
-    <button data-page="analytics" data-role="admin" onclick="showPage('analytics',this);mobileNavClose()"><span class="mnav-icon">📈</span><span class="mnav-label">Аналитика</span></button>
-    <button data-page="budget" data-role="admin" onclick="showPage('budget',this);mobileNavClose()"><span class="mnav-icon">💼</span><span class="mnav-label">Бюджет</span></button>
-    <button data-page="equipment" onclick="showPage('equipment',this);mobileNavClose()"><span class="mnav-icon">🔧</span><span class="mnav-label">Техника</span></button>
-    <button data-page="services" onclick="showPage('services',this);mobileNavClose()"><span class="mnav-icon">📋</span><span class="mnav-label">Прайс</span></button>
-    <button data-page="stock" data-role="admin" onclick="showPage('stock',this);mobileNavClose()"><span class="mnav-icon">📦</span><span class="mnav-label">Склад</span></button>
-    <button data-page="taxes" data-role="admin" onclick="showPage('taxes',this);mobileNavClose()"><span class="mnav-icon">🏛️</span><span class="mnav-label">Налог</span></button>
-    <button data-page="notes" onclick="showPage('notes',this);notesInit();mobileNavClose()"><span class="mnav-icon">📝</span><span class="mnav-label">Заметки</span></button>
-    <button data-page="files" onclick="showPage('files',this);loadFilesPage();mobileNavClose()"><span class="mnav-icon">📎</span><span class="mnav-label">Файлы</span></button>
+    <button class="active" data-page="dash" onclick="showPage('dash',this);mobileNavClose()"><span class="mnav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span><span class="mnav-label">Дашборд</span></button>
+    <button data-page="kanban" onclick="showPage('kanban',this);mobileNavClose()"><span class="mnav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><path d="M3 7l9 6 9-6"/></svg></span><span class="mnav-label">Сделки</span></button>
+    <button data-page="tasks" onclick="showPage('tasks',this);mobileNavClose()"><span class="mnav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span><span class="mnav-label">Задачи</span></button>
+    <button data-page="calendar" onclick="showPage('calendar',this);calInit();mobileNavClose()"><span class="mnav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span><span class="mnav-label">Календарь</span></button>
+    <button data-page="contacts" onclick="showPage('contacts',this);mobileNavClose()"><span class="mnav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="mnav-label">Контакты</span></button>
+    <button data-page="expenses" data-role="admin" onclick="showPage('expenses',this);mobileNavClose()"><span class="mnav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><span class="mnav-label">Расходы</span></button>
+    <button data-page="analytics" data-role="admin" onclick="showPage('analytics',this);mobileNavClose()"><span class="mnav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span><span class="mnav-label">Аналитика</span></button>
+    <button data-page="budget" data-role="admin" onclick="showPage('budget',this);mobileNavClose()"><span class="mnav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></span><span class="mnav-label">Бюджет</span></button>
+    <button data-page="equipment" onclick="showPage('equipment',this);mobileNavClose()"><span class="mnav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span><span class="mnav-label">Техника</span></button>
+    <button data-page="services" onclick="showPage('services',this);mobileNavClose()"><span class="mnav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="15" y2="16"/></svg></span><span class="mnav-label">Прайс</span></button>
+    <button data-page="stock" data-role="admin" onclick="showPage('stock',this);mobileNavClose()"><span class="mnav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span><span class="mnav-label">Склад</span></button>
+    <button data-page="taxes" data-role="admin" onclick="showPage('taxes',this);mobileNavClose()"><span class="mnav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg></span><span class="mnav-label">Налог</span></button>
+    <button data-page="notes" onclick="showPage('notes',this);notesInit();mobileNavClose()"><span class="mnav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span><span class="mnav-label">Заметки</span></button>
+    <button data-page="files" onclick="showPage('files',this);loadFilesPage();mobileNavClose()"><span class="mnav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></span><span class="mnav-label">Файлы</span></button>
   </div>
 </div>
 
@@ -1234,31 +1270,31 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
   </div>
   <div class="kpi-strip">
     <div class="kpi-card" style="--kpi-accent:#16a34a">
-      <span class="kpi-icon">💰</span>
+      <span class="kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
       <div class="kpi-val" id="kpi-revenue">—</div>
       <div class="kpi-label">Выручка</div>
       <div class="kpi-sub" id="kpi-deals-count">— успешных сделок</div>
     </div>
     <div class="kpi-card" style="--kpi-accent:#dc2626">
-      <span class="kpi-icon">📉</span>
+      <span class="kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/></svg></span>
       <div class="kpi-val" id="kpi-expenses">—</div>
       <div class="kpi-label">Расходы</div>
       <div class="kpi-sub" id="kpi-exp-count">— записей</div>
     </div>
     <div class="kpi-card" style="--kpi-accent:#2a5280">
-      <span class="kpi-icon">🏛️</span>
+      <span class="kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg></span>
       <div class="kpi-val m-neg" id="kpi-tax">—</div>
       <div class="kpi-label">Налог начислен</div>
       <div class="kpi-sub" id="kpi-tax-sub">уплачено: —</div>
     </div>
     <div class="kpi-card" style="--kpi-accent:#7c3aed">
-      <span class="kpi-icon">📈</span>
+      <span class="kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span>
       <div class="kpi-val" id="kpi-profit">—</div>
       <div class="kpi-label">Чистая прибыль</div>
       <div class="kpi-sub" id="kpi-margin">маржа —%</div>
     </div>
     <div class="kpi-card" style="--kpi-accent:#d97706">
-      <span class="kpi-icon">🔧</span>
+      <span class="kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>
       <div class="kpi-val" id="kpi-equip">—</div>
       <div class="kpi-label">Единиц техники</div>
       <div class="kpi-sub" id="kpi-repair">— в ремонте</div>
@@ -1269,7 +1305,7 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
     <button class="dash-qa-btn" onclick="openDealModal()">＋ Новая сделка</button>
     <button class="dash-qa-btn" onclick="openTaskModal()">＋ Новая задача</button>
     <button class="dash-qa-btn" onclick="openContactModal()">＋ Контакт</button>
-    <button class="dash-qa-btn dash-qa-secondary" onclick="showPage('analytics',document.querySelector('[data-page=analytics]'))">📊 Аналитика</button>
+    <button class="dash-qa-btn dash-qa-secondary" onclick="showPage('analytics',document.querySelector('[data-page=analytics]'))"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> Аналитика</button>
   </div>
 
   <!-- Карточки задач и сделок -->
@@ -1301,9 +1337,28 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
       <div class="ph-eyebrow"><div class="ph-line"></div><span class="ph-label">Воронка продаж</span></div>
       <div class="ph-title">Сделки <em>по этапам</em><span class="ph-year year-display"></span></div>
     </div>
-    <button class="add-btn" onclick="openDealModal()">＋&nbsp;Новая сделка</button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn-archive-toggle" onclick="openArchivePanel()">Архив</button>
+      <button class="add-btn" onclick="openDealModal()">＋&nbsp;Новая сделка</button>
+    </div>
+  </div>
+  <div class="k-archive-drop" id="archive-drop-zone">
+    <span class="k-archive-drop-ico">📦</span>
+    <span class="k-archive-drop-label">Перетащите сюда, чтобы архивировать</span>
   </div>
   <div class="kanban" id="kanban-board"></div>
+</div>
+
+<!-- АРХИВ ОВЕРЛЕЙ -->
+<div class="overlay" id="archive-overlay" onclick="if(event.target===this)closeArchivePanel()">
+  <div class="modal" style="max-width:680px;max-height:80vh;display:flex;flex-direction:column;">
+    <div class="modal-title">📦 Архив <em>сделок</em></div>
+    <p style="margin:0 0 16px;font-size:13px;color:var(--ink4)">Сделки в архиве автоматически переходят в статус <b>«Провалена»</b> через 30 дней.</p>
+    <div id="archive-list" style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:10px;padding-right:4px;"></div>
+    <div class="modal-row" style="margin-top:16px">
+      <button class="btn-sec" onclick="closeArchivePanel()">Закрыть</button>
+    </div>
+  </div>
 </div>
 
 <div class="page" id="page-tasks">
@@ -1321,10 +1376,10 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
     </div>
     <select class="tasks-filter-select" id="tasks-priority-filter" onchange="loadTasks(document.getElementById('btn-tasks-done').classList.contains('active'))">
       <option value="">Все приоритеты</option>
-      <option value="Критический">🔴 Критический</option>
-      <option value="Высокий">🟠 Высокий</option>
-      <option value="Обычный">🔵 Обычный</option>
-      <option value="Низкий">⚪ Низкий</option>
+      <option value="Критический"><span style="display:inline-block;width:.7em;height:.7em;border-radius:50%;background:#ef4444;vertical-align:middle;flex-shrink:0"></span> Критический</option>
+      <option value="Высокий"><span style="display:inline-block;width:.7em;height:.7em;border-radius:50%;background:#f97316;vertical-align:middle;flex-shrink:0"></span> Высокий</option>
+      <option value="Обычный"><span style="display:inline-block;width:.7em;height:.7em;border-radius:50%;background:#3b82f6;vertical-align:middle;flex-shrink:0"></span> Обычный</option>
+      <option value="Низкий"><span style="display:inline-block;width:.7em;height:.7em;border-radius:50%;background:var(--ink4);vertical-align:middle;flex-shrink:0"></span> Низкий</option>
     </select>
   </div>
   <div class="tcard">
@@ -1355,7 +1410,7 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
     <div class="page-grid">
         <div>
             <div class="kpi-card" style="--kpi-accent:#2a5280">
-                <span class="kpi-icon">🏛️</span>
+                <span class="kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg></span>
                 <div class="kpi-val m-neg" id="tax-balance">—</div>
                 <div class="kpi-label">Налог к уплате</div>
                 <div class="kpi-sub" id="tax-sub">Начислено: —, уплачено: —</div>
@@ -1557,31 +1612,31 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
   <!-- Row 1: 5 KPI -->
   <div class="kpi-strip" id="an-kpi-strip" style="grid-template-columns:repeat(5,1fr);margin-bottom:20px">
     <div class="kpi-card" style="--kpi-accent:#16a34a">
-      <span class="kpi-icon">🏆</span>
+      <span class="kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg></span>
       <div class="kpi-val" id="an-won">—</div>
       <div class="kpi-label">Успешных сделок</div>
       <div class="kpi-sub" id="an-total-deals">из — всего</div>
     </div>
     <div class="kpi-card" style="--kpi-accent:#2563eb">
-      <span class="kpi-icon">🎯</span>
+      <span class="kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span>
       <div class="kpi-val" id="an-winrate">—%</div>
       <div class="kpi-label">Конверсия</div>
       <div class="kpi-sub" id="an-lost">провалено — сделок</div>
     </div>
     <div class="kpi-card" style="--kpi-accent:#7c3aed">
-      <span class="kpi-icon">💰</span>
+      <span class="kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
       <div class="kpi-val" id="an-revenue">—</div>
       <div class="kpi-label">Выручка</div>
       <div class="kpi-sub" id="an-expenses-sub">расходы: —</div>
     </div>
     <div class="kpi-card" style="--kpi-accent:#b07d2c">
-      <span class="kpi-icon">📊</span>
+      <span class="kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>
       <div class="kpi-val" id="an-avg">—</div>
       <div class="kpi-label">Средний чек</div>
       <div class="kpi-sub">по успешным сделкам</div>
     </div>
     <div class="kpi-card" style="--kpi-accent:#0e7490">
-      <span class="kpi-icon">🔁</span>
+      <span class="kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></span>
       <div class="kpi-val" id="an-repeat-rate">—%</div>
       <div class="kpi-label">Повторные клиенты</div>
       <div class="kpi-sub" id="an-repeat-sub">— из — сделок</div>
@@ -1636,11 +1691,11 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
   <div class="an-ai-block" id="an-ai-block">
     <div class="an-ai-header">
       <div class="an-ai-header-left">
-        <span class="an-ai-header-icon">🤖</span>
+        <span class="an-ai-header-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="15" x2="8" y2="15" stroke-width="2"/><line x1="12" y1="15" x2="12" y2="15" stroke-width="2"/><line x1="16" y1="15" x2="16" y2="15" stroke-width="2"/></svg></span>
         <span class="an-ai-header-title">AI-разбор аналитики</span>
       </div>
       <button class="an-ai-btn" id="an-ai-btn" onclick="analyticsAiInsight(this)">
-        ✨ Проанализировать
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6L12 2z"/></svg> Проанализировать
       </button>
     </div>
     <div class="an-ai-body" id="an-ai-body">
@@ -1663,19 +1718,19 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
   <!-- Budget summary cards -->
   <div class="kpi-strip" style="grid-template-columns:repeat(3,1fr);margin-bottom:24px">
     <div class="kpi-card" style="--kpi-accent:#16a34a">
-      <span class="kpi-icon">📥</span>
+      <span class="kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
       <div class="kpi-val" id="bud-plan-rev">—</div>
       <div class="kpi-label">Плановая выручка</div>
       <div class="kpi-sub" id="bud-fact-rev">факт: —</div>
     </div>
     <div class="kpi-card" style="--kpi-accent:#dc2626">
-      <span class="kpi-icon">📤</span>
+      <span class="kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
       <div class="kpi-val" id="bud-plan-exp">—</div>
       <div class="kpi-label">Плановые расходы</div>
       <div class="kpi-sub" id="bud-fact-exp">факт: —</div>
     </div>
     <div class="kpi-card" style="--kpi-accent:#7c3aed">
-      <span class="kpi-icon">⚖️</span>
+      <span class="kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M12 3v18"/><path d="M3 9h18"/><path d="M5 9l-2 9"/><path d="M19 9l2 9"/><path d="M3 18h6"/><path d="M15 18h6"/></svg></span>
       <div class="kpi-val" id="bud-plan-profit">—</div>
       <div class="kpi-label">Плановая прибыль</div>
       <div class="kpi-sub" id="bud-exec">исполнение —%</div>
@@ -1874,8 +1929,13 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
       <div>
         <div class="field">
           <label>КЛИЕНТ</label>
-          <input list="d-contact-list" id="d-contact-input" placeholder="Начните вводить имя...">
-          <datalist id="d-contact-list"></datalist>
+          <div style="position:relative" id="d-contact-wrap">
+            <input type="text" id="d-contact-input" placeholder="Начните вводить имя..." autocomplete="off"
+              oninput="filterContactDropdown(this.value)"
+              onfocus="filterContactDropdown(this.value)"
+              onblur="setTimeout(()=>hideContactDropdown(),200)">
+            <div id="d-contact-dropdown" style="display:none;position:absolute;z-index:9999;left:0;right:0;top:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;max-height:200px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,.18);margin-top:2px"></div>
+          </div>
         </div>
         <div class="field">
           <label>АДРЕС ОБЪЕКТА</label>
@@ -1926,6 +1986,10 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
           <input type="checkbox" id="d-tax-included" onchange="calculateDealTotal()" style="width:auto;margin:0">
           <label for="d-tax-included" style="margin:0;font-size:12px">Налог включён</label>
         </div>
+        <div class="field" style="display:flex;align-items:center;padding-top:6px;gap:8px">
+          <input type="checkbox" id="d-tax-on-materials" onchange="calculateDealTotal()" style="width:auto;margin:0">
+          <label for="d-tax-on-materials" style="margin:0;font-size:12px">Налог с материалов</label>
+        </div>
       </div>
     </div>
 
@@ -1939,6 +2003,27 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
         </table>
       </div>
       <button class="btn-sec" style="width:100%" onclick="openItemSelectorModal('service')">＋ Добавить услугу</button>
+    </div>
+
+    <!-- Блок материалов -->
+    <div id="d-materials-block" style="margin-top:16px">
+      <label>МАТЕРИАЛЫ <span style="font-size:10px;color:var(--ink4);font-weight:400;text-transform:none">— закупка вычитается из прибыли</span></label>
+      <div class="tcard" style="margin-bottom:12px;overflow-x:auto">
+        <table id="d-materials-table" style="min-width:520px">
+          <thead>
+            <tr>
+              <th style="min-width:140px">Название</th>
+              <th style="width:64px">Кол-во</th>
+              <th style="width:90px">Закупка ₽</th>
+              <th style="width:90px">Клиент ₽</th>
+              <th style="width:80px">Маржа</th>
+              <th style="width:32px"></th>
+            </tr>
+          </thead>
+          <tbody id="d-materials-tbody"></tbody>
+        </table>
+      </div>
+      <button class="btn-sec" style="width:100%" onclick="addDealMaterial()">＋ Добавить материал</button>
     </div>
 
     <!-- Итоговые суммы -->
@@ -1956,7 +2041,7 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
 
     <div class="modal-row">
         <button class="btn-sec btn-del-modal" id="btn-deal-delete" style="display:none;">Удалить</button>
-        <button class="btn-sec" id="btn-deal-repeat" style="display:none;" onclick="openRepeatModal()">🔁 Повтор</button>
+        <button class="btn-sec" id="btn-deal-repeat" style="display:none;" onclick="openRepeatModal()"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> Повтор</button>
         <button class="btn-sec" onclick="closeDealModal()">ОТМЕНА</button>
         <button class="btn-pri" id="btn-deal-save">СОЗДАТЬ</button>
     </div>
@@ -1983,19 +2068,19 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
         <div class="fupload-zone" style="padding:12px" onclick="document.getElementById('deal-file-before-input').click()"
              ondragover="filesZoneDragOver(event)" ondragleave="filesZoneDragLeave(event)" ondrop="dealFileDrop(event, 'before')">
           <input type="file" id="deal-file-before-input" multiple accept="image/*" onchange="dealUploadFiles(this.files, 'before')">
-          <div style="font-size:11px;color:var(--ink3)">📷 Фото <b>до</b></div>
+          <div style="font-size:11px;color:var(--ink3)"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Фото <b>до</b></div>
         </div>
         <div class="fupload-zone" style="padding:12px" onclick="document.getElementById('deal-file-after-input').click()"
              ondragover="filesZoneDragOver(event)" ondragleave="filesZoneDragLeave(event)" ondrop="dealFileDrop(event, 'after')">
           <input type="file" id="deal-file-after-input" multiple accept="image/*" onchange="dealUploadFiles(this.files, 'after')">
-          <div style="font-size:11px;color:var(--ink3)">📸 Фото <b>после</b></div>
+          <div style="font-size:11px;color:var(--ink3)"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/><line x1="18" y1="3" x2="22" y2="3"/><line x1="20" y1="1" x2="20" y2="5"/></svg> Фото <b>после</b></div>
         </div>
       </div>
 
       <div class="fupload-zone" style="padding:14px;margin-bottom:10px" onclick="document.getElementById('deal-file-input').click()"
            ondragover="filesZoneDragOver(event)" ondragleave="filesZoneDragLeave(event)" ondrop="dealFileDrop(event, 'general')">
         <input type="file" id="deal-file-input" multiple onchange="dealUploadFiles(this.files, 'general')">
-        <div style="font-size:11px;color:var(--ink3)">📎 Прочие файлы (договор, смета и т.д.)</div>
+        <div style="font-size:11px;color:var(--ink3)"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Прочие файлы (договор, смета и т.д.)</div>
       </div>
 
       <div style="font-size:11px;color:var(--ink4);margin:8px 0 4px">Фото ДО</div>
@@ -2014,11 +2099,11 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
 
       <!-- Быстрые вопросы -->
       <div class="deal-ai-quick">
-        <span class="deal-ai-chip" onclick="dealAiChip('Что можно улучшить по этой сделке?')">💡 Рекомендации</span>
-        <span class="deal-ai-chip" onclick="dealAiChip('Напиши краткий итог по сделке')">📋 Итог сделки</span>
-        <span class="deal-ai-chip" onclick="dealAiChip('Какие задачи стоит создать?')">✅ Предложи задачи</span>
-        <span class="deal-ai-chip" onclick="dealAiChip('Составь сообщение клиенту о готовности')">💬 Сообщение клиенту</span>
-        <span class="deal-ai-chip" onclick="dealAiAction('summarize')">📝 Добавить итог в комментарий</span>
+        <span class="deal-ai-chip" onclick="dealAiChip('Что можно улучшить по этой сделке?')"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg> Рекомендации</span>
+        <span class="deal-ai-chip" onclick="dealAiChip('Напиши краткий итог по сделке')"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="15" y2="16"/></svg> Итог сделки</span>
+        <span class="deal-ai-chip" onclick="dealAiChip('Какие задачи стоит создать?')"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Предложи задачи</span>
+        <span class="deal-ai-chip" onclick="dealAiChip('Составь сообщение клиенту о готовности')"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Сообщение клиенту</span>
+        <span class="deal-ai-chip" onclick="dealAiAction('summarize')"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Добавить итог в комментарий</span>
       </div>
 
       <!-- Произвольный вопрос -->
@@ -2036,8 +2121,8 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
 
       <!-- Быстрые действия (появляются после ответа) -->
       <div class="deal-ai-actions" id="deal-ai-actions" style="display:none">
-        <button class="deal-ai-action-btn" onclick="dealAiAction('save_comment')">💬 Сохранить как комментарий</button>
-        <button class="deal-ai-action-btn" onclick="dealAiAction('create_task')">✅ Создать задачу</button>
+        <button class="deal-ai-action-btn" onclick="dealAiAction('save_comment')"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Сохранить как комментарий</button>
+        <button class="deal-ai-action-btn" onclick="dealAiAction('create_task')"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Создать задачу</button>
       </div>
     </div>
 
@@ -2080,7 +2165,7 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
           <div class="ccard-meta-line" id="ccard-meta-line"></div>
         </div>
         <div class="ccard-header-actions">
-          <button class="ccard-btn-edit" onclick="ccardToggleEdit()">✏ Редактировать</button>
+          <button class="ccard-btn-edit" onclick="ccardToggleEdit()"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Редактировать</button>
           <button class="ccard-btn-new" onclick="ccardNewDeal()">＋ Новая сделка</button>
         </div>
       </div>
@@ -2184,10 +2269,10 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
           </div>
           <div class="ilog-add">
             <select class="ilog-type" id="ilog-type">
-              <option value="note">📝 Заметка</option>
-              <option value="call">📞 Звонок</option>
-              <option value="meeting">🤝 Встреча</option>
-              <option value="email">✉️ Email</option>
+              <option value="note"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Заметка</option>
+              <option value="call"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.22 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.59a16 16 0 0 0 6.29 6.29l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Звонок</option>
+              <option value="meeting"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 7.65l1.06 1.06L12 21.23l7.36-7.94 1.06-1.06a5.4 5.4 0 0 0 0-7.65z"/></svg> Встреча</option>
+              <option value="email"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Email</option>
             </select>
             <textarea class="ilog-input" id="ilog-input" placeholder="Заметка, итог звонка, встречи..." rows="1"
               oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
@@ -2208,7 +2293,7 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
           <div class="fupload-zone" style="padding:14px" onclick="document.getElementById('ccard-file-input').click()"
                ondragover="filesZoneDragOver(event)" ondragleave="filesZoneDragLeave(event)" ondrop="ccardFileDrop(event)">
             <input type="file" id="ccard-file-input" multiple onchange="ccardUploadFiles(this.files)">
-            <div style="font-size:11px;color:var(--ink3)">📎 Нажмите или перетащите файл</div>
+            <div style="font-size:11px;color:var(--ink3)"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Нажмите или перетащите файл</div>
           </div>
           <div class="flist" id="ccard-files-list" style="margin-top:10px">
             <div class="fempty">Загрузка…</div>
@@ -2459,12 +2544,12 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <div class="notes-search-wrap">
-        <span class="notes-search-icon">🔍</span>
+        <span class="notes-search-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
         <input id="notes-search" class="notes-search-input" placeholder="Поиск заметок…" oninput="notesRender()">
       </div>
       <div class="notes-view-btns">
         <button class="notes-view-btn active" id="notes-grid-btn" onclick="notesSetView('grid')" title="Плитки">⊞</button>
-        <button class="notes-view-btn" id="notes-list-btn" onclick="notesSetView('list')" title="Список">☰</button>
+        <button class="notes-view-btn" id="notes-list-btn" onclick="notesSetView('list')" title="Список"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
       </div>
       <button class="add-btn" onclick="notesOpenCreate()">＋&nbsp;Новая заметка</button>
     </div>
@@ -2473,16 +2558,16 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
   <!-- Color filter bar -->
   <div class="notes-label-bar" id="notes-label-bar">
     <button class="notes-label-chip active" data-label="" onclick="notesFilterLabel(this,'')">Все</button>
-    <button class="notes-label-chip" data-label="🌿 Работа" onclick="notesFilterLabel(this,'🌿 Работа')">🌿 Работа</button>
-    <button class="notes-label-chip" data-label="⚙️ Техника" onclick="notesFilterLabel(this,'⚙️ Техника')">⚙️ Техника</button>
-    <button class="notes-label-chip" data-label="💡 Идеи" onclick="notesFilterLabel(this,'💡 Идеи')">💡 Идеи</button>
-    <button class="notes-label-chip" data-label="📋 Задачи" onclick="notesFilterLabel(this,'📋 Задачи')">📋 Задачи</button>
-    <button class="notes-label-chip" data-label="📞 Контакты" onclick="notesFilterLabel(this,'📞 Контакты')">📞 Контакты</button>
+    <button class="notes-label-chip" data-label="🌿 Работа" onclick="notesFilterLabel(this,'🌿 Работа')"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M2 22c1.25-1.25 2.5-2.5 3.5-3.5"/><path d="M22 2S13 2 8.5 5.5C6 7.25 4 10 4 14c0 2 .5 4 1.5 5.5C7.5 17 9 15 10 13c-1-1-1.5-2.5-1.5-4 0-4 3.5-7 8-7 2 0 4 .5 5.5 1.5z"/></svg> Работа</button>
+    <button class="notes-label-chip" data-label="⚙️ Техника" onclick="notesFilterLabel(this,'⚙️ Техника')"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>️ Техника</button>
+    <button class="notes-label-chip" data-label="💡 Идеи" onclick="notesFilterLabel(this,'💡 Идеи')"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg> Идеи</button>
+    <button class="notes-label-chip" data-label="📋 Задачи" onclick="notesFilterLabel(this,'📋 Задачи')"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="15" y2="16"/></svg> Задачи</button>
+    <button class="notes-label-chip" data-label="📞 Контакты" onclick="notesFilterLabel(this,'📞 Контакты')"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.22 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.59a16 16 0 0 0 6.29 6.29l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Контакты</button>
   </div>
 
   <!-- Pinned notes section -->
   <div id="notes-pinned-section" style="display:none">
-    <div class="notes-section-label">📌 Закреплённые</div>
+    <div class="notes-section-label"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> Закреплённые</div>
     <div class="notes-masonry" id="notes-pinned-grid"></div>
   </div>
 
@@ -2491,7 +2576,7 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
     <div class="notes-section-label" id="notes-other-label" style="display:none">Остальные</div>
     <div class="notes-masonry" id="notes-grid"></div>
     <div class="notes-empty" id="notes-empty" style="display:none">
-      <div class="notes-empty-icon">📝</div>
+      <div class="notes-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
       <div class="notes-empty-title">Заметок пока нет</div>
       <div class="notes-empty-sub">Нажмите «＋ Новая заметка» чтобы начать</div>
     </div>
@@ -2509,26 +2594,26 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
     <textarea id="nm-body" class="nm-body-input" placeholder="Заметка…" rows="6" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
     <div class="nm-footer">
       <div class="nm-footer-left">
-        <button class="nm-tool-btn" title="Цвет" onclick="notesToggleColorPicker()" id="nm-color-btn">🎨</button>
-        <button class="nm-tool-btn" title="Чеклист" onclick="notesToggleChecklist()" id="nm-check-btn">☑️</button>
+        <button class="nm-tool-btn" title="Цвет" onclick="notesToggleColorPicker()" id="nm-color-btn"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg></button>
+        <button class="nm-tool-btn" title="Чеклист" onclick="notesToggleChecklist()" id="nm-check-btn"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></button>
         <select class="nm-label-sel" id="nm-label">
           <option value="">Без метки</option>
-          <option value="🌿 Работа">🌿 Работа</option>
-          <option value="⚙️ Техника">⚙️ Техника</option>
-          <option value="💡 Идеи">💡 Идеи</option>
-          <option value="📋 Задачи">📋 Задачи</option>
-          <option value="📞 Контакты">📞 Контакты</option>
+          <option value="🌿 Работа"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M2 22c1.25-1.25 2.5-2.5 3.5-3.5"/><path d="M22 2S13 2 8.5 5.5C6 7.25 4 10 4 14c0 2 .5 4 1.5 5.5C7.5 17 9 15 10 13c-1-1-1.5-2.5-1.5-4 0-4 3.5-7 8-7 2 0 4 .5 5.5 1.5z"/></svg> Работа</option>
+          <option value="⚙️ Техника"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>️ Техника</option>
+          <option value="💡 Идеи"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg> Идеи</option>
+          <option value="📋 Задачи"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="15" y2="16"/></svg> Задачи</option>
+          <option value="📞 Контакты"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.22 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.59a16 16 0 0 0 6.29 6.29l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Контакты</option>
         </select>
-        <button class="nm-tool-btn" title="Закрепить" id="nm-pin-btn" onclick="notesTogglePin()">📌</button>
+        <button class="nm-tool-btn" title="Закрепить" id="nm-pin-btn" onclick="notesTogglePin()"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></button>
       </div>
       <div class="nm-footer-right">
-        <button class="nm-tool-btn nm-delete-btn" id="nm-delete-btn" onclick="notesDelete()" title="Удалить" style="display:none">🗑️</button>
+        <button class="nm-tool-btn nm-delete-btn" id="nm-delete-btn" onclick="notesDelete()" title="Удалить" style="display:none"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>️</button>
         <button class="nm-save-btn" onclick="notesSave()">Готово</button>
       </div>
     </div>
     <!-- Color picker palette -->
     <div class="nm-color-picker" id="nm-color-picker" style="display:none">
-      <button class="nm-color-swatch" data-color="" style="background:var(--surface);border:2px solid var(--sage)" title="Стандартный" onclick="notesSetNoteColor('')">✓</button>
+      <button class="nm-color-swatch" data-color="" style="background:var(--surface);border:2px solid var(--sage)" title="Стандартный" onclick="notesSetNoteColor('')"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg></button>
       <button class="nm-color-swatch" data-color="note-red"    style="background:#fae3e3" title="Красный"   onclick="notesSetNoteColor('note-red')"></button>
       <button class="nm-color-swatch" data-color="note-orange" style="background:#fdebd0" title="Оранжевый" onclick="notesSetNoteColor('note-orange')"></button>
       <button class="nm-color-swatch" data-color="note-yellow" style="background:#fef9c3" title="Жёлтый"    onclick="notesSetNoteColor('note-yellow')"></button>
@@ -2552,7 +2637,7 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
 
     <!-- Система -->
     <div class="svc-card" id="svc-system-card">
-      <div class="svc-card-title"><span>🖥</span> Система</div>
+      <div class="svc-card-title"><span><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span> Система</div>
       <div class="svc-stat-grid">
         <div class="svc-stat"><div class="svc-stat-val" id="svc-cpu">—</div><div class="svc-stat-lbl">CPU %</div></div>
         <div class="svc-stat"><div class="svc-stat-val" id="svc-mem">—</div><div class="svc-stat-lbl">RAM %</div></div>
@@ -2574,7 +2659,7 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
 
     <!-- База данных -->
     <div class="svc-card">
-      <div class="svc-card-title"><span>🗄</span> База данных</div>
+      <div class="svc-card-title"><span><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></span> База данных</div>
       <div class="svc-stat-grid">
         <div class="svc-stat"><div class="svc-stat-val" id="svc-deals">—</div><div class="svc-stat-lbl">Сделок</div></div>
         <div class="svc-stat"><div class="svc-stat-val" id="svc-contacts">—</div><div class="svc-stat-lbl">Контактов</div></div>
@@ -2584,27 +2669,27 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
         <div class="svc-stat"><div class="svc-stat-val" id="svc-active-deals" style="font-size:16px">—</div><div class="svc-stat-lbl">Активных сделок</div></div>
         <div class="svc-stat"><div class="svc-stat-val" id="svc-overdue" style="font-size:16px;color:#f87171">—</div><div class="svc-stat-lbl">Просрочено</div></div>
       </div>
-      <button class="svc-btn success" onclick="svcDbCheck()"><span class="svc-btn-icon">🔌</span> Проверить соединение</button>
+      <button class="svc-btn success" onclick="svcDbCheck()"><span class="svc-btn-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8z"/></svg></span> Проверить соединение</button>
       <div class="svc-result" id="svc-db-result"></div>
       <div style="margin-top:10px;font-size:11px;color:var(--ink4);display:flex;align-items:center;gap:6px">
-        <span>💾</span><span>Последний бэкап: <span id="svc-last-backup" style="color:var(--ink2);font-weight:500">—</span></span>
+        <span><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></span><span>Последний бэкап: <span id="svc-last-backup" style="color:var(--ink2);font-weight:500">—</span></span>
       </div>
-      <button class="svc-btn" style="margin-top:10px" onclick="svcBackupNow(this)"><span class="svc-btn-icon">💾</span> Создать бэкап сейчас</button>
+      <button class="svc-btn" style="margin-top:10px" onclick="svcBackupNow(this)"><span class="svc-btn-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></span> Создать бэкап сейчас</button>
       <div class="svc-result" id="svc-backup-result"></div>
     </div>
 
     <!-- Кэш -->
     <div class="svc-card">
-      <div class="svc-card-title"><span>⚡</span> Кэш <span id="svc-cache-count" style="font-size:11px;font-weight:400;color:var(--ink3)"></span></div>
+      <div class="svc-card-title"><span><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span> Кэш <span id="svc-cache-count" style="font-size:11px;font-weight:400;color:var(--ink3)"></span></div>
       <div class="svc-cache-tags" id="svc-cache-tags"></div>
       <hr class="svc-divider">
-      <button class="svc-btn danger" onclick="svcClearCache()"><span class="svc-btn-icon">🗑</span> Очистить кэш</button>
+      <button class="svc-btn danger" onclick="svcClearCache()"><span class="svc-btn-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span> Очистить кэш</button>
       <div class="svc-result" id="svc-cache-result"></div>
     </div>
 
     <!-- Telegram -->
     <div class="svc-card">
-      <div class="svc-card-title"><span>✈️</span> Telegram</div>
+      <div class="svc-card-title"><span><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg></span> Telegram</div>
       <!-- Статусы обоих ботов -->
       <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink3)">
@@ -2636,15 +2721,15 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
         <input type="time" id="svc-tg-time-input" value="18:00" onchange="svcSaveSchedule()"
           style="font-size:13px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--ink);width:100px">
       </div>
-      <button class="svc-btn success" onclick="svcSendReport(this)"><span class="svc-btn-icon">📊</span> Отправить отчёт сейчас</button>
-      <button class="svc-btn" style="margin-top:6px" onclick="svcRunRepeats(this)"><span class="svc-btn-icon">🔁</span> Проверить повторные сделки</button>
+      <button class="svc-btn success" onclick="svcSendReport(this)"><span class="svc-btn-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span> Отправить отчёт сейчас</button>
+      <button class="svc-btn" style="margin-top:6px" onclick="svcRunRepeats(this)"><span class="svc-btn-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></span> Проверить повторные сделки</button>
       <div class="svc-result" id="svc-tg-result"></div>
     </div>
 
 
     <!-- AI агент -->
     <div class="svc-card">
-      <div class="svc-card-title"><span>🤖</span> AI-агент</div>
+      <div class="svc-card-title"><span><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="15" x2="8" y2="15" stroke-width="2"/><line x1="12" y1="15" x2="12" y2="15" stroke-width="2"/><line x1="16" y1="15" x2="16" y2="15" stroke-width="2"/></svg></span> AI-агент</div>
 
       <!-- Счётчик токенов -->
       <div id="svc-ai-tokens-block" style="margin-bottom:14px">
@@ -2700,10 +2785,10 @@ html[data-theme="dark"] .note-card-action-btn{background:rgba(0,0,0,.4)}
   <div class="svc-grid full">
     <div class="svc-card">
       <div class="svc-card-title" style="justify-content:space-between">
-        <div><span>📋</span> Журнал сервиса</div>
+        <div><span><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="15" y2="16"/></svg></span> Журнал сервиса</div>
         <div style="display:flex;gap:8px">
           <button class="svc-btn" style="width:auto;padding:5px 12px;font-size:11px;margin:0" onclick="svcLoadLogs()">↺ Обновить</button>
-          <button class="svc-btn danger" style="width:auto;padding:5px 12px;font-size:11px;margin:0" onclick="svcRestart()">⟳ Перезапуск</button>
+          <button class="svc-btn danger" style="width:auto;padding:5px 12px;font-size:11px;margin:0" onclick="svcRestart()"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/></svg> Перезапуск</button>
         </div>
       </div>
       <div class="svc-log-box" id="svc-log-box">Нажмите «Обновить» для загрузки логов…</div>
@@ -2730,7 +2815,7 @@ function fmtShort(n, z='—'){return n != null ? n.toLocaleString('ru') : z}
 function fmtDate(s, z='—'){ if (!s) return z; const d = new Date(s); return d.toLocaleDateString('ru',{day:'2-digit',month:'2-digit',year:'numeric'}) }
 function toISODate(d) { if (!d) return null; const date = new Date(d); date.setMinutes(date.getMinutes() - date.getTimezoneOffset()); return date.toISOString().split('T')[0]; }
 
-function empty(cols,msg){return`<tr><td colspan="${cols}"><div class="empty"><div class="empty-ico">🌿</div><div class="empty-txt">${msg||'Нет данных'}</div></div></td></tr>`}
+function empty(cols,msg){return`<tr><td colspan="${cols}"><div class="empty"><div class="empty-ico">•</div><div class="empty-txt">${msg||'Нет данных'}</div></div></td></tr>`}
 function esc(s){return s != null ? String(s).replace(/"/g,'&quot;').replace(/'/g,"&apos;") : ''}
 
 async function api(ep,opts={},_silent=false){
@@ -2753,7 +2838,7 @@ async function api(ep,opts={},_silent=false){
     if(!text) return null;
     try{ return JSON.parse(text); }
     catch(pe){ console.error('JSON parse error for',ep,':',text.slice(0,200)); throw new Error('Сервер вернул неожиданный ответ'); }
-  }catch(e){if(!_silent&&!e._forbidden)showToast('❌ '+(e.message||'Ошибка сети'));throw e}
+  }catch(e){if(!_silent&&!e._forbidden)showToast('✕ '+(e.message||'Ошибка сети'));throw e}
 }
 
 // ── KANBAN STATE ──
@@ -2810,12 +2895,12 @@ async function moveDealToStage(deal, stage, newStageName, oldStageName){
         await api(`/deals/${deal.id}/comments`, {method:'POST', body: JSON.stringify({text:`Причина провала: ${lostReason}`})});
       }catch(e){ console.warn('Failed to save lost reason comment', e); }
     }
-    showToast('✅ → '+newStageName);
+    showToast('✓ → '+newStageName);
     if(stage.is_final) loadData(SELECTED_YEAR,true);
   }catch(e){
     deal.stage = oldStageName;
     renderKanban(_deals);
-    showToast('❌ Не удалось изменить этап');
+    showToast('✕ Не удалось изменить этап');
   }
 }
 
@@ -2835,7 +2920,7 @@ function renderKanban(deals=[]){
           <div class="k-hr"></div>
           <div class="k-date">${fmtDate(d.created_at)}</div>
         </div>`).join('')
-      :`<div class="empty"><div class="empty-ico" style="font-size:20px">🌿</div><div class="empty-txt">Пусто</div></div>`;
+      :`<div class="empty"><div class="empty-ico" style="font-size:20px">•</div><div class="empty-txt">Пусто</div></div>`;
     return`<div class="k-col" data-stage="${esc(st.name)}">
       <div class="k-head"><div class="k-dot" style="background:${c}"></div><span class="k-name" style="color:${c}">${st.name}</span><span class="k-count">${cards.length}</span></div>
       <div class="k-total" style="${cards.length?'':'visibility:hidden'}">${fmt(total)}</div>
@@ -2986,10 +3071,123 @@ function initDrag(){
       _touchCleanup();
     },{passive:true});
   });
+
+  // ── Drag to Archive drop zone ──
+  const dropZone = document.getElementById('archive-drop-zone');
+  if(dropZone){
+    board.querySelectorAll('.k-card[draggable]').forEach(el=>{
+      el.addEventListener('dragstart',()=>{
+        dropZone.classList.add('drag-active');
+      });
+      el.addEventListener('dragend',()=>{
+        dropZone.classList.remove('drag-active','drag-over');
+      });
+    });
+    dropZone.addEventListener('dragover',e=>{
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+    dropZone.addEventListener('dragleave',()=>{
+      dropZone.classList.remove('drag-over');
+    });
+    dropZone.addEventListener('drop',e=>{
+      e.preventDefault();
+      dropZone.classList.remove('drag-active','drag-over');
+      const id = e.dataTransfer.getData('text/plain');
+      if(!id) return;
+      archiveDeal(parseInt(id));
+    });
+  }
+}
+
+// ── ARCHIVE ──────────────────────────────────────────────────────────────────
+async function archiveDeal(dealId){
+  try{
+    await api(`/deals/${dealId}/archive`,{method:'POST'});
+    const deal = _deals.find(d=>d.id===dealId);
+    _deals = _deals.filter(d=>d.id!==dealId);
+    renderKanban(_deals);
+    showToast('📦 Сделка отправлена в архив');
+  }catch(e){
+    showToast('✕ Не удалось архивировать сделку');
+  }
+}
+
+async function unarchiveDeal(dealId){
+  try{
+    await api(`/deals/${dealId}/unarchive`,{method:'POST'});
+    showToast('✓ Сделка восстановлена из архива');
+    renderArchiveList();
+    loadData(SELECTED_YEAR, true);
+  }catch(e){
+    showToast('✕ Не удалось восстановить сделку');
+  }
+}
+
+async function failArchivedDeal(dealId){
+  const reason = await askLostReason();
+  if(!reason) return;
+  const lostStage = STAGES.find(s=>s.is_final && !s.name.toLowerCase().includes('успеш'));
+  if(!lostStage){ showToast('✕ Нет этапа провала'); return; }
+  try{
+    await api(`/deals/${dealId}/unarchive`,{method:'POST'});
+    await api(`/deals/${dealId}`,{method:'PATCH',body:JSON.stringify({stage_id:lostStage.id})});
+    await api(`/deals/${dealId}/comments`,{method:'POST',body:JSON.stringify({text:`Причина провала: ${reason}`})});
+    showToast('✕ Сделка провалена');
+    renderArchiveList();
+    loadData(SELECTED_YEAR, true);
+  }catch(e){
+    showToast('✕ Ошибка при провале сделки');
+  }
+}
+
+async function openArchivePanel(){
+  const overlay = document.getElementById('archive-overlay');
+  if(overlay) overlay.classList.add('open');
+  await renderArchiveList();
+}
+
+function closeArchivePanel(){
+  const overlay = document.getElementById('archive-overlay');
+  if(overlay) overlay.classList.remove('open');
+}
+
+async function renderArchiveList(){
+  const container = document.getElementById('archive-list');
+  if(!container) return;
+  container.innerHTML = '<p style="color:var(--ink4);font-size:13px">Загрузка...</p>';
+  try{
+    const data = await api('/deals/archived');
+    const deals = data.deals || [];
+    if(!deals.length){
+      container.innerHTML = '<p style="color:var(--ink4);font-size:13px;text-align:center;padding:24px 0">Архив пуст</p>';
+      return;
+    }
+    container.innerHTML = deals.map(d=>{
+      const daysLeft = d.days_left ?? 30;
+      const urgentClass = daysLeft<=3?'urgent':daysLeft<=10?'warn':'ok';
+      const archivedDate = d.archived_at ? fmtDate(d.archived_at) : '—';
+      return`<div class="arch-card">
+        <div class="arch-card-body">
+          <div class="arch-card-title">${esc(d.title)}</div>
+          <div class="arch-card-client">${esc(d.client)}</div>
+          <div class="arch-card-meta">Архивирована: ${archivedDate} · ${fmt(d.total)}</div>
+        </div>
+        <div class="arch-card-timer ${urgentClass}">${daysLeft}д<br><span style="font-size:10px;font-weight:400">до провала</span></div>
+        <div class="arch-card-actions">
+          <button class="arch-btn arch-btn-restore" onclick="unarchiveDeal(${d.id})">↩ Вернуть</button>
+          <button class="arch-btn arch-btn-fail" onclick="failArchivedDeal(${d.id})">✕ Провал</button>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    container.innerHTML = '<p style="color:#ef4444;font-size:13px">Ошибка загрузки архива</p>';
+  }
 }
 
 // ── DEAL MODAL ──
 let _dealItems = [];
+let _dealMaterials = [];
 let _currentDealData = null;
 
 async function setupDealModal(dealId = null) {
@@ -2997,6 +3195,7 @@ async function setupDealModal(dealId = null) {
     const saveBtn = document.getElementById('btn-deal-save');
     const deleteBtn = document.getElementById('btn-deal-delete');
     const contactList = document.getElementById('d-contact-list');
+    if (contactList) contactList.innerHTML = _contacts.map(c => `<option data-id="${c.id}" value="${esc(c.name)}"></option>`).join('');
     const stageSel = document.getElementById('d-stage');
     const assigneeSel = document.getElementById('d-assignee');
 
@@ -3022,12 +3221,12 @@ async function setupDealModal(dealId = null) {
     if(document.getElementById('d-discount-type')) document.getElementById('d-discount-type').value = 'percent';
     document.getElementById('d-tax-rate').value = 4;
     document.getElementById('d-tax-included').checked = true;
+    if(document.getElementById('d-tax-on-materials')) document.getElementById('d-tax-on-materials').checked = false;
     document.getElementById('d-tax-amount').value = fmt(0)
     document.getElementById('d-work-date')._flatpickr ? document.getElementById('d-work-date')._flatpickr.clear() : (document.getElementById('d-work-date').value = '');
     document.getElementById('d-work-time').value = '';
     document.getElementById('d-address').value = '';
 
-    contactList.innerHTML = _contacts.map(c => `<option data-id="${c.id}" value="${esc(c.name)}"></option>`).join('');
     const users = await api('/users').catch(() => []);
     assigneeSel.innerHTML = `<option value="">Не назначен</option>` + users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
 
@@ -3050,6 +3249,7 @@ async function setupDealModal(dealId = null) {
         if(document.getElementById('d-discount-type')) document.getElementById('d-discount-type').value = deal.discount_type || 'percent';
         document.getElementById('d-tax-rate').value = deal.tax_rate;
         document.getElementById('d-tax-included').checked = deal.tax_included;
+        if(document.getElementById('d-tax-on-materials')) document.getElementById('d-tax-on-materials').checked = deal.tax_on_materials || false;
         document.getElementById('d-tax-amount').value = fmt(deal.tax_amount);
 
         if (deal.deal_date) {
@@ -3067,6 +3267,13 @@ async function setupDealModal(dealId = null) {
             price: s.price_at_moment, 
             quantity: s.quantity,
             unit: s.service.unit
+        }));
+        _dealMaterials = (deal.materials || []).map(m => ({
+            id: m.id,
+            name: m.name,
+            quantity: m.quantity,
+            cost_price: m.cost_price,
+            sell_price: m.sell_price
         }));
 
         // Показываем и загружаем комментарии
@@ -3088,11 +3295,11 @@ async function setupDealModal(dealId = null) {
         if (repeatBtn) {
           repeatBtn.style.display = 'inline-flex';
           if (deal.repeat_interval_days) {
-            repeatBtn.textContent = `🔁 Повтор каждые ${deal.repeat_interval_days} дн.`;
+            repeatBtn.textContent = `↻ Повтор каждые ${deal.repeat_interval_days} дн.`;
             repeatBtn.style.borderColor = 'var(--sage)';
             repeatBtn.style.color = 'var(--sage)';
           } else {
-            repeatBtn.textContent = '🔁 Повтор';
+            repeatBtn.textContent = '↻ Повтор';
             repeatBtn.style.borderColor = '';
             repeatBtn.style.color = '';
           }
@@ -3109,6 +3316,7 @@ async function setupDealModal(dealId = null) {
         stageSel.innerHTML = STAGES.filter(s => !s.is_final).map(s => `<option value="${s.id}">${s.name}</option>`).join('');
         if (CURRENT_USER?.sub) assigneeSel.value = CURRENT_USER.sub;
         _dealItems = [];
+        _dealMaterials = [];
         _currentDealId = null;
         document.getElementById('dcomments-wrap').style.display = 'none';
         document.getElementById('deal-files-wrap').style.display = 'none';
@@ -3116,39 +3324,42 @@ async function setupDealModal(dealId = null) {
     }
 
     renderDealServices();
+    renderDealMaterials();
 }
 
 function calculateDealTotal() {
-    const subtotal = _dealItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const serviceSubtotal = _dealItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const materialSubtotal = _dealMaterials.reduce((sum, m) => sum + ((m.sell_price || 0) * (m.quantity || 0)), 0);
+    const taxOnMaterials = document.getElementById('d-tax-on-materials')?.checked || false;
+
+    const taxableSubtotal = serviceSubtotal + (taxOnMaterials ? materialSubtotal : 0);
+    const nonTaxable = taxOnMaterials ? 0 : materialSubtotal;
+    const totalSubtotal = taxableSubtotal + nonTaxable;
+
     const discount = parseFloat(document.getElementById('d-discount').value) || 0;
-  const discount_type = document.getElementById('d-discount-type')?.value || 'percent';
+    const discountType = document.getElementById('d-discount-type')?.value || 'percent';
     const taxRatePercent = parseFloat(document.getElementById('d-tax-rate').value) || 0;
     const taxIncluded = document.getElementById('d-tax-included').checked;
-    
-    const discountType = document.getElementById('d-discount-type')?.value || 'percent';
+
     let discountAmount;
     if (discountType === 'fixed') {
-        discountAmount = Math.min(discount, subtotal);
+        discountAmount = Math.min(discount, totalSubtotal);
     } else {
-        discountAmount = subtotal * (discount / 100.0);
+        discountAmount = totalSubtotal * (discount / 100.0);
     }
-    const subtotalAfterDiscount = subtotal - discountAmount;
-    
-    let finalTotal = subtotalAfterDiscount;
+
+    const ratio = taxableSubtotal / (totalSubtotal + 0.0001);
+    const taxableAfterDiscount = taxableSubtotal - discountAmount * ratio;
+    const nonTaxableAfterDiscount = nonTaxable - discountAmount * (1 - ratio);
+
     let taxAmount = 0;
+    let finalTotal = taxableAfterDiscount + nonTaxableAfterDiscount;
 
     if (taxRatePercent > 0) {
-        if (taxIncluded) {
-            // Налог включён: сумма не меняется, налог = сумма * ставка (для отображения)
-            taxAmount = subtotalAfterDiscount * (taxRatePercent / 100.0);
-            finalTotal = subtotalAfterDiscount; // итог не меняется
-        } else {
-            // Налог сверху: прибавляется к сумме
-            taxAmount = subtotalAfterDiscount * (taxRatePercent / 100.0);
-            finalTotal = subtotalAfterDiscount + taxAmount;
-        }
+        taxAmount = taxableAfterDiscount * (taxRatePercent / 100.0);
+        if (!taxIncluded) finalTotal += taxAmount;
     }
-    
+
     document.getElementById('d-total').value = fmt(finalTotal);
     document.getElementById('d-tax-amount').value = fmt(taxAmount);
 }
@@ -3160,7 +3371,7 @@ async function openDealModal(dealId = null) {
         document.getElementById('deal-overlay').classList.add('open');
         setTimeout(() => document.getElementById('d-title').focus(), 100);
     } catch(e) {
-        showToast('❌ Не удалось загрузить данные сделки');
+        showToast('✕ Не удалось загрузить данные сделки');
         console.error(e);
     }
 }
@@ -3187,7 +3398,20 @@ function updateDealServiceQty(serviceId, newQuantity) {
     const item = _dealItems.find(item => item.id === serviceId);
     if (item) {
         const qty = parseFloat(newQuantity);
-        if (qty > 0) item.quantity = qty; else removeDealService(serviceId);
+        if (!isNaN(qty) && qty > 0) item.quantity = qty;
+    }
+    calculateDealTotal();
+}
+
+function commitDealServiceQty(serviceId, newQuantity) {
+    const item = _dealItems.find(item => item.id === serviceId);
+    if (item) {
+        const qty = parseFloat(newQuantity);
+        if (!isNaN(qty) && qty > 0) {
+            item.quantity = qty;
+        } else {
+            removeDealService(serviceId);
+        }
     }
     renderDealServices();
 }
@@ -3201,7 +3425,7 @@ function renderDealServices() {
             <tr>
                 <td>${item.name} ${item.id === -1 ? '<small style="color:var(--red)">[удалена]</small>' : ''}</td>
                 <td>${fmt(item.price)}</td>
-                <td><input type="number" value="${item.quantity}" min="0.1" step="0.1" oninput="updateDealServiceQty(${item.id}, this.value)" style="width:72px;text-align:center;font-size:13px;padding:6px 4px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-family:'Playfair Display',serif;font-weight:600;color:var(--ink);outline:none;transition:border .2s" onFocus="this.style.borderColor='var(--sage)'" onBlur="this.style.borderColor='var(--border)'"></td>
+                <td><input type="number" value="${item.quantity}" min="0.1" step="0.1" oninput="updateDealServiceQty(${item.id}, this.value)" onblur="commitDealServiceQty(${item.id}, this.value)" style="width:72px;text-align:center;font-size:13px;padding:6px 4px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-family:'Playfair Display',serif;font-weight:600;color:var(--ink);outline:none;transition:border .2s" onFocus="this.style.borderColor='var(--sage)'" onBlur="this.style.borderColor='var(--border)'"></td>
                 <td>${fmt(item.price * item.quantity)}</td>
                 <td><button class="btn-del" onclick="removeDealService(${item.id})" title="Удалить">⊗</button></td>
             </tr>
@@ -3210,9 +3434,96 @@ function renderDealServices() {
     calculateDealTotal();
 }
 
+// ── МАТЕРИАЛЫ ─────────────────────────────────────────────────────────────────
+function addDealMaterial() {
+    _dealMaterials.push({ _uid: Date.now(), name: '', quantity: 1, cost_price: 0, sell_price: 0 });
+    renderDealMaterials();
+    // Фокус на имя последней строки
+    setTimeout(() => {
+        const inputs = document.querySelectorAll('.d-mat-name');
+        if (inputs.length) inputs[inputs.length - 1].focus();
+    }, 50);
+}
+
+function removeDealMaterial(uid) {
+    _dealMaterials = _dealMaterials.filter(m => (m._uid || m.id) !== uid);
+    renderDealMaterials();
+}
+
+function updateDealMaterial(uid, field, value) {
+    const m = _dealMaterials.find(m => (m._uid || m.id) === uid);
+    if (!m) return;
+    if (field === 'name') {
+        m.name = value;
+    } else {
+        m[field] = parseFloat(value) || 0;
+    }
+    calculateDealTotal();
+}
+
+function renderDealMaterials() {
+    const wrap = document.getElementById('d-materials-tbody');
+    if (!wrap) return;
+    if (_dealMaterials.length === 0) {
+        wrap.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:16px;font-size:11px;color:var(--ink4)">Материалы не добавлены</td></tr>`;
+    } else {
+        const inpStyle = `style="width:100%;min-width:0;font-size:12px;padding:5px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--ink);font-family:inherit;outline:none"`;
+        const numStyle = `style="width:72px;font-size:12px;padding:5px 4px;text-align:center;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--ink);font-family:'Playfair Display',serif;font-weight:600;outline:none"`;
+        wrap.innerHTML = _dealMaterials.map(m => {
+            const uid = m._uid || m.id;
+            const margin = ((m.sell_price - m.cost_price) * m.quantity).toFixed(2);
+            const marginColor = (m.sell_price - m.cost_price) >= 0 ? 'var(--sage)' : 'var(--red)';
+            return `<tr>
+                <td><input class="d-mat-name" type="text" value="${esc(m.name)}" placeholder="Название"
+                    oninput="updateDealMaterial(${uid},'name',this.value)" ${inpStyle}></td>
+                <td><input type="number" value="${m.quantity}" min="0.01" step="0.01"
+                    oninput="updateDealMaterial(${uid},'quantity',this.value)" ${numStyle}></td>
+                <td><input type="number" value="${m.cost_price}" min="0" step="0.01" placeholder="0"
+                    oninput="updateDealMaterial(${uid},'cost_price',this.value)" ${numStyle}></td>
+                <td><input type="number" value="${m.sell_price}" min="0" step="0.01" placeholder="0"
+                    oninput="updateDealMaterial(${uid},'sell_price',this.value)" ${numStyle}></td>
+                <td style="color:${marginColor};font-size:12px;font-weight:600;white-space:nowrap">${fmt(parseFloat(margin))}</td>
+                <td><button class="btn-del" onclick="removeDealMaterial(${uid})" title="Удалить">⊗</button></td>
+            </tr>`;
+        }).join('');
+    }
+    calculateDealTotal();
+}
+
+function filterContactDropdown(query) {
+    const dd = document.getElementById('d-contact-dropdown');
+    if (!dd) return;
+    const q = (query || '').toLowerCase().trim();
+    const matches = q.length === 0
+        ? _contacts.slice(0, 40)
+        : _contacts.filter(c => c.name.toLowerCase().includes(q)).slice(0, 40);
+    if (matches.length === 0) { dd.style.display = 'none'; return; }
+    dd.innerHTML = matches.map(c => `
+        <div onclick="selectContactDropdown(${c.id}, '${esc(c.name).replace(/'/g,"\\'")}') "
+             style="padding:9px 12px;cursor:pointer;font-size:13px;color:var(--ink);transition:background .15s"
+             onmouseenter="this.style.background='var(--surface3)'"
+             onmouseleave="this.style.background=''">
+            ${esc(c.name)}${c.phone ? `<span style="color:var(--ink4);font-size:11px;margin-left:6px">${esc(c.phone)}</span>` : ''}
+        </div>`).join('');
+    dd.style.display = 'block';
+}
+
+function selectContactDropdown(id, name) {
+    const inp = document.getElementById('d-contact-input');
+    if (inp) inp.value = name;
+    hideContactDropdown();
+}
+
+function hideContactDropdown() {
+    const dd = document.getElementById('d-contact-dropdown');
+    if (dd) dd.style.display = 'none';
+}
+
 function getContactIdByName(name) {
-    const el = document.querySelector(`#d-contact-list option[value="${esc(name)}"]`);
-    return el ? parseInt(el.dataset.id, 10) : null;
+    if (!name) return null;
+    const n = name.trim().toLowerCase();
+    const found = _contacts.find(c => c.name.toLowerCase() === n);
+    return found ? found.id : null;
 }
 
 async function saveDeal(dealId = null) {
@@ -3224,23 +3535,30 @@ async function saveDeal(dealId = null) {
   const discount_type = document.getElementById('d-discount-type')?.value || 'percent';
   const tax_rate = parseFloat(document.getElementById('d-tax-rate').value) || 0;
   const tax_included = document.getElementById('d-tax-included').checked;
+  const tax_on_materials = document.getElementById('d-tax-on-materials')?.checked || false;
   const _wpSave = document.getElementById('d-work-date');
   const work_date = (_wpSave.dataset.iso || _wpSave.value || '').replace(/(\d{2})\.(\d{2})\.(\d{4})/, '$3-$2-$1') || null;
   const work_time = document.getElementById('d-work-time').value || null;
   const address = document.getElementById('d-address').value.trim() || null;
 
   if (!title) { document.getElementById('d-title').classList.add('err'); return; }
-  if (_dealItems.length === 0) { showToast('❌ Добавьте хотя бы одну услугу'); return; }
+  if (_dealItems.length === 0) { showToast('✕ Добавьте хотя бы одну услугу'); return; }
+
+  // Проверка материалов — имя обязательно
+  const invalidMat = _dealMaterials.find(m => !m.name.trim());
+  if (invalidMat) { showToast('✕ Заполните название материала'); return; }
 
   const dealData = { 
       title, 
       stage_id, 
       manager: manager || null,
       services: _dealItems.filter(i => i.id > 0).map(item => ({ service_id: item.id, quantity: item.quantity })),
+      materials: _dealMaterials.map(m => ({ name: m.name.trim(), quantity: m.quantity || 1, cost_price: m.cost_price || 0, sell_price: m.sell_price || 0 })),
       discount,
       discount_type,
       tax_rate,
       tax_included,
+      tax_on_materials,
       work_date,
       work_time,
       address,
@@ -3259,7 +3577,7 @@ async function saveDeal(dealId = null) {
   try {
     await api(endpoint, { method, body: JSON.stringify(dealData) });
     closeDealModal();
-    showToast(dealId ? '✅ Сделка обновлена' : '✅ Сделка создана');
+    showToast(dealId ? '✓ Сделка обновлена' : '✓ Сделка создана');
     loadData(SELECTED_YEAR, true);
   } catch (e) {}
 }
@@ -3371,10 +3689,10 @@ function openContactModal(contact = null) {
         // Чипы с иконками
         const chips = [];
         if (contact.phone)       chips.push(`<span class="ccard-meta-chip">📞 ${esc(contact.phone)}</span>`);
-        if (contact.telegram_id) chips.push(`<span class="ccard-meta-chip">✈️ ${esc(contact.telegram_id)}</span>`);
-        if (contact.source)      chips.push(`<span class="ccard-meta-chip">🔖 ${esc(contact.source)}</span>`);
-        if (contact.settlement)  chips.push(`<span class="ccard-meta-chip">🏡 ${esc(contact.settlement)}</span>`);
-        if (contact.plot_area)   chips.push(`<span class="ccard-meta-chip">📐 ${contact.plot_area} сот.</span>`);
+        if (contact.telegram_id) chips.push(`<span class="ccard-meta-chip">• ${esc(contact.telegram_id)}</span>`);
+        if (contact.source)      chips.push(`<span class="ccard-meta-chip">• ${esc(contact.source)}</span>`);
+        if (contact.settlement)  chips.push(`<span class="ccard-meta-chip">• ${esc(contact.settlement)}</span>`);
+        if (contact.plot_area)   chips.push(`<span class="ccard-meta-chip">• ${contact.plot_area} сот.</span>`);
         const firstAddr = (contact.addresses || [])[0];
         if (firstAddr)           chips.push(`<span class="ccard-meta-chip">📍 ${esc(firstAddr.address || firstAddr)}</span>`);
         document.getElementById('ccard-meta-line').innerHTML = chips.join('');
@@ -3483,7 +3801,7 @@ async function ccardLoadDeals(contactId) {
             if (repeatDeal) {
                 const nextDate = repeatDeal.next_repeat_date ? fmtDate(repeatDeal.next_repeat_date) : '—';
                 repeatBadge.style.display = 'block';
-                repeatBadge.innerHTML = `<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(122,181,102,.15);border:1px solid rgba(122,181,102,.35);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--sage)">🔁 Повтор каждые ${repeatDeal.repeat_interval_days} дн. · следующий ${nextDate}</span>`;
+                repeatBadge.innerHTML = `<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(122,181,102,.15);border:1px solid rgba(122,181,102,.35);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--sage)">↻ Повтор каждые ${repeatDeal.repeat_interval_days} дн. · следующий ${nextDate}</span>`;
             } else {
                 repeatBadge.style.display = 'none';
                 repeatBadge.innerHTML = '';
@@ -3497,7 +3815,7 @@ async function ccardLoadDeals(contactId) {
                 : d.created_at ? fmtDate(d.created_at.split('T')[0]) : '—';
             const badgeBg   = color + '22';
             const repeatTag = d.repeat_interval_days
-                ? `<span style="font-size:10px;background:rgba(122,181,102,.15);color:var(--sage);border-radius:10px;padding:1px 7px;border:1px solid rgba(122,181,102,.3)">🔁 /${d.repeat_interval_days}д</span>`
+                ? `<span style="font-size:10px;background:rgba(122,181,102,.15);color:var(--sage);border-radius:10px;padding:1px 7px;border:1px solid rgba(122,181,102,.3)">↻ /${d.repeat_interval_days}д</span>`
                 : '';
             return `<div class="cdeal-row" onclick="ccardOpenDeal(${d.id})">
                 <div class="cdeal-stripe" style="background:${color}"></div>
@@ -3682,10 +4000,10 @@ async function copyDealFromContact(dealId) {
 
         await api('/deals', { method: 'POST', body: JSON.stringify(payload) });
         closeContactModal();
-        showToast('✅ Сделка скопирована — сегодняшняя дата');
+        showToast('✓ Сделка скопирована — сегодняшняя дата');
         loadData(SELECTED_YEAR, true);
     } catch(e) {
-        showToast('❌ Не удалось скопировать');
+        showToast('✕ Не удалось скопировать');
     }
 }
 
@@ -3774,7 +4092,7 @@ async function saveContact() {
         const endpoint = _currentContactId ? `/contacts/${_currentContactId}` : '/contacts';
         const method   = _currentContactId ? 'PATCH' : 'POST';
         await api(endpoint, { method, body: JSON.stringify(data) });
-        showToast(_currentContactId ? '✅ Контакт обновлён' : '✅ Контакт создан');
+        showToast(_currentContactId ? '✓ Контакт обновлён' : '✓ Контакт создан');
         closeContactModal();
         loadData(SELECTED_YEAR, true);
     } catch (e) {}
@@ -3856,7 +4174,7 @@ async function saveService() {
         const endpoint = _currentServiceId ? `/services/${_currentServiceId}` : '/services';
         const method = _currentServiceId ? 'PATCH' : 'POST';
         await api(endpoint, { method, body: JSON.stringify(data) });
-        showToast(_currentServiceId ? '✅ Услуга обновлена' : '✅ Услуга создана');
+        showToast(_currentServiceId ? '✓ Услуга обновлена' : '✓ Услуга создана');
         closeServiceModal();
         loadData(SELECTED_YEAR, true);
     } catch (e) {}
@@ -3951,7 +4269,7 @@ async function saveEquipment() {
         const endpoint = _currentEquipmentId ? `/equipment/${_currentEquipmentId}` : '/equipment';
         const method = _currentEquipmentId ? 'PATCH' : 'POST';
         await api(endpoint, { method, body: JSON.stringify(data) });
-        showToast(_currentEquipmentId ? '✅ Техника обновлена' : '✅ Техника добавлена');
+        showToast(_currentEquipmentId ? '✓ Техника обновлена' : '✓ Техника добавлена');
         closeEquipmentModal();
         loadData(SELECTED_YEAR, true);
     } catch (e) {}
@@ -4146,13 +4464,13 @@ async function saveMaintenance() {
     const method = _currentMaintenanceId ? 'PATCH' : 'POST';
     const endpoint = _currentMaintenanceId ? `/maintenance/${_currentMaintenanceId}` : '/maintenance';
     if (method === 'POST') {
-        if (!_selectedEquipmentId) { showToast('❌ Ошибка: не выбрана техника для ТО'); return; }
+        if (!_selectedEquipmentId) { showToast('✕ Ошибка: не выбрана техника для ТО'); return; }
         data.equipment_id = _selectedEquipmentId;
     }
 
     try {
         await api(endpoint, { method, body: JSON.stringify(data) });
-        showToast(_currentMaintenanceId ? '✅ Запись о ТО обновлена' : '✅ Запись о ТО добавлена');
+        showToast(_currentMaintenanceId ? '✓ Запись о ТО обновлена' : '✓ Запись о ТО добавлена');
         closeMaintenanceModal();
         loadData(SELECTED_YEAR, true);
     } catch (e) {}
@@ -4231,7 +4549,7 @@ async function saveConsumable() {
         const endpoint = _currentConsumableId ? `/consumables/${_currentConsumableId}` : '/consumables';
         const method = _currentConsumableId ? 'PATCH' : 'POST';
         await api(endpoint, { method, body: JSON.stringify(data) });
-        showToast(_currentConsumableId ? '✅ Расходник обновлен' : '✅ Расходник добавлен');
+        showToast(_currentConsumableId ? '✓ Расходник обновлен' : '✓ Расходник добавлен');
         closeConsumableModal();
         loadData(SELECTED_YEAR, true);
     } catch(e) { }
@@ -4319,7 +4637,7 @@ async function saveExpense() {
         const endpoint = _currentExpenseId ? `/expenses/${_currentExpenseId}` : '/expenses';
         const method = _currentExpenseId ? 'PATCH' : 'POST';
         await api(endpoint, { method, body: JSON.stringify(data) });
-        showToast(_currentExpenseId ? '✅ Расход обновлен' : '✅ Расход добавлен');
+        showToast(_currentExpenseId ? '✓ Расход обновлен' : '✓ Расход добавлен');
         closeExpenseModal();
         loadData(SELECTED_YEAR, true);
     } catch (e) {}
@@ -4405,7 +4723,7 @@ async function openTaskModal(taskId = null, prefillContactId = null, prefillDeal
                 deleteBtn.style.display = 'block';
                 deleteBtn.onclick = () => deleteTask(taskId);
             } else { throw new Error('Task not found'); }
-        } catch(e) { showToast('❌ Не удалось загрузить задачу'); return; }
+        } catch(e) { showToast('✕ Не удалось загрузить задачу'); return; }
     } else {
         titleHead.innerHTML = `Новая <em>задача</em>`;
         await populateAssignees(CURRENT_USER?.sub);
@@ -4455,7 +4773,7 @@ async function saveTask(){
     const is_done = status === 'Выполнена';
     await api(ep,{method, body:JSON.stringify({title,description,due_date:due_date||null,priority,status,assignee,is_done,contact_id,deal_id})});
     closeTaskModal();
-    showToast(_currentTaskId ? '✅ Сохранено' : '✅ Задача добавлена');
+    showToast(_currentTaskId ? '✓ Сохранено' : '✓ Задача добавлена');
     loadTasks(document.getElementById('btn-tasks-done').classList.contains('active'));
   }catch{}
 }
@@ -4648,7 +4966,7 @@ function renderDashTasks(tasks=[]) {
   const active = tasks.filter(t => t.status !== 'Выполнена' && !t.is_done).slice(0, 10);
   if (countEl) countEl.textContent = active.length ? active.length + ' задач' : '';
   if (!container) return;
-  if (!active.length) { container.innerHTML = '<div class="dash-empty">🌿 Нет активных задач</div>'; return; }
+  if (!active.length) { container.innerHTML = '<div class="dash-empty">• Нет активных задач</div>'; return; }
   const getPriorityColor = p => {
     if(p==='Критический') return '#ef4444';
     if(p==='Высокий') return '#fb923c';
@@ -4690,7 +5008,7 @@ function renderDashDeals(deals=[]) {
   const active = deals.filter(d => inProgressStages.includes(d.stage)).slice(0, 10);
   if (countEl) countEl.textContent = active.length ? active.length + ' сделок' : '';
   if (!container) return;
-  if (!active.length) { container.innerHTML = '<div class="dash-empty">🌿 Нет активных сделок</div>'; return; }
+  if (!active.length) { container.innerHTML = '<div class="dash-empty">• Нет активных сделок</div>'; return; }
   container.innerHTML = active.map(d => {
     const stage = STAGES.find(s => s.name === d.stage);
     const color = stage?.color || 'var(--sage)';
@@ -4701,7 +5019,7 @@ function renderDashDeals(deals=[]) {
         <div class="dash-deal-amount">${fmt(d.total)}</div>
       </div>
       <div class="dash-deal-bottom">
-        ${d.client ? `<span class="dash-deal-client">👤 ${esc(d.client)}</span>` : '<span class="dash-deal-client"></span>'}
+        ${d.client ? `<span class="dash-deal-client">• ${esc(d.client)}</span>` : '<span class="dash-deal-client"></span>'}
         <span class="dash-deal-stage" style="background:${stageBg};color:${color}">${esc(d.stage)}</span>
         <span class="dash-deal-date">${fmtDate(d.created_at || d.deal_date)}</span>
       </div>
@@ -4728,14 +5046,14 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTaxPaym
 async function saveTaxPaymentEdit() {
     const amount = parseFloat(document.getElementById('tp-amount').value);
     const date = document.getElementById('tp-date').value;
-    if (!amount || amount <= 0) { showToast('❌ Введите корректную сумму'); return; }
-    if (!date) { showToast('❌ Укажите дату'); return; }
+    if (!amount || amount <= 0) { showToast('✕ Введите корректную сумму'); return; }
+    if (!date) { showToast('✕ Укажите дату'); return; }
     try {
         await api(`/taxes/payments/${_currentTaxPaymentId}`, {
             method: 'PATCH',
             body: JSON.stringify({ amount, date, note: document.getElementById('tp-note').value.trim() || null })
         });
-        showToast('✅ Платёж обновлён');
+        showToast('✓ Платёж обновлён');
         closeTaxPaymentModal();
         loadData(SELECTED_YEAR, true);
     } catch(e) {}
@@ -4811,12 +5129,12 @@ async function saveTaxPayment() {
     const date = dateInput.value;
 
     if (!amount || amount <= 0) {
-        showToast('❌ Введите корректную сумму');
+        showToast('✕ Введите корректную сумму');
         amountInput.classList.add('err');
         return;
     }
     if (!date) {
-        showToast('❌ Укажите дату платежа');
+        showToast('✕ Укажите дату платежа');
         dateInput.classList.add('err');
         return;
     }
@@ -4832,7 +5150,7 @@ async function saveTaxPayment() {
 
     try {
         await api('/taxes/payments', { method: 'POST', body: JSON.stringify(data) });
-        showToast('✅ Платёж успешно добавлен');
+        showToast('✓ Платёж успешно добавлен');
         amountInput.value = '';
         dateInput.value = toISODate(new Date());
         loadData(SELECTED_YEAR, true); // Force reload
@@ -4909,7 +5227,7 @@ async function loadData(year, force = false){
   renderAnalytics(data.analytics, (data.expenses?.expenses || data.expenses) || []);
   renderBudget(data.budget || [], (data.deals?.deals || data.deals || []), (data.expenses?.expenses || data.expenses) || []);
   
-  showToast(hasError?'⚠️ Часть данных не загрузилась':'✅ Данные загружены');
+  showToast(hasError?'⚠️ Часть данных не загрузилась':'✓ Данные загружены');
 }
 
 async function populateYearSelector(){
@@ -5321,10 +5639,10 @@ async function saveBudgetItem() {
   try {
     if (_currentBudgetId) {
       await api(`/budget/${_currentBudgetId}`, { method:'PATCH', body: JSON.stringify(payload) });
-      showToast('✅ Строка обновлена');
+      showToast('✓ Строка обновлена');
     } else {
       await api('/budget', { method:'POST', body: JSON.stringify(payload) });
-      showToast('✅ Строка добавлена');
+      showToast('✓ Строка добавлена');
     }
     closeBudgetModal();
     loadData(SELECTED_YEAR, true);
@@ -5357,9 +5675,9 @@ function exportExcel() {
       a.href = URL.createObjectURL(blob);
       a.download = `grasscrm_${SELECTED_YEAR}.xlsx`;
       a.click();
-      showToast('✅ Excel скачан');
+      showToast('✓ Excel скачан');
     })
-    .catch(e => showToast('❌ ' + e.message));
+    .catch(e => showToast('✕ ' + e.message));
 }
 
 function exportPdf() {
@@ -5379,9 +5697,9 @@ function exportPdf() {
       a.href = URL.createObjectURL(blob);
       a.download = `grasscrm_${SELECTED_YEAR}.pdf`;
       a.click();
-      showToast('✅ PDF скачан');
+      showToast('✓ PDF скачан');
     })
-    .catch(e => showToast('❌ ' + e.message));
+    .catch(e => showToast('✕ ' + e.message));
 }
 
 // ── SERVICE PAGE ──────────────────────────────────────────────────────────────
@@ -5562,7 +5880,7 @@ function svcShowResult(id, ok, msg) {
   const el = document.getElementById(id);
   el.style.display = 'block';
   el.className = 'svc-result ' + (ok ? 'ok' : 'err');
-  el.textContent = (ok ? '✓ ' : '✗ ') + msg;
+  el.textContent = (ok ? '✓ ' : '• ') + msg;
   setTimeout(() => { el.style.display = 'none'; }, 5000);
 }
 
@@ -5666,7 +5984,7 @@ async function dealAiAsk(customPrompt) {
     input.style.height = 'auto';
 
   } catch(e) {
-    ansBox.textContent = '❌ ' + (e.message || 'Ошибка запроса');
+    ansBox.textContent = '✕ ' + (e.message || 'Ошибка запроса');
     ansBox.className = 'deal-ai-answer';
   } finally {
     sendBtn.disabled = false;
@@ -5694,7 +6012,7 @@ async function dealAiAction(action) {
       });
       await loadDealComments(_currentDealId);
       showToast('💬 Ответ AI сохранён в комментарии');
-    } catch(e) { showToast('❌ ' + e.message); }
+    } catch(e) { showToast('✕ ' + e.message); }
 
   } else if (action === 'create_task') {
     // Создать задачу из ответа AI
@@ -5711,8 +6029,8 @@ async function dealAiAction(action) {
           status: 'Открыта',
         })
       });
-      showToast('✅ Задача создана');
-    } catch(e) { showToast('❌ ' + e.message); }
+      showToast('✓ Задача создана');
+    } catch(e) { showToast('✕ ' + e.message); }
 
   } else if (action === 'summarize') {
     // Автоматически попросить итог и сохранить как комментарий
@@ -5742,9 +6060,9 @@ async function dealAiAction(action) {
       await loadDealComments(_currentDealId);
       ansBox.textContent = _dealAiLastAnswer;
       ansBox.className = 'deal-ai-answer';
-      showToast('📝 Итог добавлен в комментарии');
+      showToast('✏ Итог добавлен в комментарии');
     } catch(e) {
-      ansBox.textContent = '❌ ' + e.message;
+      ansBox.textContent = '✕ ' + e.message;
       ansBox.className = 'deal-ai-answer';
     } finally {
       sendBtn.disabled = false;
@@ -5769,7 +6087,7 @@ function _renderAiInsight(raw) {
   return sections.map(s => {
     const lines = s.trim().split("\n");
     if (!lines.length) return "";
-    return "<div class=\"an-ai-section\">" + lines.join("<br>") + "</div>";
+    return `<div class=\"an-ai-section\">" + lines.join("<br>") + "</div>`;
   }).join("");
 }
 
@@ -5780,15 +6098,15 @@ async function analyticsAiInsight(btn) {
   btn.disabled = true;
   btn.textContent = "⏳ Анализирую…";
   body.classList.add("visible");
-  textEl.innerHTML = "<div class=\"an-ai-loading\">AI изучает данные за " + SELECTED_YEAR + " год…</div>";
+  textEl.innerHTML = `<div class=\"an-ai-loading\">AI изучает данные за " + SELECTED_YEAR + " год…</div>`;
 
   try {
     const d = await api("/analytics/ai-insight?year=" + SELECTED_YEAR, { method: "POST" });
     textEl.innerHTML = _renderAiInsight(d.insight || "Нет ответа");
-    btn.textContent = "🔄 Обновить анализ";
+    btn.textContent = `🔄 Обновить анализ`;
   } catch(e) {
-    textEl.innerHTML = "<div class=\"an-ai-loading\">❌ " + (e.message || "Ошибка") + "</div>";
-    btn.textContent = "✨ Проанализировать";
+    textEl.innerHTML = `<div class=\"an-ai-loading\">✕ " + (e.message || "Ошибка") + "</div>`;
+    btn.textContent = `✦ Проанализировать`;
   } finally {
     btn.disabled = false;
   }
@@ -5857,7 +6175,7 @@ async function svcRestart() {
   if (!confirm('Перезапустить сервис CRM? Соединение прервётся на ~5 секунд.')) return;
   try {
     await api('/service/restart', {method:'POST'});
-    showToast('⟳ Перезапуск…');
+    showToast('🔄 Перезапуск…');
     setTimeout(() => location.reload(), 5000);
   } catch(e) { /* тост уже показан */ }
 }
@@ -6145,9 +6463,9 @@ async function calDrop(e, iso) {
         const t = _calTasks.find(t => t.id === taskId);
         if (t) t.due_date = iso;
         calRender();
-        showToast('✅ Задача перенесена');
+        showToast('✓ Задача перенесена');
     } catch(err) {
-        showToast('❌ Ошибка переноса');
+        showToast('✕ Ошибка переноса');
         await calLoadData();
         calRender();
     }
@@ -6177,12 +6495,12 @@ async function calRefresh() {
 // ── Helpers ──────────────────────────────────────────────────
 function fileIcon(mime, name) {
     const ext = (name || '').split('.').pop().toLowerCase();
-    if (mime?.includes('pdf') || ext === 'pdf') return {icon:'📄', cls:'pdf'};
-    if (mime?.includes('image') || ['jpg','jpeg','png','gif','webp'].includes(ext)) return {icon:'🖼️', cls:'img'};
-    if (['doc','docx'].includes(ext)) return {icon:'📝', cls:'doc'};
-    if (['xls','xlsx','csv'].includes(ext)) return {icon:'📊', cls:'xls'};
-    if (['zip','rar'].includes(ext)) return {icon:'📦', cls:'zip'};
-    return {icon:'📎', cls:'other'};
+    if (mime?.includes('pdf') || ext === 'pdf') return {icon:'•', cls:'pdf'};
+    if (mime?.includes('image') || ['jpg','jpeg','png','gif','webp'].includes(ext)) return {icon:'•', cls:'img'};
+    if (['doc','docx'].includes(ext)) return {icon:'✏', cls:'doc'};
+    if (['xls','xlsx','csv'].includes(ext)) return {icon:'•', cls:'xls'};
+    if (['zip','rar'].includes(ext)) return {icon:'•', cls:'zip'};
+    return {icon:'•', cls:'other'};
 }
 
 function renderFileItem(f, onDelete) {
@@ -6225,12 +6543,12 @@ async function filesDoUpload(files, contactId, dealId, onDone, fileKind=null) {
             });
             if (!resp.ok) {
                 const err = await resp.json().catch(() => ({}));
-                showToast('❌ ' + (err.detail || 'Ошибка загрузки'));
+                showToast('✕ ' + (err.detail || 'Ошибка загрузки'));
                 continue;
             }
-            showToast(`✅ ${file.name} загружен`);
+            showToast(`✓ ${file.name} загружен`);
         } catch(e) {
-            showToast('❌ Ошибка: ' + e.message);
+            showToast('✕ Ошибка: ' + e.message);
         }
     }
     if (onDone) await onDone();
@@ -6242,7 +6560,7 @@ async function filesDoDelete(fileId, onDone) {
         await api(`/files/${fileId}`, { method: 'DELETE' });
         showToast('🗑️ Файл удалён');
         if (onDone) await onDone();
-    } catch(e) { showToast('❌ Ошибка удаления'); }
+    } catch(e) { showToast('✕ Ошибка удаления'); }
 }
 
 // ── FILES PAGE ────────────────────────────────────────────────
@@ -6459,7 +6777,7 @@ function openRepeatModal() {
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:3000;display:flex;align-items:center;justify-content:center';
   overlay.innerHTML = `
     <div style="background:var(--surface);border-radius:16px;padding:28px 32px;width:360px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.3)">
-      <div style="font-family:'Playfair Display',serif;font-size:20px;color:var(--ink);margin-bottom:6px">🔁 Повторяющаяся сделка</div>
+      <div style="font-family:'Playfair Display',serif;font-size:20px;color:var(--ink);margin-bottom:6px">↻ Повторяющаяся сделка</div>
       <div style="font-size:12px;color:var(--ink4);margin-bottom:24px">Сделка будет автоматически создана за 3 дня до выезда</div>
 
       <label style="display:block;font-size:11px;color:var(--ink3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">Интервал повтора (дней)</label>
@@ -6525,8 +6843,8 @@ async function saveRepeat(intervalVal, nextDateVal) {
       _currentDealData.next_repeat_date = payload.next_repeat_date;
     }
     const label = payload.repeat_interval_days
-      ? `🔁 Повтор каждые ${payload.repeat_interval_days} дн.`
-      : '🔁 Повтор';
+      ? `↻ Повтор каждые ${payload.repeat_interval_days} дн.`
+      : '↻ Повтор';
     const btn = document.getElementById('btn-deal-repeat');
     if (btn) {
       btn.textContent = label;
@@ -6598,7 +6916,7 @@ window.notesInit=async function(){
 function notesSetLoading(on){
   const empty=document.getElementById('notes-empty');
   if(on){ if(empty){ empty.style.display=''; empty.innerHTML='<div class="notes-empty-icon">⏳</div><div class="notes-empty-title">Загрузка…</div>'; } }
-  else { if(empty){ empty.innerHTML=`<div class="notes-empty-icon">📝</div><div class="notes-empty-title">Заметок пока нет</div><div class="notes-empty-sub">Нажмите «＋ Новая заметка» чтобы начать</div>`; } }
+  else { if(empty){ empty.innerHTML=`<div class="notes-empty-icon">✏</div><div class="notes-empty-title">Заметок пока нет</div><div class="notes-empty-sub">Нажмите «＋ Новая заметка» чтобы начать</div>`; } }
 }
 
 window.notesSetView=function(v){
@@ -6657,7 +6975,7 @@ function noteCardHTML(n){
   </ul>`:'';
   const bodyHTML=hasBody?`<div class="note-card-body${hasBody&&hasBody.length>200?' clamp':''}">${escHtml(n.body)}</div>`:'';
   return `<div class="note-card${n.color?' '+n.color:''}" onclick="notesOpenEdit('${n.id}')">
-    ${n.pinned?'<div class="note-pin-icon">📌</div>':''}
+    ${n.pinned?'<div class="note-pin-icon">📍</div>':''}
     <div class="note-card-inner">
       ${n.title?`<div class="note-card-title">${escHtml(n.title)}</div>`:''}
       ${clHTML||bodyHTML}
@@ -6668,7 +6986,7 @@ function noteCardHTML(n){
       <span class="note-card-date">${dateStr}</span>
     </div>
     <div class="note-card-actions" onclick="event.stopPropagation()">
-      <button class="note-card-action-btn" title="Закрепить / открепить" onclick="notesQuickPin('${n.id}')">${n.pinned?'📌':'📍'}</button>
+      <button class="note-card-action-btn" title="Закрепить / открепить" onclick="notesQuickPin('${n.id}')">${n.pinned?'📍':'📍'}</button>
       <button class="note-card-action-btn" title="Удалить" onclick="notesQuickDelete('${n.id}')">🗑️</button>
     </div>
   </div>`;
